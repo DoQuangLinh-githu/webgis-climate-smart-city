@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản Lý Dữ Liệu (Admin) - WebGIS Climate Smart City</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/tesseract.js@2.1.0/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.0.0/build/index.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f0f2f5; }
+    .sidebar { width: 50px; background: #007bff; height: 100vh; position: fixed; transition: width 0.3s; overflow: hidden; }
+    .sidebar.open { width: 200px; }
+    .sidebar .toggle-btn { color: white; font-size: 24px; padding: 10px; cursor: pointer; text-align: center; }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .sidebar li { padding: 10px; }
+    .sidebar a { color: white; text-decoration: none; display: block; }
+    .sidebar a:hover { background: #0056b3; }
+    .content { margin-left: 50px; width: 100%; transition: margin-left 0.3s; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .content.sidebar-open { margin-left: 200px; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    h2 { color: #333; text-align: center; }
+    .error { color: red; text-align: center; margin-bottom: 10px; }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    label { font-weight: bold; }
+    input, button { padding: 5px; border: 1px solid #ddd; border-radius: 5px; }
+    button { background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    th { background: #007bff; color: white; }
+    .file-upload { margin: 20px 0; }
+    .file-upload button, .file-upload input[type="file"] { margin: 5px 0; }
+    .file-upload button { padding: 10px 20px; }
+    #editArea { width: 100%; height: 100px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+    <ul>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/cndl">Cập Nhật Dữ Liệu</a></li>
+      <li><a href="/history">Lịch Sử</a></li>
+      <li><a href="/changepass">Đổi Mật Khẩu</a></li>
+      <% if (user && user.role === 'admin') { %>
+        <li><a href="/hsnd">Hồ Sơ</a></li>
+        <li><a href="/qldl">Quản Lý Dữ Liệu</a></li>
+        <li><a href="/xbtk">Xuất Báo Cáo</a></li>
+      <% } %>
+      <li><a href="/logout">Đăng Xuất</a></li>
+    </ul>
+  </div>
+  <div class="content" id="content">
+    <div class="container">
+      <h2>Quản Lý Dữ Liệu (Admin)</h2>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+      <% if (!user || user.role !== 'admin') { %>
+        <p class="error">Vui lòng đăng nhập với vai trò Admin để quản lý dữ liệu!</p>
+      <% } else { %>
+        <form action="/qldl" method="post">
+          <label>Quận/Huyện</label>
+          <input type="text" name="district" required>
+          <label>Chỉ số khí hậu</label>
+          <input type="number" name="climateIndex" step="0.01" required>
+          <label>Điểm thành phố thông minh</label>
+          <input type="number" name="smartCityScore" step="0.01" required>
+          <label>Vĩ độ</label>
+          <input type="number" name="lat" step="0.000001" required>
+          <label>Kinh độ</label>
+          <input type="number" name="lng" step="0.000001" required>
+          <button type="submit">Thêm Dữ Liệu</button>
+        </form>
+        <div class="file-upload">
+          <label>Tải lên file Excel</label>
+          <input type="file" id="excelUpload" accept=".xls,.xlsx">
+          <button type="button" onclick="uploadExcel()">Tải lên</button>
+        </div>
+        <div class="file-upload">
+          <h3>Quản lý File Văn bản</h3>
+          <input type="file" id="textUpload" accept=".txt,text/plain">
+          <textarea id="editArea" placeholder="Thêm chú thích hoặc nội dung chỉnh sửa..."></textarea>
+          <button type="button" onclick="convertToPdf()">Chuyển thành PDF</button>
+          <input type="file" id="pdfUpload" accept="application/pdf">
+          <button type="button" onclick="scanToWord()">Scan PDF thành Word</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Quận/Huyện</th>
+              <th>Chỉ số khí hậu</th>
+              <th>Điểm TP thông minh</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% data.forEach(item => { %>
+              <tr>
+                <td><%= item.district %></td>
+                <td><%= item.climate_index %></td>
+                <td><%= item.smart_city_score %></td>
+                <td><a href="/sua_bdkh/<%= item.id %>">Sửa</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+  <script>
+    // Hàm toggle sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      sidebar.classList.toggle('open');
+      content.classList.toggle('sidebar-open');
+    }
+
+    // Hàm upload Excel (giả định)
+    function uploadExcel() {
+      alert('Chức năng tải lên Excel chưa được triển khai đầy đủ. Vui lòng kiểm tra với backend!');
+    }
+
+    // Hàm chuyển văn bản thành PDF
+    async function convertToPdf() {
+      if (!user || user.role !== 'admin') {
+        alert('Vui lòng đăng nhập với vai trò Admin để sử dụng chức năng này!');
+        return;
+      }
+      const textUpload = document.getElementById('textUpload');
+      const file = textUpload.files[0];
+      if (!file) {
+        alert('Vui lòng chọn file văn bản (.txt)!');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const textContent = e.target.result;
+        const editText = document.getElementById('editArea').value || 'Chú thích mặc định';
+        const { PDFDocument, rgb } = PDFLib;
+        const pdfDoc = await PDFDocument.create();
+        const page = await pdfDoc.addPage([600, 400]);
+        page.drawText(textContent + '\n\n' + editText, {
+          x: 50,
+          y: 350,
+          size: 12,
+          color: rgb(0, 0, 0)
+        });
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'converted_' + file.name.replace('.txt', '.pdf');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      };
+      reader.readAsText(file);
+    }
+
+    // Hàm scan PDF thành Word
+    async function scanToWord() {
+      if (!user || user.role !== 'admin') {
+        alert('Vui lòng đăng nhập với vai trò Admin để sử dụng chức năng này!');
+        return;
+      }
+      const pdfUpload = document.getElementById('pdfUpload');
+      const file = pdfUpload.files[0];
+      if (!file) {
+        alert('Vui lòng chọn file PDF!');
+        return;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+      const pages = pdfDoc.getPages();
+      let textContent = '';
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const { data: pageImage } = await page.getImageData();
+        const { data: { text } } = await Tesseract.recognize(pageImage, 'vie', {
+          logger: m => console.log(m)
+        });
+        textContent += text + '\n\n';
+      }
+
+      const { Document, Paragraph, Packer } = window.docx;
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph(textContent)
+          ]
+        }]
+      });
+
+      Packer.toBlob(doc).then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'scanned_' + file.name.replace('.pdf', '.docx');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      });
+    }
+  </script>
+</body>
+</html>

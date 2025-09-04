@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - WebGIS Climate Smart City</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f0f2f5; }
+    .sidebar { width: 50px; background: #007bff; height: 100vh; position: fixed; transition: width 0.3s; overflow: hidden; }
+    .sidebar.open { width: 200px; }
+    .sidebar .toggle-btn { color: white; font-size: 24px; padding: 10px; cursor: pointer; text-align: center; }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .sidebar li { padding: 10px; }
+    .sidebar a { color: white; text-decoration: none; display: block; }
+    .sidebar a:hover { background: #0056b3; }
+    .content { margin-left: 50px; width: 100%; transition: margin-left 0.3s; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .content.sidebar-open { margin-left: 200px; }
+    .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    h2 { color: #333; text-align: center; }
+    #map { height: 500px; margin: 20px 0; border-radius: 10px; }
+    .layer-control { position: absolute; top: 10px; right: 10px; background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 1000; }
+    .layer-control h3 { margin: 0 0 10px; font-size: 16px; color: #333; }
+    .layer-control label { display: block; margin: 5px 0; cursor: pointer; }
+    .layer-control input[type="checkbox"] { margin-right: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    th { background: #007bff; color: white; }
+    .error { color: red; text-align: center; margin-bottom: 10px; }
+    a { color: #007bff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+    <ul>
+      <li><a href="/login">Đăng Nhập</a></li>
+    </ul>
+  </div>
+  <div class="content" id="content">
+    <div class="container">
+      <h2>Dashboard</h2>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+      <div id="map"></div>
+      <div class="layer-control">
+        <h3>Chọn Lớp</h3>
+        <label><input type="checkbox" id="roads"> Đường giao thông</label>
+        <label><input type="checkbox" id="rivers"> Sông</label>
+        <label><input type="checkbox" id="airways"> Hàng không</label>
+        <label><input type="checkbox" id="provinces"> Ranh giới tỉnh</label>
+        <label><input type="checkbox" id="wards"> Ranh giới xã</label>
+        <label><input type="checkbox" id="stores"> Cửa hàng</label>
+        <label><input type="checkbox" id="trains"> Tàu</label>
+        <label><input type="checkbox" id="stations"> Ga</label>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Quận/Huyện</th>
+            <th>Chỉ số khí hậu</th>
+            <th>Điểm TP thông minh</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% data.forEach(item => { %>
+            <tr>
+              <td><%= item.district %></td>
+              <td><%= item.climate_index %></td>
+              <td><%= item.smart_city_score %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <p><a href="/login">Đăng nhập để chỉnh sửa hoặc truy cập thêm chức năng</a></p>
+    </div>
+  </div>
+  <script>
+    // Khởi tạo bản đồ
+    const map = L.map('map').setView([10.762622, 106.660172], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Thêm chức năng tìm kiếm vị trí
+    L.Control.geocoder({
+      position: 'topleft',
+      defaultMarkGeocode: true
+    }).addTo(map);
+
+    // Định nghĩa các lớp từ GeoServer
+    const layers = {
+      roads: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:roads&outputFormat=application/json',
+        style: { color: '#ff0000', weight: 2 }
+      }),
+      rivers: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:rivers&outputFormat=application/json',
+        style: { color: '#0000ff', weight: 2 }
+      }),
+      airways: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:airways&outputFormat=application/json',
+        style: { color: '#ffa500', weight: 2 }
+      }),
+      provinces: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:provinces&outputFormat=application/json',
+        style: { color: '#008000', weight: 2, fillOpacity: 0.1 }
+      }),
+      wards: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:wards&outputFormat=application/json',
+        style: { color: '#800080', weight: 2, fillOpacity: 0.1 }
+      }),
+      stores: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:stores&outputFormat=application/json',
+        pointToLayer: (feature, latlng) => L.marker(latlng, {
+          icon: L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #ff4500; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px;">C</div>',
+            iconSize: [20, 20]
+          })
+        }).bindPopup(feature.properties.name || 'Cửa hàng')
+      }),
+      trains: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:trains&outputFormat=application/json',
+        pointToLayer: (feature, latlng) => L.marker(latlng, {
+          icon: L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #4682b4; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px;">T</div>',
+            iconSize: [20, 20]
+          })
+        }).bindPopup(feature.properties.name || 'Tàu')
+      }),
+      stations: L.geoJSON(null, {
+        url: 'http://localhost:8080/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=your_workspace:stations&outputFormat=application/json',
+        pointToLayer: (feature, latlng) => L.marker(latlng, {
+          icon: L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background-color: #9b59b6; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px;">G</div>',
+            iconSize: [20, 20]
+          })
+        }).bindPopup(feature.properties.name || 'Ga')
+      })
+    };
+
+    // Tải và kiểm soát các lớp
+    Object.entries(layers).forEach(([id, layer]) => {
+      layer.on('data:loaded', () => {
+        document.getElementById(id).addEventListener('change', (e) => {
+          if (e.target.checked) {
+            layer.addTo(map);
+          } else {
+            map.removeLayer(layer);
+          }
+        });
+      });
+      fetch(layer.options.url)
+        .then(response => response.json())
+        .then(data => {
+          layer.addData(data);
+          layer.fire('data:loaded');
+        })
+        .catch(err => console.error(`Error loading ${id}:`, err));
+    });
+
+    // Thêm marker từ dữ liệu
+    <% data.forEach(item => { %>
+      L.marker([<%= item.geom.coordinates[1] %>, <%= item.geom.coordinates[0] %>], {
+        icon: L.divIcon({
+          className: 'custom-marker',
+          html: '<div style="background-color: #007bff; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px;">M</div>',
+          iconSize: [20, 20]
+        })
+      }).addTo(map)
+        .bindPopup(`<b>${item.district}</b><br>Chỉ số khí hậu: ${item.climate_index}<br>Điểm TP thông minh: ${item.smart_city_score}`, {
+          maxWidth: 300,
+          className: 'custom-popup'
+        });
+    <% }) %>
+
+    // Hàm toggle sidebar
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      sidebar.classList.toggle('open');
+      content.classList.toggle('sidebar-open');
+    }
+  </script>
+  <style>
+    .custom-marker { cursor: pointer; }
+    .custom-popup { background-color: #fff; border: 2px solid #007bff; border-radius: 5px; padding: 10px; }
+    .custom-popup b { color: #007bff; }
+  </style>
+</body>
+</html>

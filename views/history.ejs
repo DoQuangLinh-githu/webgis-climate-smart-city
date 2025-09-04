@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Lịch Sử Hoạt Động - WebGIS Climate Smart City</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f0f2f5; }
+    .sidebar { width: 50px; background: #007bff; height: 100vh; position: fixed; transition: width 0.3s; overflow: hidden; }
+    .sidebar.open { width: 200px; }
+    .sidebar .toggle-btn { color: white; font-size: 24px; padding: 10px; cursor: pointer; text-align: center; }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .sidebar li { padding: 10px; }
+    .sidebar a { color: white; text-decoration: none; display: block; }
+    .sidebar a:hover { background: #0056b3; }
+    .content { margin-left: 50px; width: 100%; transition: margin-left 0.3s; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .content.sidebar-open { margin-left: 200px; }
+    .container { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    h2 { color: #333; text-align: center; }
+    .error { color: red; text-align: center; margin-bottom: 10px; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 10px; border-bottom: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+    <ul>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/cndl">Cập Nhật Dữ Liệu</a></li>
+      <li><a href="/history">Lịch Sử</a></li>
+      <li><a href="/changepass">Đổi Mật Khẩu</a></li>
+      <% if (user && user.role === 'admin') { %>
+        <li><a href="/hsnd">Hồ Sơ</a></li>
+        <li><a href="/qldl">Quản Lý Dữ Liệu</a></li>
+        <li><a href="/xbtk">Xuất Báo Cáo</a></li>
+      <% } %>
+      <li><a href="/logout">Đăng Xuất</a></li>
+    </ul>
+  </div>
+  <div class="content" id="content">
+    <div class="container">
+      <h2>Lịch Sử Hoạt Động</h2>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+      <% if (!user) { %>
+        <p class="error">Vui lòng đăng nhập để xem lịch sử!</p>
+      <% } else { %>
+        <ul>
+          <% data.forEach(item => { %>
+            <li>- Cập nhật: <%= item.district %> (Chỉ số khí hậu: <%= item.climate_index %>, Điểm TP thông minh: <%= item.smart_city_score %>)</li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      sidebar.classList.toggle('open');
+      content.classList.toggle('sidebar-open');
+    }
+  </script>
+</body>
+</html>

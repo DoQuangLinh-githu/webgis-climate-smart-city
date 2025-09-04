@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đăng Ký Tài Khoản - WebGIS Climate Smart City</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f0f2f5; }
+    .sidebar { width: 50px; background: #007bff; height: 100vh; position: fixed; transition: width 0.3s; overflow: hidden; }
+    .sidebar.open { width: 200px; }
+    .sidebar .toggle-btn { color: white; font-size: 24px; padding: 10px; cursor: pointer; text-align: center; }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .sidebar li { padding: 10px; }
+    .sidebar a { color: white; text-decoration: none; display: block; }
+    .sidebar a:hover { background: #0056b3; }
+    .content { margin-left: 50px; width: 100%; transition: margin-left 0.3s; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .content.sidebar-open { margin-left: 200px; }
+    .container { max-width: 400px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    h2 { color: #333; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .error { color: red; text-align: center; margin-bottom: 10px; }
+    .link { text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
+    <ul>
+      <li><a href="/login">Đăng Nhập</a></li>
+      <li><a href="/register">Đăng Ký</a></li>
+    </ul>
+  </div>
+  <div class="content" id="content">
+    <div class="container">
+      <h2>Đăng Ký Tài Khoản</h2>
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+      <% if (success) { %>
+        <p class="error" style="color: green;"><%= success %></p>
+        <p class="error" style="color: blue;">Vui lòng kiểm tra email của bạn để xác nhận tài khoản.</p>
+      <% } %>
+      <form action="/register" method="POST" onsubmit="return validateForm()">
+        <div class="form-group">
+          <label for="username">Tên người dùng</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" name="password" required>
+          <small id="passwordError" style="color: red; display: none;">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số, và ký tự đặc biệt!</small>
+        </div>
+        <button type="submit">Đăng Ký</button>
+      </form>
+      <div class="link">
+        <a href="/login">Đã có tài khoản? Đăng nhập</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      sidebar.classList.toggle('open');
+      content.classList.toggle('sidebar-open');
+    }
+
+    function validateForm() {
+      const password = document.getElementById('password').value;
+      const passwordError = document.getElementById('passwordError');
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      
+      if (!passwordRegex.test(password)) {
+        passwordError.style.display = 'block';
+        return false;
+      }
+      passwordError.style.display = 'none';
+      return true;
+    }
+  </script>
+</body>
+</html>
