@@ -26,7 +26,8 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
-pool.connect()
+// Kiểm tra kết nối database
+pool.query('SELECT NOW()')
   .then(() => console.log(`Connected to PostgreSQL (${process.env.DB_NAME}) with user ${process.env.DB_USER}`))
   .catch(err => {
     console.error('PostgreSQL connection error:', {
@@ -123,7 +124,7 @@ app.post('/login', async (req, res) => {
     return res.render('login', { error: 'Tài khoản chưa được xác minh!' });
   }
   const token = jwt.sign({ username: user.username, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.cookie('token', token, { httpOnly: true, maxAge: 3600000 });
+  res.cookie('token', token, { httpOnly: true, maxAge: 3600000, secure: true, sameSite: 'strict' });
   console.log('Login successful, redirecting to /dashboard');
   res.redirect('/dashboard');
 });
