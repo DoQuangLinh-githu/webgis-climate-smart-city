@@ -164,7 +164,7 @@ app.post('/register', async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: 'Xác nhận email cho WebGIS Climate Smart City',
-      text: `Chào ${username},\n\nVui lòng sử dụng mã xác nhận sau để kích hoạt tài khoản của bạn:\n${verificationCode}\n\nTruy cập: http://localhost:3000/verify?email=${encodeURIComponent(email)}&code=${verificationCode}\n\nTrân trọng,\nĐội ngũ WebGIS`
+      text: `Chào ${username},\n\nVui lòng sử dụng mã xác nhận sau để kích hoạt tài khoản của bạn:\n${verificationCode}\n\nTruy cập: ${process.env.APP_URL}/verify?email=${encodeURIComponent(email)}&code=${verificationCode}\n\nTrân trọng,\nĐội ngũ WebGIS`
     };
     await transporter.sendMail(mailOptions);
 
@@ -336,5 +336,4 @@ app.post('/sua_bdkh/:id', authenticateToken, async (req, res) => {
   res.redirect('/dashboard');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+module.exports = app;
