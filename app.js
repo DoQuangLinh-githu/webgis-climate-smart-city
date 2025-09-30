@@ -20,14 +20,16 @@ console.log('🚀 Khởi động hệ thống WebGIS Climate Smart City...');
 const app = express();
 
 // Kết nối Redis với xử lý lỗi
+const redisPort = parseInt(process.env.REDIS_PORT, 10) || 6379;
 const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
+  port: redisPort,
   retryStrategy: (times) => {
     console.warn(`⚠️ Không kết nối được Redis lần ${times}. Thử lại sau ${Math.min(times * 100, 2000)}ms...`);
     return Math.min(times * 100, 2000);
   },
 });
+
 
 redis.on('error', (err) => {
   console.warn('❌ Lỗi Redis:', err.message);
@@ -145,7 +147,7 @@ app.use(
 );
 
 // Tạo thư mục uploads
-const uploadDir = process.env.UPLOAD_DIR || './uploads';
+const uploadDir = process.env.UPLOAD_DIR || '/tmp/uploads';
 (async () => {
   try {
     await fs.mkdir(uploadDir, { recursive: true });
