@@ -2110,4 +2110,13 @@ app.get('/logout', (req, res) => {
 })();
 
 // Xuất Express app cho Vercel
-module.exports = { app, pool, ensureConstraints, evaluateFormula, parseRange, getCachedOrQuery };
+// Xuất app cho Vercel
+module.exports = app;
+
+// Nếu chạy local thì dùng port 3000
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`✅ Local server running at http://localhost:${PORT}`);
+  });
+}
