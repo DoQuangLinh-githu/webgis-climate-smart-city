@@ -12,69 +12,62 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
-const Redis = require('ioredis');
+// ❌ Bỏ Redis
+// const Redis = require('ioredis');
 const nodemailer = require('nodemailer');
+const math = require('mathjs');
 
 console.log('🚀 Khởi động hệ thống WebGIS Climate Smart City...');
 
+// Express app
 const app = express();
 
-// Kết nối Redis với xử lý lỗi
-const redisPort = parseInt(process.env.REDIS_PORT, 10) || 6379;
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: redisPort,
-  retryStrategy: (times) => {
-    console.warn(`⚠️ Không kết nối được Redis lần ${times}. Thử lại sau ${Math.min(times * 100, 2000)}ms...`);
-    return Math.min(times * 100, 2000);
-  },
-});
+// 🚫 Không dùng Redis
+console.warn("⚠️ Redis đã được tắt, hệ thống chỉ sử dụng PostgreSQL.");
 
-
-redis.on('error', (err) => {
-  console.warn('❌ Lỗi Redis:', err.message);
-});
-
-const math = require('mathjs');
-
+// ==== Evaluate Formula ====
 function evaluateFormula(formula, value, additionalParams = {}) {
   try {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) throw new Error('Giá trị không hợp lệ để tính công thức');
 
-    // Công thức đơn giản
     if (formula.includes('value *')) {
       const multiplier = parseFloat(formula.split('value *')[1].trim());
       if (isNaN(multiplier)) throw new Error('Hệ số nhân không hợp lệ');
       return numValue * multiplier;
     } else if (formula.includes('100 - value')) {
       return 100 - numValue;
-    } 
-    // Công thức định tính
-    else if (['Qualitative/score by policy', 'Scale 1-5', 'Data availability & integration', 'Existence and quality of plan', 'Composite', 'Count density', 'Number of days AQI > threshold', 'Digitalization level', 'Number/quality of initiatives', 'Operational efficiency', 'GHG reduction measures', 'Level of service'].includes(formula)) {
-      // Trả về giá trị từ ScoringLevels dựa trên level được gửi từ form
-      return numValue; // Giả định numValue là score_value từ ScoringLevels
-    } 
-    // Công thức tổng hợp
-    else if (formula.includes('avg(')) {
-      const params = formula.match(/avg\(([^)]+)\)/)[1].split(',').map(p => p.trim());
-      const values = params.map(param => additionalParams[param] || numValue);
-      if (values.some(v => isNaN(parseFloat(v)))) throw new Error('Tham số không hợp lệ cho hàm avg');
+    } else if (
+      [
+        'Qualitative/score by policy',
+        'Scale 1-5',
+        'Data availability & integration',
+        'Existence and quality of plan',
+        'Composite',
+        'Count density',
+        'Number of days AQI > threshold',
+        'Digitalization level',
+        'Number/quality of initiatives',
+        'Operational efficiency',
+        'GHG reduction measures',
+        'Level of service',
+      ].includes(formula)
+    ) {
+      return numValue;
+    } else if (formula.includes('avg(')) {
+      const params = formula.match(/avg\(([^)]+)\)/)[1].split(',').map((p) => p.trim());
+      const values = params.map((param) => additionalParams[param] || numValue);
+      if (values.some((v) => isNaN(parseFloat(v)))) throw new Error('Tham số không hợp lệ cho hàm avg');
       return values.reduce((sum, val) => sum + parseFloat(val), 0) / values.length;
-    } 
-    // Công thức định lượng phức tạp
-    else {
-      // Thay thế các biến trong công thức bằng giá trị từ additionalParams
+    } else {
       let evalFormula = formula;
       for (const [key, val] of Object.entries(additionalParams)) {
         evalFormula = evalFormula.replace(new RegExp(key, 'g'), val);
       }
       evalFormula = evalFormula.replace('value', numValue.toString());
-      
+
       const result = math.evaluate(evalFormula);
-      if (typeof result !== 'number' || isNaN(result)) {
-        throw new Error('Kết quả công thức không hợp lệ');
-      }
+      if (typeof result !== 'number' || isNaN(result)) throw new Error('Kết quả công thức không hợp lệ');
       return result;
     }
   } catch (err) {
@@ -83,11 +76,11 @@ function evaluateFormula(formula, value, additionalParams = {}) {
   }
 }
 
-// Thiết lập View Engine
+// ==== View Engine ====
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Cấu hình bảo mật Header
+// ==== Security Headers ====
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -102,7 +95,7 @@ app.use(
   })
 );
 
-// Cấu hình CORS
+// ==== CORS ====
 app.use(
   cors({
     origin: process.env.NODE_ENV === 'production' ? process.env.APP_URL : true,
@@ -112,7 +105,7 @@ app.use(
   })
 );
 
-// Giới hạn số lượng yêu cầu
+// ==== Rate Limit ====
 const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000;
 const maxRequests = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100;
 
@@ -133,12 +126,12 @@ app.use(
   })
 );
 
-// Xử lý body request
+// ==== Body Parser & Cookies ====
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser(process.env.SESSION_SECRET));
 
-// Cung cấp file tĩnh
+// ==== Static Files ====
 app.use(
   express.static(path.join(__dirname, 'public'), {
     maxAge: '1d',
@@ -146,7 +139,7 @@ app.use(
   })
 );
 
-// Tạo thư mục uploads
+// ==== Uploads Directory ====
 const uploadDir = process.env.UPLOAD_DIR || '/tmp/uploads';
 (async () => {
   try {
@@ -157,41 +150,31 @@ const uploadDir = process.env.UPLOAD_DIR || '/tmp/uploads';
   }
 })();
 
-// Cấu hình Multer
 const upload = multer({
   dest: uploadDir,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Chỉ chấp nhận file PDF!'), false);
-    }
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Chỉ chấp nhận file PDF!'), false);
   },
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// Kết nối PostgreSQL (Neon + Vercel)
-const { Pool } = require("pg");
-
+// ==== PostgreSQL (Neon) ====
+const { Pool } = require('pg');
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Neon yêu cầu SSL
+  ssl: { rejectUnauthorized: false },
 });
 
-// Kiểm tra kết nối database
-pool.query("SELECT NOW()")
-  .then(() => {
-    console.log("✅ Connected to Neon PostgreSQL");
-  })
-  .catch(err => {
-    console.error("❌ PostgreSQL connection error:", {
-      message: err.message,
-      code: err.code
-    });
+pool
+  .query('SELECT NOW()')
+  .then(() => console.log('✅ Connected to Neon PostgreSQL'))
+  .catch((err) => {
+    console.error('❌ PostgreSQL connection error:', { message: err.message, code: err.code });
     process.exit(1);
   });
 
-// Đảm bảo ràng buộc unique tồn tại
+// ==== Constraints ====
 async function ensureConstraints() {
   try {
     await pool.query(`
@@ -200,7 +183,7 @@ async function ensureConstraints() {
     `);
     console.log('✅ Đã thêm ràng buộc unique cho Assessments_Template');
   } catch (err) {
-    if (err.code !== '42710') { // 42710: duplicate_object
+    if (err.code !== '42710') {
       console.error('❌ Lỗi khi thêm ràng buộc unique:', err.message);
     } else {
       console.log('✅ Ràng buộc unique đã tồn tại cho Assessments_Template');
@@ -208,20 +191,15 @@ async function ensureConstraints() {
   }
 }
 
-// Hàm parse phạm vi giá trị từ evaluation_criteria
+// ==== Parse Range ====
 function parseRange(criteria) {
   try {
     if (!criteria || criteria === '0') return { min_value: null, max_value: null };
 
-    // Loại bỏ khoảng trắng và các ký tự không cần thiết
     const cleanCriteria = criteria.trim().replace(/%/g, '').replace(/m²\/người/g, '');
 
-    // Xử lý các trường hợp đặc biệt không phải phạm vi số
-    if (!cleanCriteria.match(/[\d<=>-]/)) {
-      return { min_value: null, max_value: null };
-    }
+    if (!cleanCriteria.match(/[\d<=>-]/)) return { min_value: null, max_value: null };
 
-    // Xử lý các phạm vi
     if (cleanCriteria.startsWith('<')) {
       const max = parseFloat(cleanCriteria.replace('<', ''));
       return { min_value: null, max_value: max };
@@ -229,20 +207,30 @@ function parseRange(criteria) {
       const min = parseFloat(cleanCriteria.replace('≥', '').replace('>=', ''));
       return { min_value: min, max_value: null };
     } else if (cleanCriteria.includes('-')) {
-      const [min, max] = cleanCriteria.split('-').map(s => s.trim());
+      const [min, max] = cleanCriteria.split('-').map((s) => s.trim());
       let minVal = min.includes('>') ? parseFloat(min.replace('>', '')) : parseFloat(min);
       let maxVal = max.includes('<') ? parseFloat(max.replace('<', '')) : parseFloat(max);
       return { min_value: minVal, max_value: maxVal };
     } else {
       const value = parseFloat(cleanCriteria);
-      if (!isNaN(value)) {
-        return { min_value: value, max_value: value };
-      }
+      if (!isNaN(value)) return { min_value: value, max_value: value };
       return { min_value: null, max_value: null };
     }
   } catch (err) {
     console.warn(`⚠️ Không thể parse phạm vi từ "${criteria}": ${err.message}`);
     return { min_value: null, max_value: null };
+  }
+}
+
+// ==== getCachedOrQuery (chỉ dùng PostgreSQL) ====
+async function getCachedOrQuery(key, query) {
+  try {
+    const result = await pool.query(query);
+    console.log(`✅ Lấy dữ liệu trực tiếp từ PostgreSQL cho key: ${key}`);
+    return result.rows;
+  } catch (err) {
+    console.error(`❌ Lỗi khi query PostgreSQL cho key ${key}:`, err.message);
+    return [];
   }
 }
 
@@ -2122,4 +2110,4 @@ app.get('/logout', (req, res) => {
 })();
 
 // Xuất Express app cho Vercel
-module.exports = app;
+module.exports = { app, pool, ensureConstraints, evaluateFormula, parseRange, getCachedOrQuery };
