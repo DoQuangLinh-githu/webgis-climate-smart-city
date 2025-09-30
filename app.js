@@ -2105,23 +2105,20 @@ app.get('/logout', (req, res) => {
 });
 
 // Khởi động server
-const PORT = process.env.PORT || 3000;
 (async () => {
   try {
-    // Chỉ chạy initializeDatabase nếu biến môi trường INIT_DB được đặt là true
     if (process.env.INIT_DB === 'true') {
       await initializeDatabase();
       console.log('✅ Cơ sở dữ liệu đã được khởi tạo.');
     } else {
       console.log('⏩ Bỏ qua khởi tạo cơ sở dữ liệu.');
     }
-    // Đảm bảo ràng buộc unique tồn tại bất kể INIT_DB
     await ensureConstraints();
-    app.listen(PORT, () => {
-      console.log(`🌐 Server đang chạy trên cổng ${PORT}`);
-    });
   } catch (err) {
     console.error('❌ Lỗi khởi động server:', err);
     process.exit(1);
   }
 })();
+
+// Xuất Express app cho Vercel
+module.exports = app;
