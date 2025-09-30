@@ -1,217 +1,286 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Quản Lý Dữ Liệu (Admin) - WebGIS Climate Smart City</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://unpkg.com/tesseract.js@2.1.0/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/docx@7.0.0/build/index.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f0f2f5; }
-    .sidebar { width: 50px; background: #007bff; height: 100vh; position: fixed; transition: width 0.3s; overflow: hidden; }
-    .sidebar.open { width: 200px; }
-    .sidebar .toggle-btn { color: white; font-size: 24px; padding: 10px; cursor: pointer; text-align: center; }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
-    .sidebar li { padding: 10px; }
-    .sidebar a { color: white; text-decoration: none; display: block; }
-    .sidebar a:hover { background: #0056b3; }
-    .content { margin-left: 50px; width: 100%; transition: margin-left 0.3s; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-    .content.sidebar-open { margin-left: 200px; }
-    .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    h2 { color: #333; text-align: center; }
-    .error { color: red; text-align: center; margin-bottom: 10px; }
-    form { display: flex; flex-direction: column; gap: 10px; }
-    label { font-weight: bold; }
-    input, button { padding: 5px; border: 1px solid #ddd; border-radius: 5px; }
-    button { background: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-    th { background: #007bff; color: white; }
-    .file-upload { margin: 20px 0; }
-    .file-upload button, .file-upload input[type="file"] { margin: 5px 0; }
-    .file-upload button { padding: 10px 20px; }
-    #editArea { width: 100%; height: 100px; margin: 10px 0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGIS - Quản Lý Dữ Liệu</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            animation: slideInLeft 0.5s ease-in-out;
+        }
+        
+        .nav-link {
+            color: #495057;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 5px 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 30px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .field-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 20px;
+            transition: transform 0.2s ease;
+        }
+        
+        .field-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .field-header {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .indicator-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .indicator-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0, 123, 255, 0.15);
+        }
+        
+        .form-floating {
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+        }
+        
+        .level-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        
+        .level-1 { background: #f8f9fa; color: #6c757d; }
+        .level-2 { background: #fff3cd; color: #856404; }
+        .level-3 { background: #d1ecf1; color: #0c5460; }
+        .level-4 { background: #d4edda; color: #155724; }
+        .level-5 { background: #cce5ff; color: #004085; }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .district-select {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            .field-header h5 {
+                font-size: 1.1rem;
+            }
+            
+            .sidebar {
+                margin-bottom: 20px;
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
-    <ul>
-      <li><a href="/dashboard">Dashboard</a></li>
-      <li><a href="/cndl">Cập Nhật Dữ Liệu</a></li>
-      <li><a href="/history">Lịch Sử</a></li>
-      <li><a href="/changepass">Đổi Mật Khẩu</a></li>
-      <% if (user && user.role === 'admin') { %>
-        <li><a href="/hsnd">Hồ Sơ</a></li>
-        <li><a href="/qldl">Quản Lý Dữ Liệu</a></li>
-        <li><a href="/xbtk">Xuất Báo Cáo</a></li>
-      <% } %>
-      <li><a href="/logout">Đăng Xuất</a></li>
-    </ul>
-  </div>
-  <div class="content" id="content">
-    <div class="container">
-      <h2>Quản Lý Dữ Liệu (Admin)</h2>
-      <% if (error) { %>
-        <p class="error"><%= error %></p>
-      <% } %>
-      <% if (!user || user.role !== 'admin') { %>
-        <p class="error">Vui lòng đăng nhập với vai trò Admin để quản lý dữ liệu!</p>
-      <% } else { %>
-        <form action="/qldl" method="post">
-          <label>Quận/Huyện</label>
-          <input type="text" name="district" required>
-          <label>Chỉ số khí hậu</label>
-          <input type="number" name="climateIndex" step="0.01" required>
-          <label>Điểm thành phố thông minh</label>
-          <input type="number" name="smartCityScore" step="0.01" required>
-          <label>Vĩ độ</label>
-          <input type="number" name="lat" step="0.000001" required>
-          <label>Kinh độ</label>
-          <input type="number" name="lng" step="0.000001" required>
-          <button type="submit">Thêm Dữ Liệu</button>
-        </form>
-        <div class="file-upload">
-          <label>Tải lên file Excel</label>
-          <input type="file" id="excelUpload" accept=".xls,.xlsx">
-          <button type="button" onclick="uploadExcel()">Tải lên</button>
+    <div class="container-fluid main-container">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+        <div class="position-sticky pt-3">
+          <h4 class="text-center">WebGIS</h4>
+          <h5 class="text-center">Climate Smart City</h5>
+          <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
+            <% if (user && user.role === 'admin') { %>
+              <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
+            <% } %>
+            <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+            <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+            <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+          </ul>
+          <hr>
+          <div class="text-center">
+            <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
+            <% if (user && user.role === 'admin') { %>
+              <span class="badge bg-primary">Quản trị</span>
+            <% } else { %>
+              <span class="badge bg-secondary">Người dùng</span>
+            <% } %>
+          </div>
         </div>
-        <div class="file-upload">
-          <h3>Quản lý File Văn bản</h3>
-          <input type="file" id="textUpload" accept=".txt,text/plain">
-          <textarea id="editArea" placeholder="Thêm chú thích hoặc nội dung chỉnh sửa..."></textarea>
-          <button type="button" onclick="convertToPdf()">Chuyển thành PDF</button>
-          <input type="file" id="pdfUpload" accept="application/pdf">
-          <button type="button" onclick="scanToWord()">Scan PDF thành Word</button>
+      </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Quản Lý Dữ Liệu - TP. Hồ Chí Minh</h1>
+                    <p>Xem và chỉnh sửa dữ liệu chỉ số Climate Smart City</p>
+                </div>
+
+                <% if (error) { %>
+                    <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
+                <% } %>
+                <% if (success) { %>
+                    <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
+                <% } %>
+
+                <div class="field-card">
+                    <div class="field-header">
+                        <h5><i class="fas fa-list"></i> Tổng Chỉ Số</h5>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-list"></i> Tổng chỉ số</h5>
+                        <p>Số lượng chỉ số: <strong><%= assessments ? assessments.length : 0 %></strong></p>
+                    </div>
+                </div>
+
+                <div class="field-card">
+                    <div class="field-header">
+                        <h5><i class="fas fa-chart-bar"></i> Danh Sách Chỉ Số</h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (assessments && assessments.length > 0) { %>
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Lĩnh vực</th>
+                                        <th>Chỉ số</th>
+                                        <th>Giá trị</th>
+                                        <th>Điểm</th>
+                                        <th>Cấp độ</th>
+                                        <th>Mô tả</th>
+                                        <th>Ngày cập nhật</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% assessments.forEach(ass => { %>
+                                        <tr>
+                                            <td><%= ass.domain_name %></td>
+                                            <td><%= ass.indicator_name %></td>
+                                            <td><%= ass.value %></td>
+                                            <td><%= ass.score_awarded %></td>
+                                            <td><span class="level-badge level-<%= ass.level %>">Cấp <%= ass.level %></span></td>
+                                            <td><%= ass.description || 'N/A' %></td>
+                                            <td><%= new Date(ass.date).toLocaleDateString('vi-VN') %></td>
+                                            <td>
+                                                <a href="/edit_cndl/<%= ass.assessment_id %>" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i> Sửa</a>
+                                                <form action="/qldl/delete/<%= ass.assessment_id %>" method="POST" style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc muốn xóa chỉ số này?')"><i class="fas fa-trash"></i> Xóa</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        <% } else { %>
+                            <p>Chưa có chỉ số nào</p>
+                        <% } %>
+                    </div>
+                </div>
+            </main>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Quận/Huyện</th>
-              <th>Chỉ số khí hậu</th>
-              <th>Điểm TP thông minh</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% data.forEach(item => { %>
-              <tr>
-                <td><%= item.district %></td>
-                <td><%= item.climate_index %></td>
-                <td><%= item.smart_city_score %></td>
-                <td><a href="/sua_bdkh/<%= item.id %>">Sửa</a></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
     </div>
-  </div>
-  <script>
-    // Hàm toggle sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const content = document.getElementById('content');
-      sidebar.classList.toggle('open');
-      content.classList.toggle('sidebar-open');
-    }
 
-    // Hàm upload Excel (giả định)
-    function uploadExcel() {
-      alert('Chức năng tải lên Excel chưa được triển khai đầy đủ. Vui lòng kiểm tra với backend!');
-    }
-
-    // Hàm chuyển văn bản thành PDF
-    async function convertToPdf() {
-      if (!user || user.role !== 'admin') {
-        alert('Vui lòng đăng nhập với vai trò Admin để sử dụng chức năng này!');
-        return;
-      }
-      const textUpload = document.getElementById('textUpload');
-      const file = textUpload.files[0];
-      if (!file) {
-        alert('Vui lòng chọn file văn bản (.txt)!');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        const textContent = e.target.result;
-        const editText = document.getElementById('editArea').value || 'Chú thích mặc định';
-        const { PDFDocument, rgb } = PDFLib;
-        const pdfDoc = await PDFDocument.create();
-        const page = await pdfDoc.addPage([600, 400]);
-        page.drawText(textContent + '\n\n' + editText, {
-          x: 50,
-          y: 350,
-          size: 12,
-          color: rgb(0, 0, 0)
-        });
-        const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'converted_' + file.name.replace('.txt', '.pdf');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      };
-      reader.readAsText(file);
-    }
-
-    // Hàm scan PDF thành Word
-    async function scanToWord() {
-      if (!user || user.role !== 'admin') {
-        alert('Vui lòng đăng nhập với vai trò Admin để sử dụng chức năng này!');
-        return;
-      }
-      const pdfUpload = document.getElementById('pdfUpload');
-      const file = pdfUpload.files[0];
-      if (!file) {
-        alert('Vui lòng chọn file PDF!');
-        return;
-      }
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-      const pages = pdfDoc.getPages();
-      let textContent = '';
-
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        const { data: pageImage } = await page.getImageData();
-        const { data: { text } } = await Tesseract.recognize(pageImage, 'vie', {
-          logger: m => console.log(m)
-        });
-        textContent += text + '\n\n';
-      }
-
-      const { Document, Paragraph, Packer } = window.docx;
-      const doc = new Document({
-        sections: [{
-          properties: {},
-          children: [
-            new Paragraph(textContent)
-          ]
-        }]
-      });
-
-      Packer.toBlob(doc).then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'scanned_' + file.name.replace('.pdf', '.docx');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      });
-    }
-  </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

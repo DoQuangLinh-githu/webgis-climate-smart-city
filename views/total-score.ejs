@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng Điểm - WebGIS Climate Smart City</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            animation: slideInLeft 0.5s ease-in-out;
+        }
+        .nav-link {
+            color: #495057;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 5px 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 30px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .table-custom {
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .table-custom th, .table-custom td {
+            vertical-align: middle;
+        }
+        .map-container {
+            height: 400px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .level-badge {
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: white;
+        }
+        .level-1 { background-color: #6c757d; }
+        .level-2 { background-color: #856404; }
+        .level-3 { background-color: #0c5460; }
+        .level-4 { background-color: #155724; }
+        .level-5 { background-color: #004085; }
+        .chart-container {
+            position: relative;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+                margin: 10px;
+            }
+            .sidebar {
+                margin-bottom: 20px;
+                position: relative;
+                top: 0;
+            }
+            .chart-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid main-container">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <h4 class="text-center">WebGIS</h4>
+                    <h5 class="text-center">Climate Smart City</h5>
+                    <ul class="nav flex-column">
+                        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
+                        <% if (user && user.role === 'admin') { %>
+                            <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
+                        <% } %>
+                        <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+                    </ul>
+                    <hr>
+                    <div class="text-center">
+                        <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
+                        <% if (user && user.role === 'admin') { %>
+                            <span class="badge bg-primary">Quản trị</span>
+                        <% } else { %>
+                            <span class="badge bg-secondary">Người dùng</span>
+                        <% } %>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Alerts -->
+                <% if (error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i><%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                    </div>
+                <% } %>
+                <% if (success) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i><%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                    </div>
+                <% } %>
+
+                <!-- Total Score Section -->
+                <div class="main-content">
+                    <h2 class="mb-4"><i class="fas fa-star me-2"></i>Tổng Điểm - TP. Hồ Chí Minh</h2>
+                    <form method="GET" action="/total-score" class="mb-3">
+                        <label for="year" class="form-label">Chọn năm:</label>
+                        <select name="year" id="year" class="form-select w-auto d-inline-block" onchange="this.form.submit()">
+                            <% years.forEach(function(yearItem) { %>
+                                <option value="<%= yearItem %>" <%= selectedYear === yearItem ? 'selected' : '' %>><%= yearItem %></option>
+                            <% }); %>
+                        </select>
+                    </form>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card card-custom">
+                                <div class="card-body text-center">
+                                    <h6>Tổng quan năm <%= selectedYear %></h6>
+                                    <p class="mb-0"><strong>Tổng điểm cộng dồn:</strong> <%= data[0]?.diem || '0/1000' %></p>
+                                    <p class="mb-0"><strong>Số ngày cập nhật:</strong> <%= updateDays || 0 %></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="chart-container">
+                                <canvas id="scoreChart"></canvas>
+                                <div class="loading-spinner" id="chart-spinner">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Đang tải biểu đồ...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Thành Phố</th>
+                                    <th>Chỉ Số Khí Hậu</th>
+                                    <th>Điểm TP Thông Minh</th>
+                                    <th>Cấp Độ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (data && data.length > 0) { %>
+                                    <% data.forEach(function(item) { %>
+                                        <tr>
+                                            <td><strong><%= item.district %></strong></td>
+                                            <td><%= item.khi_hau %></td>
+                                            <td><%= item.diem %></td>
+                                            <td><span class="level-badge level-<%= item.level.split(' ')[1] %>"><%= item.level %></span></td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="text-center">Không có dữ liệu cho TP. Hồ Chí Minh</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Map Section -->
+                <div class="main-content">
+                    <h2 class="mb-4"><i class="fas fa-map me-2"></i>Bản Đồ GIS</h2>
+                    <div class="map-container" id="map">
+                        <div class="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Đang tải bản đồ...</span>
+                            </div>
+                            <div class="mt-2 text-muted small">Đang tải dữ liệu GIS...</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadChart();
+        });
+
+        function initMap() {
+            map = L.map('map').setView([10.7769, 106.7009], 11); // Ho Chi Minh City
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(map);
+            loadGeoJSON();
+        }
+
+        async function loadGeoJSON() {
+            try {
+                const response = await fetch('/api/geojson');
+                const geojson = await response.json();
+                if (geojson && geojson.features) {
+                    const data = <%- JSON.stringify(data && data.length > 0 ? data : [
+                        { district: 'TP. Hồ Chí Minh', khi_hau: '87.5%', diem: '875/1000', level: 'Level 5' }
+                    ]) %>;
+                    L.geoJSON(geojson, {
+                        pointToLayer: function(feature, latlng) {
+                            return L.marker(latlng, {
+                                icon: L.divIcon({
+                                    className: 'custom-div-icon',
+                                    html: `<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold" 
+                                           style="width: 30px; height: 30px; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                                           ${getLevelIcon(data[0]?.level?.split(' ')[1] || 5)}
+                                       </div>`,
+                                    iconSize: [30, 30],
+                                    iconAnchor: [15, 15]
+                                })
+                            });
+                        },
+                        onEachFeature: function(feature, layer) {
+                            layer.bindPopup(`
+                                <div class="text-center">
+                                    <h6 class="fw-bold text-primary">${data[0]?.district || 'TP. Hồ Chí Minh'}</h6>
+                                    <p class="mb-1"><small class="text-muted">Chỉ số KH:</small> 
+                                        <span class="badge bg-primary">${data[0]?.khi_hau || '87.5%'}</span></p>
+                                    <p class="mb-0"><small class="text-muted">Cấp độ:</small> 
+                                        <span class="level-badge level-${data[0]?.level?.split(' ')[1] || 5}">${data[0]?.level || 'Level 5'}</span></p>
+                                </div>
+                            `);
+                        }
+                    }).addTo(map);
+                }
+                document.querySelector('.loading-spinner').style.display = 'none';
+            } catch (err) {
+                console.error('Lỗi tải GeoJSON:', err);
+                document.querySelector('.loading-spinner').style.display = 'none';
+            }
+        }
+
+        function loadChart() {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            const data = <%- JSON.stringify(data && data.length > 0 ? data : [
+                { district: 'TP. Hồ Chí Minh', khi_hau: '87.5%', diem: '875/1000', level: 'Level 5' }
+            ]) %>;
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [data[0]?.district || 'TP. Hồ Chí Minh'],
+                    datasets: [{
+                        label: 'Chỉ Số Khí Hậu (%)',
+                        data: [parseFloat(data[0]?.khi_hau?.replace('%', '') || 87.5)],
+                        backgroundColor: '#36A2EB',
+                        borderColor: '#36A2EB',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: true,
+                            text: 'Chỉ Số Khí Hậu TP. Hồ Chí Minh',
+                            font: { size: 16 }
+                        }
+                    }
+                }
+            });
+            document.getElementById('chart-spinner').style.display = 'none';
+        }
+
+        function getLevelIcon(level) {
+            const icons = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
+            return icons[parseInt(level) - 1] || '1️⃣';
+        }
+    </script>
+</body>
+</html>

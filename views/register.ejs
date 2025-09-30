@@ -1,89 +1,358 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Đăng Ký Tài Khoản - WebGIS Climate Smart City</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; display: flex; background: #f0f2f5; }
-    .sidebar { width: 50px; background: #007bff; height: 100vh; position: fixed; transition: width 0.3s; overflow: hidden; }
-    .sidebar.open { width: 200px; }
-    .sidebar .toggle-btn { color: white; font-size: 24px; padding: 10px; cursor: pointer; text-align: center; }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
-    .sidebar li { padding: 10px; }
-    .sidebar a { color: white; text-decoration: none; display: block; }
-    .sidebar a:hover { background: #0056b3; }
-    .content { margin-left: 50px; width: 100%; transition: margin-left 0.3s; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-    .content.sidebar-open { margin-left: 200px; }
-    .container { max-width: 400px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    h2 { color: #333; text-align: center; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-    button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .error { color: red; text-align: center; margin-bottom: 10px; }
-    .link { text-align: center; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Đăng ký tài khoản để truy cập hệ thống WebGIS Climate Smart City, quản lý và phân tích dữ liệu thành phố thông minh.">
+    <title>Đăng Ký - WebGIS Climate Smart City</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+        }
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: 50px auto;
+        }
+        .form-header {
+            background: #28a745;
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+        .btn-primary-custom {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        .btn-primary-custom:hover {
+            background: linear-gradient(45deg, #0056b3, #003d80);
+        }
+        .form-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .link-login {
+            color: #007bff;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .link-login:hover {
+            text-decoration: underline;
+        }
+        .form-floating-custom > input {
+            padding-top: 1.625rem;
+            padding-bottom: 0.625rem;
+        }
+        .form-floating-custom > label {
+            padding-top: 1rem;
+            padding-bottom: 0.5rem;
+            color: #6c757d;
+        }
+        .alert {
+            border-radius: 8px;
+        }
+        .form-text {
+            font-size: 0.85rem;
+        }
+        .invalid-feedback, .valid-feedback {
+            font-size: 0.85rem;
+        }
+        @media (max-width: 576px) {
+            .form-card {
+                margin: 20px;
+            }
+            .navbar-nav {
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <div class="toggle-btn" onclick="toggleSidebar()">☰</div>
-    <ul>
-      <li><a href="/login">Đăng Nhập</a></li>
-      <li><a href="/register">Đăng Ký</a></li>
-    </ul>
-  </div>
-  <div class="content" id="content">
-    <div class="container">
-      <h2>Đăng Ký Tài Khoản</h2>
-      <% if (error) { %>
-        <p class="error"><%= error %></p>
-      <% } %>
-      <% if (success) { %>
-        <p class="error" style="color: green;"><%= success %></p>
-        <p class="error" style="color: blue;">Vui lòng kiểm tra email của bạn để xác nhận tài khoản.</p>
-      <% } %>
-      <form action="/register" method="POST" onsubmit="return validateForm()">
-        <div class="form-group">
-          <label for="username">Tên người dùng</label>
-          <input type="text" id="username" name="username" required>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><i class="fas fa-globe me-2"></i>WebGIS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/login"><i class="fas fa-sign-in-alt me-2"></i>Đăng Nhập</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/register" aria-current="page"><i class="fas fa-user-plus me-2"></i>Đăng Ký</a></li>
+                </ul>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" required>
-        </div>
-        <div class="form-group">
-          <label for="password">Mật khẩu</label>
-          <input type="password" id="password" name="password" required>
-          <small id="passwordError" style="color: red; display: none;">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số, và ký tự đặc biệt!</small>
-        </div>
-        <button type="submit">Đăng Ký</button>
-      </form>
-      <div class="link">
-        <a href="/login">Đã có tài khoản? Đăng nhập</a>
-      </div>
-    </div>
-  </div>
-  <script>
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const content = document.getElementById('content');
-      sidebar.classList.toggle('open');
-      content.classList.toggle('sidebar-open');
-    }
+    </nav>
 
-    function validateForm() {
-      const password = document.getElementById('password').value;
-      const passwordError = document.getElementById('passwordError');
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-      
-      if (!passwordRegex.test(password)) {
-        passwordError.style.display = 'block';
-        return false;
-      }
-      passwordError.style.display = 'none';
-      return true;
-    }
-  </script>
+    <!-- Main Content -->
+    <main class="container-fluid">
+        <div class="form-card">
+            <div class="form-header">
+                <h2><i class="fas fa-user-plus me-2"></i>Đăng Ký Tài Khoản</h2>
+            </div>
+            <div class="card-body p-4">
+                <% if (success) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i><%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                    </div>
+                <% } %>
+                <% if (error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                    </div>
+                <% } %>
+
+                <form method="POST" action="/register" class="needs-validation" novalidate>
+
+                    <div class="mb-4 form-floating-custom">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Tên người dùng" required pattern="[a-zA-Z0-9_]{3,20}" title="3-20 ký tự, chỉ chữ, số và gạch dưới" value="<%= typeof req !== 'undefined' && req.body?.username ? req.body.username : '' %>">
+                        <label for="username"><i class="fas fa-user me-1"></i>Tên người dùng</label>
+                        <div class="invalid-feedback">Tên người dùng phải có 3-20 ký tự (chữ, số, gạch dưới)</div>
+                        <div class="form-text text-muted">Sẽ dùng để đăng nhập và hiển thị</div>
+                    </div>
+
+                    <div class="mb-4 form-floating-custom">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Email" required value="<%= typeof req !== 'undefined' && req.body?.email ? req.body.email : '' %>">
+                        <label for="email"><i class="fas fa-envelope me-1"></i>Email</label>
+                        <div class="invalid-feedback">Vui lòng nhập email hợp lệ</div>
+                        <div class="form-text text-muted">Dùng để xác nhận và khôi phục mật khẩu</div>
+                    </div>
+
+                    <div class="mb-4 form-floating-custom position-relative">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu" required minlength="8" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$" title="Mật khẩu phải có ≥8 ký tự, chữ hoa, chữ thường, số và ký tự đặc biệt">
+                        <label for="password"><i class="fas fa-lock me-1"></i>Mật khẩu</label>
+                        <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y" style="z-index: 10;" onclick="togglePassword('password')">
+                            <i class="fas fa-eye" id="password-toggle-icon"></i>
+                        </button>
+                        <div class="invalid-feedback">Mật khẩu phải có ≥8 ký tự, chữ hoa, chữ thường, số và ký tự đặc biệt</div>
+                        <div class="form-text text-muted">≥8 ký tự: A-Z, a-z, 0-9, @#$!%*&</div>
+                    </div>
+
+                    <div class="mb-4 form-floating-custom position-relative">
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Xác nhận mật khẩu" required minlength="8">
+                        <label for="confirmPassword"><i class="fas fa-lock me-1"></i>Xác nhận mật khẩu</label>
+                        <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y" style="z-index: 10;" onclick="togglePassword('confirmPassword')">
+                            <i class="fas fa-eye" id="confirmPassword-toggle-icon"></i>
+                        </button>
+                        <div class="invalid-feedback">Mật khẩu xác nhận không khớp</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                Tôi đồng ý với <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#termsModal">Điều khoản dịch vụ</a> và <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#privacyModal">Chính sách bảo mật</a>
+                            </label>
+                            <div class="invalid-feedback d-block">Bạn phải đồng ý với điều khoản sử dụng</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100 mb-3" id="registerBtn">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                        <i class="fas fa-user-plus me-2"></i>Tạo Tài Khoản
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p class="text-muted mb-0">
+                        <small>Đã có tài khoản? <a href="/login" class="text-primary fw-semibold link-login">Đăng nhập ngay</a></small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel"><i class="fas fa-file-contract me-2"></i>Điều Khoản Dịch Vụ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body" style="height: 400px; overflow-y: auto;">
+                    <p><strong>1. Giới thiệu</strong></p>
+                    <p>Chào mừng bạn đến với WebGIS Climate Smart City - hệ thống quản lý và đánh giá chỉ số thành phố thông minh với khí hậu cho TP. Hồ Chí Minh.</p>
+                    <p><strong>2. Quyền và Trách Nhiệm</strong></p>
+                    <p>Bạn cam kết sử dụng hệ thống đúng mục đích, không chia sẻ thông tin đăng nhập và bảo mật dữ liệu.</p>
+                    <p><strong>3. Dữ Liệu</strong></p>
+                    <p>Tất cả dữ liệu được mã hóa và bảo mật theo chuẩn quốc tế. Chúng tôi chỉ sử dụng dữ liệu để cải thiện dịch vụ.</p>
+                    <p><strong>4. Hủy Bỏ</strong></p>
+                    <p>Bạn có thể hủy tài khoản bất cứ lúc nào. Chúng tôi có quyền tạm ngưng tài khoản vi phạm điều khoản.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="privacyModalLabel"><i class="fas fa-shield-alt me-2"></i>Chính Sách Bảo Mật</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body" style="height: 400px; overflow-y: auto;">
+                    <p><strong>1. Thông Tin Thu Thập</strong></p>
+                    <p>Chúng tôi thu thập: tên đăng nhập, email, mật khẩu (mã hóa), và dữ liệu sử dụng hệ thống.</p>
+                    <p><strong>2. Bảo Mật</strong></p>
+                    <ul>
+                        <li>Mật khẩu được mã hóa bằng BCrypt</li>
+                        <li>Token JWT có thời hạn 24h</li>
+                        <li>Kết nối HTTPS an toàn</li>
+                        <li>Backup dữ liệu hàng ngày</li>
+                    </ul>
+                    <p><strong>3. Chia Sẻ Dữ Liệu</strong></p>
+                    <p>Chúng tôi không chia sẻ dữ liệu cá nhân với bên thứ ba, trừ khi có yêu cầu pháp lý.</p>
+                    <p><strong>4. Quyền Của Bạn</strong></p>
+                    <ul>
+                        <li>Xem, sửa, xóa dữ liệu cá nhân</li>
+                        <li>Hủy tài khoản bất cứ lúc nào</li>
+                        <li>Nhận thông báo qua email</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        // Form validation and enhancements
+        (function() {
+            'use strict';
+
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const registerBtn = document.getElementById('registerBtn');
+            const form = document.querySelector('.needs-validation');
+
+            // Password visibility toggle
+            function togglePassword(fieldId) {
+                const input = document.getElementById(fieldId);
+                const icon = document.getElementById(`${fieldId}-toggle-icon`);
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            }
+
+            // Password strength checker
+            function validatePassword() {
+                const val = password.value;
+                const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+                if (val.length >= 8) {
+                    if (strongRegex.test(val)) {
+                        password.classList.remove('is-invalid');
+                        password.classList.add('is-valid');
+                        password.parentElement.querySelector('.invalid-feedback').textContent = 'Mật khẩu mạnh!';
+                        password.parentElement.querySelector('.invalid-feedback').classList.add('valid-feedback');
+                        password.parentElement.querySelector('.invalid-feedback').classList.remove('invalid-feedback');
+                    } else {
+                        password.classList.remove('is-valid');
+                        password.classList.add('is-invalid');
+                        password.parentElement.querySelector('.invalid-feedback').textContent = 'Cần chữ hoa, chữ thường, số và ký tự đặc biệt!';
+                        password.parentElement.querySelector('.invalid-feedback').classList.add('invalid-feedback');
+                        password.parentElement.querySelector('.invalid-feedback').classList.remove('valid-feedback');
+                    }
+                } else {
+                    password.classList.remove('is-valid', 'is-invalid');
+                }
+                validateConfirmPassword();
+                checkFormValidity();
+            }
+
+            // Confirm password validation
+            function validateConfirmPassword() {
+                if (confirmPassword.value && confirmPassword.value !== password.value) {
+                    confirmPassword.classList.add('is-invalid');
+                    confirmPassword.classList.remove('is-valid');
+                } else if (confirmPassword.value) {
+                    confirmPassword.classList.remove('is-invalid');
+                    confirmPassword.classList.add('is-valid');
+                }
+                checkFormValidity();
+            }
+
+            // Form validity and button state
+            function checkFormValidity() {
+                const terms = document.getElementById('terms').checked;
+                const passwordValid = password.classList.contains('is-valid');
+                const confirmValid = confirmPassword.classList.contains('is-valid');
+                const allValid = form.checkValidity() && terms && passwordValid && confirmValid;
+
+                registerBtn.disabled = !allValid;
+                registerBtn.innerHTML = allValid
+                    ? '<i class="fas fa-user-plus me-2"></i>Sẵn Sàng Tạo!'
+                    : '<i class="fas fa-user-plus me-2"></i>Tạo Tài Khoản';
+                registerBtn.classList.toggle('btn-success', allValid);
+                registerBtn.classList.toggle('btn-primary-custom', !allValid);
+            }
+
+            // Event listeners
+            password.addEventListener('input', validatePassword);
+            confirmPassword.addEventListener('input', validateConfirmPassword);
+            document.querySelectorAll('input, .form-check-input').forEach(el => {
+                el.addEventListener('input', checkFormValidity);
+                el.addEventListener('change', checkFormValidity);
+            });
+
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                if (!this.checkValidity() || !document.getElementById('terms').checked) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                } else {
+                    registerBtn.querySelector('.spinner-border').classList.remove('d-none');
+                    registerBtn.disabled = true;
+                    registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span><i class="fas fa-spinner fa-spin me-2"></i>Đang tạo...';
+                }
+                this.classList.add('was-validated');
+            });
+
+            // Animate form card on load
+            const card = document.querySelector('.form-card');
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+
+            // Expose togglePassword globally for button onclick
+            window.togglePassword = togglePassword;
+        })();
+    </script>
 </body>
 </html>

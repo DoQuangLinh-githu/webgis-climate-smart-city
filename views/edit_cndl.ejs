@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGIS - Sửa Dữ Liệu</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main-container {
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            animation: slideInLeft 0.5s ease-in-out;
+        }
+        .nav-link {
+            color: #495057;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 5px 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+            transform: translateX(5px) scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 30px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+        }
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+                margin: 10px;
+            }
+            .sidebar {
+                margin-bottom: 20px;
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid main-container">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+        <div class="position-sticky pt-3">
+          <h4 class="text-center">WebGIS</h4>
+          <h5 class="text-center">Climate Smart City</h5>
+          <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
+            <% if (user && user.role === 'admin') { %>
+              <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
+            <% } %>
+            <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+            <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+            <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+          </ul>
+          <hr>
+          <div class="text-center">
+            <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
+            <% if (user && user.role === 'admin') { %>
+              <span class="badge bg-primary">Quản trị</span>
+            <% } else { %>
+              <span class="badge bg-secondary">Người dùng</span>
+            <% } %>
+          </div>
+        </div>
+      </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <a href="/qldl" class="btn btn-primary mb-3"><i class="fas fa-arrow-left"></i> Quay lại Quản Lý Dữ Liệu</a>
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Sửa Dữ Liệu Bảng <%= table %> (ID: <%= item ? item.assessment_id : 'N/A' %>)</h1>
+                </div>
+
+                <% if (error) { %>
+                    <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
+                <% } %>
+                <% if (success) { %>
+                    <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
+                <% } %>
+
+                <% if (item && fields) { %>
+                    <form method="POST" action="/edit_cndl/<%= item.assessment_id %>">
+                        <% fields.forEach(f => { %>
+                            <div class="mb-3">
+                                <label class="form-label"><%= f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %></label>
+                                <% if (f === 'description') { %>
+                                    <textarea class="form-control" name="<%= f %>" readonly><%= item[f] || '' %></textarea>
+                                <% } else { %>
+                                    <input type="text" class="form-control" name="<%= f %>" value="<%= item[f] || '' %>" <%= f === 'city' || f === 'year' || f === 'indicator_code' || f === 'unit_code' || f === 'assessor' || f === 'level' ? 'readonly' : '' %>>
+                                <% } %>
+                            </div>
+                        <% }) %>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu Thay Đổi</button>
+                    </form>
+                <% } else { %>
+                    <div class="alert alert-warning">Không tìm thấy dữ liệu để sửa!</div>
+                    <a href="/qldl" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Quay lại Quản Lý Dữ Liệu</a>
+                <% } %>
+
+                <% if (geojson) { %>
+                    <div class="mt-5">
+                        <h3>Bản đồ</h3>
+                        <div id="map" style="height: 400px;"></div>
+                    </div>
+                    <script>
+                        const map = L.map('map').setView([10.7769, 106.7009], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(map);
+                        L.geoJSON(<%- JSON.stringify(geojson) %>).addTo(map);
+                    </script>
+                <% } %>
+            </main>
+        </div>
+    </div>
+</body>
+</html>
