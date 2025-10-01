@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -193,7 +194,7 @@
                                             <% ind.variables.forEach(varItem => { %>
                                                 <div class="form-floating variable-input">
                                                     <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>[params][<%= varItem.var_name %>]" required min="0" step="any" oninput="autoCalculate('<%= ind.code %>', '<%= (ind.formula || '').replace(/"/g, '\\"') %>')">
-                                                    <label for="<%= ind.code %>_<%= varItem.var_name %>">Giá trị nhập <%= varItem.var_name %>: <%= varItem.var_name %>(<%= varItem.var_desc.match(/\((kWh|kW|level)\)/)?.[1] || 'unit' %>) <span title="Ví dụ: Nhập số như 1000 <%= varItem.var_desc.match(/\((kWh|kW|level)\)/)?.[1] || 'unit' %>">ℹ️</span></label>
+                                                    <label for="<%= ind.code %>_<%= varItem.var_name %>">Giá trị nhập <%= varItem.var_name %>: <%= varItem.var_name %>(<%= varItem.var_desc.match(/\((kWh|kW|level)\)/)?.[1] || 'unit' %>) <span title="<%= varItem.var_desc %>">ℹ️</span></label>
                                                     <div class="invalid-feedback">Giá trị phải là số ≥ 0.</div>
                                                 </div>
                                             <% }); %>
@@ -307,3 +308,4 @@
     </script>
 </body>
 </html>
+```

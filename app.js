@@ -1085,35 +1085,56 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
-// Thêm hàm parseRecipe vào app.js (giữa phần evaluateFormula và View Engine)
+// Hàm parseRecipe (chuẩn hóa tên biến và lấy mô tả)
 function parseRecipe(recipe) {
   if (!recipe) return [];
   const lines = recipe.split('\n').filter(line => line.trim().startsWith('✓'));
   return lines.map(line => {
-    const match = line.match(/✓\s*(\w+):\s*(.+)/);
-    return match ? { var_name: match[1], var_desc: match[2] } : null;
+    const match = line.match(/✓\s*(\w+(&\w+)?):\s*(.+)/);
+    if (!match) return null;
+    let varName = match[1];
+    // Chuẩn hóa tên biến
+    if (varName === 'ERE') varName = 'E_RE';
+    if (varName === 'LAT&C') varName = 'L_AT&C';
+    if (varName === 'PRE') varName = 'P_RE';
+    if (varName === 'Ptotal') varName = 'P_total';
+    return { var_name: varName, var_desc: match[3] };
   }).filter(v => v);
 }
 
-// Cập nhật route GET /cndl
+// Route GET /cndl
 app.get('/cndl', authenticateToken, async (req, res) => {
   try {
     const user = req.user;
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const city = 'TP. Hồ Chí Minh';
 
-    // Lấy dữ liệu Domains
     let domains = await pool.query('SELECT * FROM Domains ORDER BY domain_id');
     domains = domains.rows || [];
 
-    // Lấy dữ liệu Indicators và parse recipe_description
-    let indicators = await pool.query('SELECT *, recipe_description FROM Indicators ORDER BY domain_id, indicator_id');
+    let indicators;
+    try {
+      indicators = await pool.query('SELECT *, recipe_description FROM Indicators ORDER BY domain_id, indicator_id');
+    } catch (err) {
+      if (err.message.includes('column "recipe_description" does not exist')) {
+        console.warn('Cột recipe_description không tồn tại, lấy dữ liệu Indicators mà không có recipe_description');
+        indicators = await pool.query('SELECT * FROM Indicators ORDER BY domain_id, indicator_id');
+      } else {
+        throw err;
+      }
+    }
+
+    const assessments = await pool.query(
+      'SELECT indicator_code, value FROM Assessments_Template WHERE city = $1 AND year = $2',
+      [city, year]
+    );
+
     indicators = indicators.rows.map(ind => ({
       ...ind,
-      variables: parseRecipe(ind.recipe_description)
+      variables: parseRecipe(ind.recipe_description || ''),
+      existing_value: assessments.rows.find(a => a.indicator_code === ind.code)?.value || null
     })) || [];
 
-    // Thêm icon mặc định cho domains
     const domainsWithIcons = Array.isArray(domains) ? domains.map(domain => ({
       ...domain,
       icon: domain.icon || getDefaultIcon(domain.domain_id)
@@ -1153,13 +1174,13 @@ app.get('/cndl', authenticateToken, async (req, res) => {
   }
 });
 
-// Cập nhật route POST /cndl
+// Route POST /cndl/submit (giữ nguyên, đảm bảo validation)
 app.post(
-  '/cndl/submit', // Đổi tên endpoint để rõ ràng hơn
+  '/cndl/submit',
   authenticateToken,
   [
     body('year').isInt({ min: 2000, max: 2100 }).withMessage('Năm phải từ 2000 đến 2100'),
-    body('*.value')
+    body('*.value_calculated')
       .optional()
       .trim()
       .customSanitizer((value) => value.replace(',', '.').replace(/[^\d.]/g, ''))
@@ -1200,9 +1221,7 @@ app.post(
 
         let value = data.value_calculated ? parseFloat(data.value_calculated) : null;
         let additionalParams = data.params || {};
-        let level = null;
 
-        // Kiểm tra giá trị biến
         for (const [param, paramValue] of Object.entries(additionalParams)) {
           if (!/^\d+(\.\d*)?$/.test(paramValue)) {
             console.error(`Giá trị không hợp lệ cho ${param} của ${indicator.code}: ${paramValue}`);
@@ -1226,13 +1245,8 @@ app.post(
             }, scoringLevels.find((sl) => sl.indicator_id === indicator.indicator_id) || { level: 1, score_value: 0, description: 'Không có mô tả' });
         }
 
-        // Lấy dữ liệu cũ để ghi log
         const oldQuery = await pool.query(
-          `
-          SELECT value, score_awarded, level, description
-          FROM Assessments_Template
-          WHERE city = $1 AND year = $2 AND indicator_code = $3
-          `,
+          `SELECT value, score_awarded, level, description FROM Assessments_Template WHERE city = $1 AND year = $2 AND indicator_code = $3`,
           [city, year, indicator.code]
         );
         const oldValues = oldQuery.rows[0] ? oldQuery.rows[0] : null;
@@ -1274,28 +1288,24 @@ app.post(
 
       if (insertValues.length > 0) {
         await pool.query(
-          `
-          INSERT INTO Assessments_Template (city, year, domain_id, indicator_id, indicator_code, value, unit_code, score_awarded, assessor, date, level, description)
-          VALUES ${insertValues.map((_, i) => `($${i * 12 + 1}, $${i * 12 + 2}, $${i * 12 + 3}, $${i * 12 + 4}, $${i * 12 + 5}, $${i * 12 + 6}, $${i * 12 + 7}, $${i * 12 + 8}, $${i * 12 + 9}, $${i * 12 + 10}, $${i * 12 + 11}, $${i * 12 + 12})`).join(',')}
-          ON CONFLICT (city, year, indicator_code)
-          DO UPDATE SET
-            value = EXCLUDED.value,
-            unit_code = EXCLUDED.unit_code,
-            score_awarded = EXCLUDED.score_awarded,
-            assessor = EXCLUDED.assessor,
-            date = EXCLUDED.date,
-            level = EXCLUDED.level,
-            description = EXCLUDED.description
-          `,
+          `INSERT INTO Assessments_Template (city, year, domain_id, indicator_id, indicator_code, value, unit_code, score_awarded, assessor, date, level, description)
+           VALUES ${insertValues.map((_, i) => `($${i * 12 + 1}, $${i * 12 + 2}, $${i * 12 + 3}, $${i * 12 + 4}, $${i * 12 + 5}, $${i * 12 + 6}, $${i * 12 + 7}, $${i * 12 + 8}, $${i * 12 + 9}, $${i * 12 + 10}, $${i * 12 + 11}, $${i * 12 + 12})`).join(',')}
+           ON CONFLICT (city, year, indicator_code)
+           DO UPDATE SET
+             value = EXCLUDED.value,
+             unit_code = EXCLUDED.unit_code,
+             score_awarded = EXCLUDED.score_awarded,
+             assessor = EXCLUDED.assessor,
+             date = EXCLUDED.date,
+             level = EXCLUDED.level,
+             description = EXCLUDED.description`,
           insertValues.flat()
         );
 
         if (historyValues.length > 0) {
           await pool.query(
-            `
-            INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent)
-            VALUES ${historyValues.map((_, i) => `($${i * 8 + 1}, $${i * 8 + 2}, $${i * 8 + 3}, $${i * 8 + 4}, $${i * 8 + 5}, $${i * 8 + 6}, $${i * 8 + 7}, $${i * 8 + 8})`).join(',')}
-            `,
+            `INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent)
+             VALUES ${historyValues.map((_, i) => `($${i * 8 + 1}, $${i * 8 + 2}, $${i * 8 + 3}, $${i * 8 + 4}, $${i * 8 + 5}, $${i * 8 + 6}, $${i * 8 + 7}, $${i * 8 + 8})`).join(',')}`,
             historyValues.flat()
           );
         }
