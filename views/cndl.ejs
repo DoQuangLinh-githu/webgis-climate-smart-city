@@ -268,44 +268,38 @@
                     <% domains.forEach(domain => { %>
                         <div class="field-card">
                             <div class="field-header">
-                                <h5><%= domain.name %></h5>
+                                <h5><i class="<%= domain.icon %>"></i> <%= domain.name %></h5>
                                 <span>Max score: <%= domain.max_score %></span>
                             </div>
                             <div class="card-body p-4">
                                 <% indicators.filter(ind => ind.domain_id === domain.domain_id).forEach(ind => { %>
                                     <div class="indicator-item">
-                                        <h6 class="mb-3"><%= ind.name %> (<%= ind.code %>)</h6>
-                                        <p><strong>Đơn vị:</strong> <%= ind.unit_code %></p>
-                                        <p><strong>Công thức:</strong> <%= ind.formula || 'N/A' %></p>
-                                        <p><strong>Giá trị hiện tại:</strong> <%= ind.current_value || 'N/A' %></p>
-                                        <p class="mb-3">Nhập các giá trị dưới đây để hệ thống tự động tính toán:</p>
-                                        <% if (ind.formula_params && ind.formula_params.length > 0) { %>
-                                            <% ind.formula_params.forEach(param => { %>
+                                        <div class="form-floating">
+                                            <input type="number" id="<%= ind.code %>_value" name="<%= ind.code %>[value_calculated]" class="form-control" min="0" step="any" value="<%= ind.existing_value || '' %>">
+                                            <label for="<%= ind.code %>_value">Giá trị <%= ind.code %> (<%= ind.unit_code %>)</label>
+                                            <small class="form-text text-muted">
+                                                Giá trị phải là số ≥ 0
+                                                <i class="fas fa-info-circle tooltip-icon" title="Nhập giá trị số không âm"></i>
+                                            </small>
+                                        </div>
+                                        <% if (ind.variables && ind.variables.length > 0) { %>
+                                            <% ind.variables.forEach(param => { %>
                                                 <div class="form-floating">
-                                                    <input type="number" id="<%= param %>" name="<%= param %>" class="form-control" min="0" step="any" value="0" required>
-                                                    <label for="<%= param %>"><%= param %> (<%= ind.unit_code %>)</label>
+                                                    <input type="number" id="<%= ind.code %>_<%= param %>" name="<%= ind.code %>[params][<%= param %>]" class="form-control" min="0" step="any">
+                                                    <label for="<%= ind.code %>_<%= param %>"><%= param %> (<%= ind.unit_code %>)</label>
                                                     <small class="form-text text-muted">
                                                         Giá trị phải là số ≥ 0
                                                         <i class="fas fa-info-circle tooltip-icon" title="Nhập giá trị số không âm"></i>
                                                     </small>
                                                 </div>
-                                            <% }); %>
+                                            <% }) %>
                                             <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('<%= ind.code %>')">Tính Preview</button>
-                                        <% } else { %>
-                                            <div class="form-floating">
-                                                <input type="number" id="<%= ind.code %>" name="<%= ind.code %>" class="form-control" min="0" step="any" value="0" required>
-                                                <label for="<%= ind.code %>">Giá trị <%= ind.code %></label>
-                                                <small class="form-text text-muted">
-                                                    Giá trị phải là số ≥ 0
-                                                    <i class="fas fa-info-circle tooltip-icon" title="Nhập giá trị số không âm"></i>
-                                                </small>
-                                            </div>
                                         <% } %>
                                     </div>
-                                <% }); %>
+                                <% }) %>
                             </div>
                         </div>
-                    <% }); %>
+                    <% }) %>
                     <button type="submit" class="btn btn-primary">Lưu Dữ Liệu</button>
                 </form>
             <% } else { %>
@@ -318,7 +312,8 @@
                 <% if (success) { %>
                     <div class="alert alert-success"><%= success %></div>
                 <% } %>
-                <form action="/calculate-indicators" method="POST">
+                <form action="/cndl" method="POST">
+                    <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
                     <!-- ENI_RWE -->
                     <div class="field-card">
                         <div class="field-header">
@@ -326,26 +321,30 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="E_RE" name="E_RE" class="form-control" min="0" step="any" required>
+                                <input type="number" id="ENI_RWE_value" name="ENI_RWE[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="ENI_RWE_value">Giá trị ENI_RWE (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="E_RE" name="ENI_RWE[params][E_RE]" class="form-control" min="0" step="any" required>
                                 <label for="E_RE">Năng lượng tái tạo sử dụng (E_RE, kWh)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="EC" name="EC" class="form-control" min="0" step="any" required>
+                                <input type="number" id="EC" name="ENI_RWE[params][EC]" class="form-control" min="0" step="any" required>
                                 <label for="EC">Tổng năng lượng tiêu thụ (EC, kWh)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="L_ATC" name="L_ATC" class="form-control" min="0" step="any" required>
+                                <input type="number" id="L_ATC" name="ENI_RWE[params][L_AT&C]" class="form-control" min="0" step="any" required>
                                 <label for="L_ATC">Tổn thất năng lượng (L_AT&C, kWh)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="P_RE" name="P_RE" class="form-control" min="0" step="any" required>
+                                <input type="number" id="P_RE" name="ENI_RWE[params][P_RE]" class="form-control" min="0" step="any" required>
                                 <label for="P_RE">Công suất năng lượng tái tạo (P_RE, kW)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="P_total" name="P_total" class="form-control" min="0" step="any" required>
+                                <input type="number" id="P_total" name="ENI_RWE[params][P_total]" class="form-control" min="0" step="any" required>
                                 <label for="P_total">Tổng công suất (P_total, kW)</label>
                             </div>
-                            <button type="submit" name="indicator" value="ENI_RWE" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('ENI_RWE')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -356,14 +355,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="SE_RE" name="SE_RE" class="form-control" min="0" step="any" required>
+                                <input type="number" id="SENIRE_value" name="SENIRE[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="SENIRE_value">Giá trị SENIRE (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="SE_RE" name="SENIRE[params][SE_RE]" class="form-control" min="0" step="any" required>
                                 <label for="SE_RE">Năng lượng tái tạo tự tạo (SE_RE, kWh)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="ES" name="ES" class="form-control" min="0" step="any" required>
+                                <input type="number" id="ES" name="SENIRE[params][ES]" class="form-control" min="0" step="any" required>
                                 <label for="ES">Tổng năng lượng cung cấp (ES, kWh)</label>
                             </div>
-                            <button type="submit" name="indicator" value="SENIRE" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('SENIRE')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -374,14 +377,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="CO2eb" name="CO2eb" class="form-control" min="0" step="any" required>
+                                <input type="number" id="R_CO2e_value" name="R_CO2e[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="R_CO2e_value">Giá trị R_CO2e (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="CO2eb" name="R_CO2e[params][CO2eb]" class="form-control" min="0" step="any" required>
                                 <label for="CO2eb">Lượng phát thải CO2 cơ sở (CO2eb, tấn)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="CO2et" name="CO2et" class="form-control" min="0" step="any" required>
+                                <input type="number" id="CO2et" name="R_CO2e[params][CO2et]" class="form-control" min="0" step="any" required>
                                 <label for="CO2et">Lượng phát thải CO2 hiện tại (CO2et, tấn)</label>
                             </div>
-                            <button type="submit" name="indicator" value="R_CO2e" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('R_CO2e')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -392,14 +399,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="E_Save" name="E_Save" class="form-control" min="0" step="any" required>
+                                <input type="number" id="EI_Save_value" name="EI_Save[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="EI_Save_value">Giá trị EI_Save (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="E_Save" name="EI_Save[params][E_Save]" class="form-control" min="0" step="any" required>
                                 <label for="E_Save">Năng lượng tiết kiệm (E_Save, kWh)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="E_C" name="E_C" class="form-control" min="0" step="any" required>
+                                <input type="number" id="E_C" name="EI_Save[params][∑E_C]" class="form-control" min="0" step="any" required>
                                 <label for="E_C">Tổng năng lượng tiêu thụ (∑E_C, kWh)</label>
                             </div>
-                            <button type="submit" name="indicator" value="EI_Save" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('EI_Save')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -410,14 +421,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="E_input" name="E_input" class="form-control" min="0" step="any" required>
+                                <input type="number" id="EI_LR_value" name="EI_LR[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="EI_LR_value">Giá trị EI_LR (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="E_input" name="EI_LR[params][E_input]" class="form-control" min="0" step="any" required>
                                 <label for="E_input">Năng lượng đầu vào (E_input, kWh)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="E_delivered" name="E_delivered" class="form-control" min="0" step="any" required>
+                                <input type="number" id="E_delivered" name="EI_LR[params][E_delivered]" class="form-control" min="0" step="any" required>
                                 <label for="E_delivered">Năng lượng phân phối (E_delivered, kWh)</label>
                             </div>
-                            <button type="submit" name="indicator" value="EI_LR" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('EI_LR')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -428,18 +443,22 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="SL_e" name="SL_e" class="form-control" min="0" step="any" required>
+                                <input type="number" id="SLI_value" name="SLI[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="SLI_value">Giá trị SLI (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="SL_e" name="SLI[params][∑SL_e]" class="form-control" min="0" step="any" required>
                                 <label for="SL_e">Tổng số đèn hiệu quả (∑SL_e)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="SL" name="SL" class="form-control" min="0" step="any" required>
+                                <input type="number" id="SL" name="SLI[params][∑SL]" class="form-control" min="0" step="any" required>
                                 <label for="SL">Tổng số đèn (∑SL)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="SL_s" name="SL_s" class="form-control" min="0" step="any" required>
+                                <input type="number" id="SL_s" name="SLI[params][∑SL_s]" class="form-control" min="0" step="any" required>
                                 <label for="SL_s">Tổng số đèn thông minh (∑SL_s)</label>
                             </div>
-                            <button type="submit" name="indicator" value="SLI" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('SLI')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -450,22 +469,26 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="B_P" name="B_P" class="form-control" min="0" step="any" required>
+                                <input type="number" id="VNGBI_value" name="VNGBI[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="VNGBI_value">Giá trị VNGBI (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="B_P" name="VNGBI[params][∑B_P]" class="form-control" min="0" step="any" required>
                                 <label for="B_P">Số công trình đạt chuẩn (∑B_P)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="B_AC" name="B_AC" class="form-control" min="0" step="any" required>
+                                <input type="number" id="B_AC" name="VNGBI[params][∑B_AC]" class="form-control" min="0" step="any" required>
                                 <label for="B_AC">Tổng số công trình (∑B_AC)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="S_GB" name="S_GB" class="form-control" min="0" step="any" required>
+                                <input type="number" id="S_GB" name="VNGBI[params][S_GB]" class="form-control" min="0" step="any" required>
                                 <label for="S_GB">Diện tích công trình xanh (S_GB, m²)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="S_BC" name="S_BC" class="form-control" min="0" step="any" required>
+                                <input type="number" id="S_BC" name="VNGBI[params][S_BC]" class="form-control" min="0" step="any" required>
                                 <label for="S_BC">Tổng diện tích công trình (S_BC, m²)</label>
                             </div>
-                            <button type="submit" name="indicator" value="VNGBI" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('VNGBI')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -476,14 +499,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="S_water_present" name="S_water_present" class="form-control" min="0" step="any" required>
+                                <input type="number" id="R_S-water_value" name="R_S-water[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="R_S-water_value">Giá trị R_S-water (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="S_water_present" name="R_S-water[params][S_water-present]" class="form-control" min="0" step="any" required>
                                 <label for="S_water_present">Lượng nước tiết kiệm hiện tại (S_water-present, m³)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="S_water_plan" name="S_water_plan" class="form-control" min="0" step="any" required>
+                                <input type="number" id="S_water_plan" name="R_S-water[params][S_water-plan]" class="form-control" min="0" step="any" required>
                                 <label for="S_water_plan">Lượng nước tiết kiệm kế hoạch (S_water-plan, m³)</label>
                             </div>
-                            <button type="submit" name="indicator" value="R_S-water" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('R_S-water')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -494,14 +521,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="S_op_present" name="S_op_present" class="form-control" min="0" step="any" required>
+                                <input type="number" id="R_S-op_value" name="R_S-op[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="R_S-op_value">Giá trị R_S-op (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="S_op_present" name="R_S-op[params][S_op-present]" class="form-control" min="0" step="any" required>
                                 <label for="S_op_present">Hoạt động tiết kiệm hiện tại (S_op-present)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="S_op_plan" name="S_op_plan" class="form-control" min="0" step="any" required>
+                                <input type="number" id="S_op_plan" name="R_S-op[params][S_op-plan]" class="form-control" min="0" step="any" required>
                                 <label for="S_op_plan">Hoạt động tiết kiệm kế hoạch (S_op-plan)</label>
                             </div>
-                            <button type="submit" name="indicator" value="R_S-op" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('R_S-op')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -512,14 +543,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="R_S_water" name="R_S_water" class="form-control" min="0" step="any" required>
+                                <input type="number" id="Rso-total_value" name="Rso-total[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="Rso-total_value">Giá trị Rso-total (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="R_S_water" name="Rso-total[params][R_S-water]" class="form-control" min="0" step="any" required>
                                 <label for="R_S_water">Giá trị R_S-water (%)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="R_S_op" name="R_S_op" class="form-control" min="0" step="any" required>
+                                <input type="number" id="R_S_op" name="Rso-total[params][R_S-op]" class="form-control" min="0" step="any" required>
                                 <label for="R_S_op">Giá trị R_S-op (%)</label>
                             </div>
-                            <button type="submit" name="indicator" value="Rso-total" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('Rso-total')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -530,14 +565,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="S_pp" name="S_pp" class="form-control" min="0" step="any" required>
+                                <input type="number" id="Rcover_value" name="Rcover[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="Rcover_value">Giá trị Rcover (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="S_pp" name="Rcover[params][S_pp]" class="form-control" min="0" step="any" required>
                                 <label for="S_pp">Sản phẩm tái chế (S_pp, tấn)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="P" name="P" class="form-control" min="0" step="any" required>
+                                <input type="number" id="P" name="Rcover[params][P]" class="form-control" min="0" step="any" required>
                                 <label for="P">Tổng sản phẩm (P, tấn)</label>
                             </div>
-                            <button type="submit" name="indicator" value="Rcover" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('Rcover')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -548,14 +587,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="S_land_p" name="S_land_p" class="form-control" min="0" step="any" required>
+                                <input type="number" id="Rland-p_value" name="Rland-p[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="Rland-p_value">Giá trị Rland-p (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="S_land_p" name="Rland-p[params][S_land-p]" class="form-control" min="0" step="any" required>
                                 <label for="S_land_p">Diện tích đất bảo vệ (S_land-p, m²)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="S_total_land" name="S_total_land" class="form-control" min="0" step="any" required>
+                                <input type="number" id="S_total_land" name="Rland-p[params][S_total-land]" class="form-control" min="0" step="any" required>
                                 <label for="S_total_land">Tổng diện tích đất (S_total-land, m²)</label>
                             </div>
-                            <button type="submit" name="indicator" value="Rland-p" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('Rland-p')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -566,18 +609,22 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="A_natural" name="A_natural" class="form-control" min="0" step="any" required>
+                                <input type="number" id="UBI_value" name="UBI[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="UBI_value">Giá trị UBI (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="A_natural" name="UBI[params][A_natural]" class="form-control" min="0" step="any" required>
                                 <label for="A_natural">Diện tích tự nhiên (A_natural, m²)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="A_restored" name="A_restored" class="form-control" min="0" step="any" required>
+                                <input type="number" id="A_restored" name="UBI[params][A_restored]" class="form-control" min="0" step="any" required>
                                 <label for="A_restored">Diện tích phục hồi (A_restored, m²)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="A_city" name="A_city" class="form-control" min="0" step="any" required>
+                                <input type="number" id="A_city" name="UBI[params][A_city]" class="form-control" min="0" step="any" required>
                                 <label for="A_city">Tổng diện tích thành phố (A_city, m²)</label>
                             </div>
-                            <button type="submit" name="indicator" value="UBI" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('UBI')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -588,22 +635,26 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="NMT_L" name="NMT_L" class="form-control" min="0" step="any" required>
+                                <input type="number" id="NMT_value" name="NMT[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="NMT_value">Giá trị NMT (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="NMT_L" name="NMT[params][∑NMT_L]" class="form-control" min="0" step="any" required>
                                 <label for="NMT_L">Tổng chiều dài phương tiện không phát thải (∑NMT_L, km)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="L_C" name="L_C" class="form-control" min="0" step="any" required>
+                                <input type="number" id="L_C" name="NMT[params][L_C]" class="form-control" min="0" step="any" required>
                                 <label for="L_C">Chiều dài đường xe đạp (L_C, km)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="L_ct" name="L_ct" class="form-control" min="0" step="any" required>
+                                <input type="number" id="L_ct" name="NMT[params][L_ct]" class="form-control" min="0" step="any" required>
                                 <label for="L_ct">Chiều dài đường công cộng (L_ct, km)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="L_R" name="L_R" class="form-control" min="0" step="any" required>
+                                <input type="number" id="L_R" name="NMT[params][∑L_R]" class="form-control" min="0" step="any" required>
                                 <label for="L_R">Tổng chiều dài đường (∑L_R, km)</label>
                             </div>
-                            <button type="submit" name="indicator" value="NMT" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('NMT')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -614,14 +665,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="PT_c" name="PT_c" class="form-control" min="0" step="any" required>
+                                <input type="number" id="PT_c_value" name="PT_c[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="PT_c_value">Giá trị PT_c (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="PT_c" name="PT_c[params][∑PT_c]" class="form-control" min="0" step="any" required>
                                 <label for="PT_c">Số lượng phương tiện công cộng (∑PT_c)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="PT" name="PT" class="form-control" min="0" step="any" required>
+                                <input type="number" id="PT" name="PT_c[params][∑PT]" class="form-control" min="0" step="any" required>
                                 <label for="PT">Tổng số phương tiện (∑PT)</label>
                             </div>
-                            <button type="submit" name="indicator" value="PT_c" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('PT_c')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -632,14 +687,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="PT_F" name="PT_F" class="form-control" min="0" step="any" required>
+                                <input type="number" id="PT1000_value" name="PT1000[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="PT1000_value">Giá trị PT1000 (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="PT_F" name="PT1000[params][PT_F]" class="form-control" min="0" step="any" required>
                                 <label for="PT_F">Số lượng phương tiện công cộng (PT_F)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="P" name="P" class="form-control" min="0" step="any" required>
+                                <input type="number" id="P" name="PT1000[params][P]" class="form-control" min="0" step="any" required>
                                 <label for="P">Dân số (P)</label>
                             </div>
-                            <button type="submit" name="indicator" value="PT1000" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('PT1000')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -650,14 +709,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="STL_S" name="STL_S" class="form-control" min="0" step="any" required>
+                                <input type="number" id="STL_value" name="STL[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="STL_value">Giá trị STL (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="STL_S" name="STL[params][∑STL_S]" class="form-control" min="0" step="any" required>
                                 <label for="STL_S">Tổng số đèn giao thông thông minh (∑STL_S)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="TL" name="TL" class="form-control" min="0" step="any" required>
+                                <input type="number" id="TL" name="STL[params][∑TL]" class="form-control" min="0" step="any" required>
                                 <label for="TL">Tổng số đèn giao thông (∑TL)</label>
                             </div>
-                            <button type="submit" name="indicator" value="STL" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('STL')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -668,14 +731,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="SRRW_L" name="SRRW_L" class="form-control" min="0" step="any" required>
+                                <input type="number" id="SRRW_value" name="SRRW[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="SRRW_value">Giá trị SRRW (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="SRRW_L" name="SRRW[params][∑SRRW_L]" class="form-control" min="0" step="any" required>
                                 <label for="SRRW_L">Tổng chiều dài đường tái chế (∑SRRW_L, km)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="TSR" name="TSR" class="form-control" min="0" step="any" required>
+                                <input type="number" id="TSR" name="SRRW[params][∑TSR]" class="form-control" min="0" step="any" required>
                                 <label for="TSR">Tổng chiều dài đường (∑TSR, km)</label>
                             </div>
-                            <button type="submit" name="indicator" value="SRRW" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('SRRW')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -686,10 +753,14 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="AQI_d_AT" name="AQI_d_AT" class="form-control" min="0" step="any" required>
+                                <input type="number" id="AQI_TDE_value" name="AQI_TDE[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="AQI_TDE_value">Giá trị AQI_TDE (ngày)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="AQI_d_AT" name="AQI_TDE[params][∑AQI^d>AT]" class="form-control" min="0" step="any" required>
                                 <label for="AQI_d_AT">Tổng số ngày AQI vượt ngưỡng (∑AQI^d>AT)</label>
                             </div>
-                            <button type="submit" name="indicator" value="AQI_TDE" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('AQI_TDE')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -700,14 +771,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_P" name="W_P" class="form-control" min="0" step="any" required>
+                                <input type="number" id="WI_loss_value" name="WI_loss[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="WI_loss_value">Giá trị WI_loss (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_P" name="WI_loss[params][∑W_P]" class="form-control" min="0" step="any" required>
                                 <label for="W_P">Tổng lượng nước sản xuất (∑W_P, m³)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_S" name="W_S" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_S" name="WI_loss[params][∑W_S]" class="form-control" min="0" step="any" required>
                                 <label for="W_S">Tổng lượng nước sử dụng (∑W_S, m³)</label>
                             </div>
-                            <button type="submit" name="indicator" value="WI_loss" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('WI_loss')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -718,14 +793,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_rr" name="W_rr" class="form-control" min="0" step="any" required>
+                                <input type="number" id="WI_loss_rr_value" name="WI_loss_rr[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="WI_loss_rr_value">Giá trị WI_loss (rr) (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_rr" name="WI_loss_rr[params][W_rr]" class="form-control" min="0" step="any" required>
                                 <label for="W_rr">Lượng nước tái sử dụng (W_rr, m³)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_s" name="W_s" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_s" name="WI_loss_rr[params][W_s]" class="form-control" min="0" step="any" required>
                                 <label for="W_s">Tổng lượng nước sử dụng (W_s, m³)</label>
                             </div>
-                            <button type="submit" name="indicator" value="WI_loss_rr" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('WI_loss_rr')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -736,14 +815,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="P_W" name="P_W" class="form-control" min="0" step="any" required>
+                                <input type="number" id="R_USWA_value" name="R_USWA[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="R_USWA_value">Giá trị R_USWA (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="P_W" name="R_USWA[params][P_W]" class="form-control" min="0" step="any" required>
                                 <label for="P_W">Công suất xử lý nước thải (P_W, m³/ngày)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="P_S" name="P_S" class="form-control" min="0" step="any" required>
+                                <input type="number" id="P_S" name="R_USWA[params][∑P_S]" class="form-control" min="0" step="any" required>
                                 <label for="P_S">Tổng công suất hệ thống (∑P_S, m³/ngày)</label>
                             </div>
-                            <button type="submit" name="indicator" value="R_USWA" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('R_USWA')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -754,14 +837,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_landfill" name="W_landfill" class="form-control" min="0" step="any" required>
+                                <input type="number" id="R_USWA_landfill_value" name="R_USWA_landfill[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="R_USWA_landfill_value">Giá trị R_USWA (landfill) (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_landfill" name="R_USWA_landfill[params][W_landfill]" class="form-control" min="0" step="any" required>
                                 <label for="W_landfill">Chất thải chôn lấp (W_landfill, tấn)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_waste_generate" name="W_waste_generate" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_waste_generate" name="R_USWA_landfill[params][W_waste_generate]" class="form-control" min="0" step="any" required>
                                 <label for="W_waste_generate">Tổng chất thải phát sinh (W_waste_generate, tấn)</label>
                             </div>
-                            <button type="submit" name="indicator" value="R_USWA_landfill" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('R_USWA_landfill')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -772,18 +859,22 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_RU" name="W_RU" class="form-control" min="0" step="any" required>
+                                <input type="number" id="RRWI_value" name="RRWI[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="RRWI_value">Giá trị RRWI (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_RU" name="RRWI[params][W_RU]" class="form-control" min="0" step="any" required>
                                 <label for="W_RU">Chất thải tái sử dụng (W_RU, tấn)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_RRC" name="W_RRC" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_RRC" name="RRWI[params][W_RRC]" class="form-control" min="0" step="any" required>
                                 <label for="W_RRC">Chất thải tái chế (W_RRC, tấn)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_G" name="W_G" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_G" name="RRWI[params][∑W_G]" class="form-control" min="0" step="any" required>
                                 <label for="W_G">Tổng chất thải phát sinh (∑W_G, tấn)</label>
                             </div>
-                            <button type="submit" name="indicator" value="RRWI" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('RRWI')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -794,14 +885,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_Cons_deli_cp" name="W_Cons_deli_cp" class="form-control" min="0" step="any" required>
+                                <input type="number" id="WI_Cons_deli_cp_value" name="WI_Cons.deli.cp[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="WI_Cons_deli_cp_value">Giá trị WI_Cons.deli.cp (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_Cons_deli_cp" name="WI_Cons.deli.cp[params][W_Cons.deli.cp]" class="form-control" min="0" step="any" required>
                                 <label for="W_Cons_deli_cp">Nước tiêu thụ phân phối (W_Cons.deli.cp, m³)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_Cons" name="W_Cons" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_Cons" name="WI_Cons.deli.cp[params][W_Cons]" class="form-control" min="0" step="any" required>
                                 <label for="W_Cons">Tổng nước tiêu thụ (W_Cons, m³)</label>
                             </div>
-                            <button type="submit" name="indicator" value="WI_Cons.deli.cp" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('WI_Cons.deli.cp')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -812,14 +907,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_Cons_rr" name="W_Cons_rr" class="form-control" min="0" step="any" required>
+                                <input type="number" id="WI_Cons_rr_value" name="WI_Cons.rr[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="WI_Cons_rr_value">Giá trị WI_Cons.rr (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_Cons_rr" name="WIroughlyWI_Cons.rr[params][W_Cons.rr]" class="form-control" min="0" step="any" required>
                                 <label for="W_Cons_rr">Nước tiêu thụ tái sử dụng (W_Cons.rr, m³)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_Cons_deli_reduce" name="W_Cons_deli_reduce" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_Cons_deli_reduce" name="WI_Cons.rr[params][W_Cons.deli.reduce]" class="form-control" min="0" step="any" required>
                                 <label for="W_Cons_deli_reduce">Nước tiêu thụ phân phối giảm (W_Cons.deli.reduce, m³)</label>
                             </div>
-                            <button type="submit" name="indicator" value="WI_Cons.rr" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('WI_Cons.rr')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -830,14 +929,18 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="W_T" name="W_T" class="form-control" min="0" step="any" required>
+                                <input type="number" id="WWT_I_value" name="WWT_I[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="WWT_I_value">Giá trị WWT_I (%)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="W_T" name="WWT_I[params][W_T]" class="form-control" min="0" step="any" required>
                                 <label for="W_T">Nước thải xử lý (W_T, m³)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_G" name="W_G" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_G" name="WWT_I[params][W_G]" class="form-control" min="0" step="any" required>
                                 <label for="W_G">Tổng nước thải phát sinh (W_G, m³)</label>
                             </div>
-                            <button type="submit" name="indicator" value="WWT_I" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('WWT_I')">Tính Preview</button>
                         </div>
                     </div>
 
@@ -848,24 +951,29 @@
                         </div>
                         <div class="card-body p-4">
                             <div class="form-floating">
-                                <input type="number" id="GHGsLandfill" name="GHGsLandfill" class="form-control" min="0" step="any" required>
+                                <input type="number" id="GHGIs_value" name="GHGIs[value_calculated]" class="form-control" min="0" step="any" required>
+                                <label for="GHGIs_value">Giá trị GHGIs (tấn CO2e)</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="number" id="GHGsLandfill" name="GHGIs[params][GHGsLandfill]" class="form-control" min="0" step="any" required>
                                 <label for="GHGsLandfill">Phát thải từ chôn lấp (GHGsLandfill, tấn CO2e)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="GHGsWTE" name="GHGsWTE" class="form-control" min="0" step="any" required>
+                                <input type="number" id="GHGsWTE" name="GHGIs[params][GHGsWTE]" class="form-control" min="0" step="any" required>
                                 <label for="GHGsWTE">Phát thải từ đốt rác (GHGsWTE, tấn CO2e)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="GHGsRecycling" name="GHGsRecycling" class="form-control" min="0" step="any" required>
+                                <input type="number" id="GHGsRecycling" name="GHGIs[params][GHGsRecycling]" class="form-control" min="0" step="any" required>
                                 <label for="GHGsRecycling">Phát thải từ tái chế (GHGsRecycling, tấn CO2e)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="GHGsComposting" name="GHGsComposting" class="form-control" min="0" step="any" required>
+                                <input type="number" id="GHGsComposting" name="GHGIs[params][GHGsComposting]" class="form-control" min="0" step="any" required>
                                 <label for="GHGsComposting">Phát thải từ ủ phân (GHGsComposting, tấn CO2e)</label>
                             </div>
-                            <button type="submit" name="indicator" value="GHGIs" class="btn btn-primary">Tính toán</button>
+                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('GHGIs')">Tính Preview</button>
                         </div>
                     </div>
+                    <button type="submit" class="btn btn-primary">Lưu Dữ Liệu</button>
                 </form>
             <% } %>
         </main>
@@ -873,9 +981,31 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function calculatePreview(indicatorCode) {
-            // Placeholder for client-side preview calculation
-            alert(`Tính toán preview cho chỉ số: ${indicatorCode}`);
+        async function calculatePreview(indicatorCode) {
+            const form = document.querySelector('form');
+            const valueInput = form.querySelector(`input[name="${indicatorCode}[value_calculated]"]`);
+            const value = valueInput.value;
+            const params = {};
+            form.querySelectorAll(`input[name^="${indicatorCode}[params]"]`).forEach(input => {
+                const paramName = input.name.match(/\[params\]\[(.+)\]/)[1];
+                params[paramName] = input.value;
+            });
+
+            try {
+                const response = await fetch('/cndl/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ indicator_code: indicatorCode, value, params })
+                });
+                const result = await response.json();
+                if (result.error) {
+                    alert('Lỗi: ' + result.error);
+                    return;
+                }
+                alert(`Kết quả xem trước:\nGiá trị: ${result.calculatedValue}\nCấp độ: ${result.level}\nĐiểm: ${result.score}\nMô tả: ${result.description}`);
+            } catch (err) {
+                alert('Lỗi khi xem trước: ' + err.message);
+            }
         }
 
         // Enable tooltips
