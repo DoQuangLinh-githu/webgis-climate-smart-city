@@ -1152,6 +1152,17 @@ function evaluateFormula(formula, value, additionalParams = {}) {
   }
 }
 
+// Hàm parseRecipe để phân tích recipe_description
+function parseRecipe(recipe) {
+  if (!recipe) return [];
+  try {
+    return recipe.split(',').map(param => param.trim());
+  } catch (err) {
+    console.error('Lỗi parseRecipe:', err.message);
+    return [];
+  }
+}
+
 // Route GET /cndl
 app.get('/cndl', authenticateToken, async (req, res) => {
   try {
@@ -1176,7 +1187,7 @@ app.get('/cndl', authenticateToken, async (req, res) => {
     const domains = domainsRes.rows || [];
     const indicators = indicatorsRes.rows.map(ind => ({
       ...ind,
-      variables: parseRecipe(ind.recipe_description),
+      variables: parseRecipe(ind.recipe_description), // Sử dụng parseRecipe
       existing_value: assessmentsRes.rows.find(a => a.indicator_code === ind.code)?.value || null
     })) || [];
 
@@ -1206,7 +1217,7 @@ app.get('/cndl', authenticateToken, async (req, res) => {
       success: req.query.success || null
     });
   } catch (err) {
-    console.error('Lỗi GET /cndl:', err);
+    console.error('Lỗi GET /cndl:', err.message, err.stack);
     res.render('cndl', {
       user: req.user,
       city: 'TP. Hồ Chí Minh',
