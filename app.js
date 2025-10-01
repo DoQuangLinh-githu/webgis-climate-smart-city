@@ -12,8 +12,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
-// ❌ Bỏ Redis
-// const Redis = require('ioredis');
 const nodemailer = require('nodemailer');
 const math = require('mathjs');
 
@@ -21,6 +19,9 @@ console.log('🚀 Khởi động hệ thống WebGIS Climate Smart City...');
 
 // Express app
 const app = express();
+
+// Sửa: Thêm trust proxy cho Vercel
+app.set('trust proxy', 1);
 
 // 🚫 Không dùng Redis
 console.warn("⚠️ Redis đã được tắt, hệ thống chỉ sử dụng PostgreSQL.");
@@ -113,6 +114,7 @@ app.use(
   rateLimit({
     windowMs,
     max: maxRequests,
+    keyGenerator: (req) => req.ip, // Sử dụng IP từ Express
     message: {
       error: 'Quá nhiều yêu cầu từ IP này. Vui lòng thử lại sau.',
       retryAfter: Math.ceil(windowMs / 1000),
@@ -222,7 +224,7 @@ function parseRange(criteria) {
   }
 }
 
-// ==== getCachedOrQuery (chỉ dùng PostgreSQL) ====
+// Sửa: Chỉ dùng PostgreSQL, không dùng Redis
 async function getCachedOrQuery(key, query) {
   try {
     const result = await pool.query(query);
@@ -796,25 +798,6 @@ async function getGeoJSON(city = 'TP. Hồ Chí Minh') {
   }
 }
 
-async function getCachedOrQuery(key, query) {
-  try {
-    const cached = await redis.get(key);
-    if (cached) {
-      console.log(`✅ Lấy ${key} từ Redis cache`);
-      return JSON.parse(cached);
-    }
-    const result = await pool.query(query);
-    const data = result.rows;
-    await redis.set(key, JSON.stringify(data), 'EX', 3600); 
-    console.log(`✅ Lưu ${key} vào Redis cache`);
-    return data;
-  } catch (err) {
-    console.warn(`⚠️ Lỗi Redis khi lấy ${key}, dùng PostgreSQL:`, err.message);
-    const result = await pool.query(query);
-    return result.rows;
-  }
-}
-
 // Tuyến đường GET /
 app.get('/', async (req, res) => {
   try {
@@ -1108,46 +1091,16 @@ app.get('/cndl', authenticateToken, async (req, res) => {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const city = 'TP. Hồ Chí Minh';
 
-    // Lấy dữ liệu Domains từ Redis hoặc database
-    let domains = { rows: [] };
-    const cachedDomains = await redis.get('domains');
-    if (cachedDomains) {
-      try {
-        const parsedDomains = JSON.parse(cachedDomains);
-        domains = { rows: Array.isArray(parsedDomains) ? parsedDomains : [] };
-      } catch (parseErr) {
-        console.warn('⚠️ Dữ liệu Redis domains không hợp lệ, sử dụng database:', parseErr.message);
-      }
-    }
-    if (!cachedDomains || domains.rows.length === 0) {
-      const result = await pool.query('SELECT * FROM Domains');
-      domains = result;
-      if (result.rows && result.rows.length > 0) {
-        await redis.set('domains', JSON.stringify(result.rows), 'EX', 3600);
-      }
-    }
+    // Lấy dữ liệu Domains từ database
+    let domains = await pool.query('SELECT * FROM Domains');
+    domains = domains.rows || [];
 
-    // Lấy dữ liệu Indicators từ Redis hoặc database
-    let indicators = { rows: [] };
-    const cachedIndicators = await redis.get('indicators');
-    if (cachedIndicators) {
-      try {
-        const parsedIndicators = JSON.parse(cachedIndicators);
-        indicators = { rows: Array.isArray(parsedIndicators) ? parsedIndicators : [] };
-      } catch (parseErr) {
-        console.warn('⚠️ Dữ liệu Redis indicators không hợp lệ, sử dụng database:', parseErr.message);
-      }
-    }
-    if (!cachedIndicators || indicators.rows.length === 0) {
-      const result = await pool.query('SELECT * FROM Indicators');
-      indicators = result;
-      if (result.rows && result.rows.length > 0) {
-        await redis.set('indicators', JSON.stringify(result.rows), 'EX', 3600);
-      }
-    }
+    // Lấy dữ liệu Indicators từ database
+    let indicators = await pool.query('SELECT * FROM Indicators');
+    indicators = indicators.rows || [];
 
     // Kiểm tra và xử lý domains.rows
-    const domainsWithIcons = Array.isArray(domains.rows) ? domains.rows.map(domain => ({
+    const domainsWithIcons = Array.isArray(domains) ? domains.map(domain => ({
       ...domain,
       icon: domain.icon || getDefaultIcon(domain.domain_id)
     })) : [];
@@ -1167,7 +1120,7 @@ app.get('/cndl', authenticateToken, async (req, res) => {
       user,
       city,
       domains: domainsWithIcons,
-      indicators: indicators.rows || [],
+      indicators: indicators || [],
       year,
       error: req.query.error || null,
       success: req.query.success || null,
@@ -1185,6 +1138,7 @@ app.get('/cndl', authenticateToken, async (req, res) => {
     });
   }
 });
+
 app.post(
   '/cndl',
   authenticateToken,
@@ -1355,7 +1309,6 @@ app.post(
         }
       }
 
-      await redis.del('assessments_template');
       res.redirect(`/dashboard?year=${year}&success=${encodeURIComponent('Dữ liệu đã được được lưu thành công')}`);
     } catch (err) {
       console.error('Lỗi POST /cndl:', err.message, err.stack);
@@ -2110,7 +2063,6 @@ app.get('/logout', (req, res) => {
 })();
 
 // Xuất Express app cho Vercel
-// Xuất app cho Vercel
 module.exports = app;
 
 // Nếu chạy local thì dùng port 3000
