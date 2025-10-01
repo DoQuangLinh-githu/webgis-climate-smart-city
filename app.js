@@ -1085,24 +1085,6 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
-// Hàm parseRecipe (chuẩn hóa tên biến và lấy mô tả)
-function parseRecipe(recipe) {
-  if (!recipe) return [];
-  const lines = recipe.split('\n').filter(line => line.trim().startsWith('✓'));
-  return lines.map(line => {
-    const match = line.match(/✓\s*(\w+(&\w+)?):\s*(.+)/);
-    if (!match) return null;
-    let varName = match[1];
-    // Chuẩn hóa tên biến
-    if (varName === 'ERE') varName = 'E_RE';
-    if (varName === 'LAT&C') varName = 'L_AT&C';
-    if (varName === 'PRE') varName = 'P_RE';
-    if (varName === 'Ptotal') varName = 'P_total';
-    return { var_name: varName, var_desc: match[3] };
-  }).filter(v => v);
-}
-
-// Route GET /cndl
 app.get('/cndl', authenticateToken, async (req, res) => {
   try {
     const user = req.user;
@@ -1174,7 +1156,6 @@ app.get('/cndl', authenticateToken, async (req, res) => {
   }
 });
 
-// Route POST /cndl/submit (giữ nguyên, đảm bảo validation)
 app.post(
   '/cndl/submit',
   authenticateToken,
