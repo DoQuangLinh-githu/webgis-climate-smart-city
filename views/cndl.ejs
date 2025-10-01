@@ -250,60 +250,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <% if (user.role === 'admin') { %>
-                <!-- Admin View: Data Update -->
-                <h2 class="mb-4">Cập Nhật Dữ Liệu - <%= city || 'TP. Hồ Chí Minh' %></h2>
-                <p class="text-muted mb-4">Nhập dữ liệu chỉ số cho năm được chọn. Hệ thống sẽ tự động tính giá trị dựa trên công thức.</p>
-                <% if (error) { %>
-                    <div class="alert alert-danger"><%= error %></div>
-                <% } %>
-                <% if (success) { %>
-                    <div class="alert alert-success"><%= success %></div>
-                <% } %>
-                <form action="/cndl" method="POST">
-                    <div class="form-floating mb-4">
-                        <input type="number" id="year" name="year" class="form-control" min="2000" max="2100" value="<%= year || new Date().getFullYear() %>" required>
-                        <label for="year">Chọn Năm</label>
-                        <small class="form-text text-muted">Năm phải từ 2000 đến 2100.</small>
-                    </div>
-                    <% domains.forEach(domain => { %>
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="<%= domain.icon %>"></i> <%= domain.name %></h5>
-                                <span>Max score: <%= domain.max_score %></span>
-                            </div>
-                            <div class="card-body p-4">
-                                <% indicators.filter(ind => ind.domain_id === domain.domain_id).forEach(ind => { %>
-                                    <div class="indicator-item">
-                                        <div class="form-floating">
-                                            <input type="number" id="<%= ind.code %>_value" name="<%= ind.code %>[value_calculated]" class="form-control" min="0" step="any" value="<%= ind.existing_value || '' %>">
-                                            <label for="<%= ind.code %>_value">Giá trị <%= ind.code %> (<%= ind.unit_code %>)</label>
-                                            <small class="form-text text-muted">
-                                                Giá trị phải là số ≥ 0
-                                                <i class="fas fa-info-circle tooltip-icon" title="Nhập giá trị số không âm"></i>
-                                            </small>
-                                        </div>
-                                        <% if (ind.variables && ind.variables.length > 0) { %>
-                                            <% ind.variables.forEach(param => { %>
-                                                <div class="form-floating">
-                                                    <input type="number" id="<%= ind.code %>_<%= param %>" name="<%= ind.code %>[params][<%= param %>]" class="form-control" min="0" step="any">
-                                                    <label for="<%= ind.code %>_<%= param %>"><%= param %> (<%= ind.unit_code %>)</label>
-                                                    <small class="form-text text-muted">
-                                                        Giá trị phải là số ≥ 0
-                                                        <i class="fas fa-info-circle tooltip-icon" title="Nhập giá trị số không âm"></i>
-                                                    </small>
-                                                </div>
-                                            <% }) %>
-                                            <button type="button" class="btn btn-primary mt-3" onclick="calculatePreview('<%= ind.code %>')">Tính Preview</button>
-                                        <% } %>
-                                    </div>
-                                <% }) %>
-                            </div>
-                        </div>
-                    <% }) %>
-                    <button type="submit" class="btn btn-primary">Lưu Dữ Liệu</button>
-                </form>
-            <% } else { %>
-                <!-- User View: Environmental Indicator Calculations -->
+                                <!-- User View: Environmental Indicator Calculations -->
                 <h2 class="mb-4">Tính toán các chỉ số môi trường</h2>
                 <p class="text-muted mb-4">Nhập các giá trị để tính toán các chỉ số môi trường.</p>
                 <% if (error) { %>
@@ -911,7 +858,7 @@
                                 <label for="WI_Cons_rr_value">Giá trị WI_Cons.rr (%)</label>
                             </div>
                             <div class="form-floating">
-                                <input type="number" id="W_Cons_rr" name="WIroughlyWI_Cons.rr[params][W_Cons.rr]" class="form-control" min="0" step="any" required>
+                                <input type="number" id="W_Cons_rr" name="WI_Cons.rr[params][W_Cons.rr]" class="form-control" min="0" step="any" required>
                                 <label for="W_Cons_rr">Nước tiêu thụ tái sử dụng (W_Cons.rr, m³)</label>
                             </div>
                             <div class="form-floating">
