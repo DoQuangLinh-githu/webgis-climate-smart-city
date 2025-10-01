@@ -182,23 +182,27 @@
                                 <% indicators.filter(ind => ind.domain_id === domain.domain_id).forEach(ind => { %>
                                     <div class="indicator-item">
                                         <h6><%= ind.name %> (<%= ind.code %>)</h6>
-                                        <p><strong>Đơn vị:</strong> <%= ind.unit_code %> | <strong>Công thức:</strong> <%= ind.formula || 'Không có công thức' %></p>
+                                        <p><strong>Đơn vị:</strong> <%= ind.unit_code %></p>
+                                        <p><strong>Công thức:</strong> <%= ind.formula || 'Không có công thức' %></p>
+                                        <% if (ind.existing_value) { %>
+                                            <p><strong>Giá trị hiện tại:</strong> <%= ind.existing_value %> <%= ind.unit_code %></p>
+                                        <% } %>
                                         <p>Nhập các giá trị dưới đây để hệ thống tự động tính toán:</p>
 
                                         <% if (ind.variables && ind.variables.length > 0) { %>
                                             <% ind.variables.forEach(varItem => { %>
                                                 <div class="form-floating variable-input">
-                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>[params][<%= varItem.var_name %>]" required min="0" step="any" oninput="autoCalculate('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">
-                                                    <label for="<%= ind.code %>_<%= varItem.var_name %>"><%= varItem.var_name %>: <%= varItem.var_desc %></label>
+                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>[params][<%= varItem.var_name %>]" required min="0" step="any" oninput="autoCalculate('<%= ind.code %>', '<%= (ind.formula || '').replace(/"/g, '\\"') %>')">
+                                                    <label for="<%= ind.code %>_<%= varItem.var_name %>">Giá trị nhập <%= varItem.var_name %>: <%= varItem.var_name %>(<%= varItem.var_desc.match(/\((kWh|kW|level)\)/)?.[1] || 'unit' %>) <span title="Ví dụ: Nhập số như 1000 <%= varItem.var_desc.match(/\((kWh|kW|level)\)/)?.[1] || 'unit' %>">ℹ️</span></label>
                                                     <div class="invalid-feedback">Giá trị phải là số ≥ 0.</div>
                                                 </div>
                                             <% }); %>
-                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="autoCalculate('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
+                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="autoCalculate('<%= ind.code %>', '<%= (ind.formula || '').replace(/"/g, '\\"') %>')">Tính Preview</button>
                                             <p id="<%= ind.code %>_preview" class="mt-2"></p>
                                             <input type="hidden" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated">
                                         <% } else { %>
                                             <div class="form-floating">
-                                                <input type="number" class="form-control" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated" required min="0" step="any">
+                                                <input type="number" class="form-control" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated" required min="0" step="any" value="<%= ind.existing_value || '' %>">
                                                 <label for="<%= ind.code %>_value_calculated">Giá trị <%= ind.name %> (<%= ind.unit_code %>)</label>
                                                 <div class="invalid-feedback">Giá trị phải là số ≥ 0.</div>
                                             </div>
@@ -217,12 +221,18 @@
 
     <script>
         function autoCalculate(code, formula) {
+            if (!formula) {
+                document.getElementById(`${code}_preview`).innerText = 'Không có công thức để tính';
+                document.getElementById(`${code}_preview`).className = 'mt-2 preview-invalid';
+                return;
+            }
+
             const inputs = document.querySelectorAll(`[name^="${code}[params]"]`);
             let vars = {};
             let allFilled = true;
 
             inputs.forEach(input => {
-                const varName = input.name.match(/\[params\]\[(\w+)\]/)[1];
+                const varName = input.name.match(/\[params\]\[(\w+(&\w+)?)\]/)[1];
                 const value = parseFloat(input.value);
                 if (isNaN(value) || value < 0) {
                     allFilled = false;
@@ -265,6 +275,19 @@
                 hiddenInput.value = '';
             }
         }
+
+        // Debounce để tránh tính toán liên tục
+        let timeout;
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    const code = input.name.match(/\[(.+)\]/)?.[1] || input.name.split('[')[0];
+                    const formula = input.closest('.indicator-item').querySelector('button')?.getAttribute('onclick')?.match(/autoCalculate\('[^']+', '([^']+)'\)/)?.[1] || '';
+                    autoCalculate(code, formula);
+                }, 300);
+            });
+        });
 
         document.querySelector('form').addEventListener('submit', (e) => {
             let valid = true;
