@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cập Nhật Dữ Liệu - WebGIS Climate Smart City</title>
-    <!-- Font Awesome cho icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Math.js cho tính toán client-side -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
     <style>
         :root {
@@ -16,18 +14,15 @@
             --danger-color: #dc3545;
             --info-color: #17a2b8;
         }
-
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
         .main-container {
             min-height: 100vh;
             padding: 20px 0;
         }
-
         .sidebar {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -39,7 +34,6 @@
             top: 20px;
             animation: slideInLeft 0.5s ease-in-out;
         }
-
         .nav-link {
             color: #495057;
             padding: 12px 20px;
@@ -51,14 +45,12 @@
             gap: 10px;
             font-weight: 500;
         }
-
         .nav-link:hover, .nav-link.active {
             background: linear-gradient(45deg, var(--primary-color), #0056b3);
             color: white;
             transform: translateX(5px) scale(1.02);
             box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
         }
-
         .main-content {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -69,7 +61,6 @@
             margin-bottom: 20px;
             animation: fadeIn 0.5s ease-in-out;
         }
-
         .field-card {
             background: white;
             border-radius: 12px;
@@ -78,11 +69,9 @@
             margin-bottom: 20px;
             transition: transform 0.2s ease;
         }
-
         .field-card:hover {
             transform: translateY(-2px);
         }
-
         .field-header {
             background: linear-gradient(45deg, var(--primary-color), #0056b3);
             color: white;
@@ -92,7 +81,6 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .indicator-item {
             background: #f8f9fa;
             border: 2px solid #e9ecef;
@@ -101,16 +89,13 @@
             margin-bottom: 15px;
             transition: all 0.3s ease;
         }
-
         .indicator-item:hover {
             border-color: var(--primary-color);
             box-shadow: 0 2px 10px rgba(0, 123, 255, 0.15);
         }
-
         .form-floating {
             margin-bottom: 15px;
         }
-
         .btn-primary {
             background: linear-gradient(45deg, var(--primary-color), #0056b3);
             border: none;
@@ -119,38 +104,24 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
         }
-
         .alert {
             border-radius: 10px;
             border: none;
             padding: 15px 20px;
             animation: fadeIn 0.5s ease-in-out;
         }
-
-        .loading {
-            display: none;
-        }
-
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-        }
-
         @media (max-width: 768px) {
             .main-content {
                 padding: 15px;
                 margin: 10px;
             }
-            
             .field-header h5 {
                 font-size: 1.1rem;
             }
-            
             .sidebar {
                 margin-bottom: 20px;
                 position: relative;
@@ -160,38 +131,14 @@
     </style>
 </head>
 <body>
-    <% 
-        // Định nghĩa hàm getDefaultIcon ở server-side
-        function getDefaultIcon(domainId) {
-            const iconMap = {
-                1: 'fas fa-bolt',      // Năng lượng
-                2: 'fas fa-leaf',      // Quy hoạch
-                3: 'fas fa-car',       // Giao thông
-                4: 'fas fa-tint',      // Nước
-                5: 'fas fa-trash'      // Chất thải
-            };
-            return iconMap[domainId] || 'fas fa-cog'; // Icon mặc định
-        }
-
-        // Hàm parse recipe_description thành danh sách biến (giả định server-side)
-        function parseRecipe(recipe) {
-            if (!recipe) return [];
-            const lines = recipe.split('\n').filter(line => line.trim().startsWith('✓'));
-            return lines.map(line => {
-                const match = line.match(/✓\s*(\w+):\s*(.+)/);
-                return match ? { var_name: match[1], var_desc: match[2] } : null;
-            }).filter(v => v);
-        }
-    %>
     <div class="container-fluid main-container">
         <div class="row">
-            <!-- Sidebar -->
             <nav class="col-md-3 col-lg-2 d-md-block sidebar">
                 <div class="position-sticky pt-3">
                     <h4 class="text-center">WebGIS</h4>
                     <h5 class="text-center">Climate Smart City</h5>
                     <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a Pea></li>
+                        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link active" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
                         <% if (user && user.role === 'admin') { %>
                             <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
@@ -214,7 +161,6 @@
                 </div>
             </nav>
 
-            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
                 <h2>Cập Nhật Dữ Liệu - <%= city || 'TP. Hồ Chí Minh' %></h2>
                 <p>Nhập dữ liệu chỉ số cho năm được chọn</p>
@@ -236,7 +182,7 @@
                     <% domains.forEach(domain => { %>
                         <div class="field-card">
                             <div class="field-header">
-                                <h5><i class="<%= getDefaultIcon(domain.domain_id) %>"></i> <%= domain.name %></h5>
+                                <h5><i class="<%= domain.icon %>"></i> <%= domain.name %></h5>
                                 <span>Max score: <%= domain.max_score %></span>
                             </div>
                             <div class="p-3">
@@ -246,31 +192,28 @@
                                         <p><strong>Đơn vị:</strong> <%= ind.unit_code %> | <strong>Công thức:</strong> <%= ind.formula %></p>
                                         <p>(Nhập các biến dưới, hệ thống sẽ tính value tự động dựa trên recipe)</p>
 
-                                        <!-- Parse recipe_description thành variables -->
-                                        <% const variables = parseRecipe(ind.recipe_description); %>
-                                        <% if (variables.length > 0) { %>
-                                            <% variables.forEach(varItem => { %>
+                                        <% if (ind.variables && ind.variables.length > 0) { %>
+                                            <% ind.variables.forEach(varItem => { %>
                                                 <div class="form-floating variable-input">
-                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>_<%= varItem.var_name %>" required min="0" step="any">
+                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>[params][<%= varItem.var_name %>]" required min="0" step="any">
                                                     <label for="<%= ind.code %>_<%= varItem.var_name %>"><%= varItem.var_name %>: <%= varItem.var_desc %></label>
                                                     <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
                                                 </div>
                                             <% }); %>
                                         <% } else { %>
-                                            <!-- Fallback cho indicator định tính -->
                                             <div class="form-floating">
-                                                <input type="number" class="form-control" name="<%= ind.code %>_value" id="<%= ind.code %>_value" required min="0" step="any">
-                                                <label for="<%= ind.code %>_value">Giá trị <%= ind.name %></label>
+                                                <input type="number" class="form-control" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated" required min="0" step="any">
+                                                <label for="<%= ind.code %>_value_calculated">Giá trị <%= ind.name %></label>
                                                 <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
                                             </div>
                                         <% } %>
 
-                                        <!-- Hidden input cho value cuối -->
-                                        <input type="hidden" name="<%= ind.code %>_value_calculated" id="<%= ind.code %>_value_calculated">
+                                        <input type="hidden" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated_hidden" <% if (ind.variables && ind.variables.length > 0) { %>value=""<% } %>>
 
-                                        <!-- Button tính preview -->
-                                        <button type="button" class="btn btn-primary btn-sm mt-2" onclick="calculateValue('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
-                                        <p id="<%= ind.code %>_preview" class="mt-2"></p>
+                                        <% if (ind.variables && ind.variables.length > 0) { %>
+                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="calculateValue('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
+                                            <p id="<%= ind.code %>_preview" class="mt-2"></p>
+                                        <% } %>
                                     </div>
                                 <% }); %>
                             </div>
@@ -284,14 +227,11 @@
     </div>
 
     <script>
-        // Hàm tính preview client-side
         function calculateValue(code, formula) {
             let vars = {};
-            document.querySelectorAll(`[name^="${code}_"]`).forEach(input => {
-                if (input.name !== `${code}_value_calculated`) {
-                    let varName = input.name.replace(`${code}_`, '');
-                    vars[varName] = parseFloat(input.value) || 0;
-                }
+            document.querySelectorAll(`[name^="${code}[params]"]`).forEach(input => {
+                let varName = input.name.match(/\[params\]\[(\w+)\]/)[1];
+                vars[varName] = parseFloat(input.value) || 0;
             });
 
             let evalFormula = formula;
@@ -310,10 +250,9 @@
             }
 
             document.getElementById(`${code}_preview`).innerText = `Value preview: ${result}`;
-            document.getElementById(`${code}_value_calculated`).value = typeof result === 'number' ? result : '';
+            document.getElementById(`${code}_value_calculated_hidden`).value = typeof result === 'number' ? result : '';
         }
 
-        // Client-side validation
         document.querySelector('form').addEventListener('submit', (e) => {
             let valid = true;
             document.querySelectorAll('input[type="number"]').forEach(input => {
