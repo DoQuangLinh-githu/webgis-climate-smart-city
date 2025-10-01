@@ -1085,50 +1085,113 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
+// Hàm parseRecipe để phân tích recipe_description
+function parseRecipe(recipe) {
+  if (!recipe) return [];
+  try {
+    return recipe.split(',').map(param => param.trim());
+  } catch {
+    return [];
+  }
+}
+
+// Hàm evaluateFormula sử dụng mathjs
+function evaluateFormula(formula, value, additionalParams = {}) {
+  try {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      console.warn(`Giá trị không hợp lệ: ${value}`);
+      return 0;
+    }
+
+    // Các công thức không cần tính toán
+    const qualitativeFormulas = [
+      'Qualitative/score by policy',
+      'Scale 1-5',
+      'Data availability & integration',
+      'Existence and quality of plan',
+      'Composite',
+      'Count density',
+      'Number of days AQI > threshold',
+      'Digitalization level',
+      'Number/quality of initiatives',
+      'Operational efficiency',
+      'GHG reduction measures',
+      'Level of service'
+    ];
+
+    if (qualitativeFormulas.includes(formula)) {
+      return numValue;
+    }
+
+    if (formula.includes('value *')) {
+      const multiplier = parseFloat(formula.split('value *')[1].trim());
+      if (isNaN(multiplier)) throw new Error('Hệ số nhân không hợp lệ');
+      return numValue * multiplier;
+    } else if (formula.includes('100 - value')) {
+      return 100 - numValue;
+    } else if (formula.includes('avg(')) {
+      const params = formula.match(/avg\(([^)]+)\)/)[1].split(',').map(p => p.trim());
+      const values = params.map(param => parseFloat(additionalParams[param] || numValue));
+      if (values.some(v => isNaN(v))) throw new Error('Tham số không hợp lệ cho hàm avg');
+      return values.reduce((sum, val) => sum + val, 0) / values.length;
+    } else {
+      let evalFormula = formula;
+      for (const [key, val] of Object.entries(additionalParams)) {
+        if (!/^\d+(\.\d*)?$/.test(val)) throw new Error(`Giá trị không hợp lệ cho tham số ${key}`);
+        evalFormula = evalFormula.replace(new RegExp(`\\b${key}\\b`, 'g'), val);
+      }
+      evalFormula = evalFormula.replace('value', numValue.toString());
+      const result = math.evaluate(evalFormula);
+      if (typeof result !== 'number' || isNaN(result)) throw new Error('Kết quả công thức không hợp lệ');
+      return result;
+    }
+  } catch (err) {
+    console.error(`Lỗi xử lý công thức "${formula}": ${err.message}`);
+    return parseFloat(value) || 0;
+  }
+}
+
+// Route GET /cndl
 app.get('/cndl', authenticateToken, async (req, res) => {
   try {
     const user = req.user;
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const city = 'TP. Hồ Chí Minh';
 
-    let domains = await pool.query('SELECT * FROM Domains ORDER BY domain_id');
-    domains = domains.rows || [];
+    // Tối ưu hóa truy vấn: Lấy domains và indicators cùng lúc
+    const [domainsRes, indicatorsRes, assessmentsRes] = await Promise.all([
+      pool.query('SELECT * FROM Domains ORDER BY domain_id'),
+      pool.query(`
+        SELECT i.*, COALESCE(i.recipe_description, '') AS recipe_description
+        FROM Indicators i
+        ORDER BY domain_id, indicator_id
+      `),
+      pool.query(
+        'SELECT indicator_code, value FROM Assessments_Template WHERE city = $1 AND year = $2',
+        [city, year]
+      )
+    ]);
 
-    let indicators;
-    try {
-      indicators = await pool.query('SELECT *, recipe_description FROM Indicators ORDER BY domain_id, indicator_id');
-    } catch (err) {
-      if (err.message.includes('column "recipe_description" does not exist')) {
-        console.warn('Cột recipe_description không tồn tại, lấy dữ liệu Indicators mà không có recipe_description');
-        indicators = await pool.query('SELECT * FROM Indicators ORDER BY domain_id, indicator_id');
-      } else {
-        throw err;
-      }
-    }
-
-    const assessments = await pool.query(
-      'SELECT indicator_code, value FROM Assessments_Template WHERE city = $1 AND year = $2',
-      [city, year]
-    );
-
-    indicators = indicators.rows.map(ind => ({
+    const domains = domainsRes.rows || [];
+    const indicators = indicatorsRes.rows.map(ind => ({
       ...ind,
-      variables: parseRecipe(ind.recipe_description || ''),
-      existing_value: assessments.rows.find(a => a.indicator_code === ind.code)?.value || null
+      variables: parseRecipe(ind.recipe_description),
+      existing_value: assessmentsRes.rows.find(a => a.indicator_code === ind.code)?.value || null
     })) || [];
 
-    const domainsWithIcons = Array.isArray(domains) ? domains.map(domain => ({
+    const domainsWithIcons = domains.map(domain => ({
       ...domain,
       icon: domain.icon || getDefaultIcon(domain.domain_id)
-    })) : [];
+    }));
 
     function getDefaultIcon(domainId) {
       const iconMap = {
-        1: 'fas fa-bolt',
-        2: 'fas fa-leaf',
-        3: 'fas fa-car',
-        4: 'fas fa-tint',
-        5: 'fas fa-trash'
+        1: 'fas fa-bolt', // Năng lượng
+        2: 'fas fa-leaf', // Môi trường
+        3: 'fas fa-car', // Giao thông
+        4: 'fas fa-tint', // Nước
+        5: 'fas fa-trash' // Chất thải
       };
       return iconMap[domainId] || 'fas fa-cog';
     }
@@ -1140,7 +1203,7 @@ app.get('/cndl', authenticateToken, async (req, res) => {
       indicators,
       year,
       error: req.query.error || null,
-      success: req.query.success || null,
+      success: req.query.success || null
     });
   } catch (err) {
     console.error('Lỗi GET /cndl:', err);
@@ -1151,28 +1214,29 @@ app.get('/cndl', authenticateToken, async (req, res) => {
       indicators: [],
       year: new Date().getFullYear(),
       error: 'Lỗi khi tải dữ liệu: ' + err.message,
-      success: null,
+      success: null
     });
   }
 });
 
+// Route POST /cndl
 app.post(
-  '/cndl/submit',
+  '/cndl',
   authenticateToken,
   [
     body('year').isInt({ min: 2000, max: 2100 }).withMessage('Năm phải từ 2000 đến 2100'),
     body('*.value_calculated')
       .optional()
       .trim()
-      .customSanitizer((value) => value.replace(',', '.').replace(/[^\d.]/g, ''))
+      .customSanitizer(value => value.replace(',', '.').replace(/[^\d.]/g, ''))
       .matches(/^\d+(\.\d*)?$/)
       .withMessage('Giá trị phải là số dương, ví dụ: 45 hoặc 45.5'),
     body('*.params.*')
       .optional()
       .trim()
-      .customSanitizer((value) => value.replace(',', '.').replace(/[^\d.]/g, ''))
+      .customSanitizer(value => value.replace(',', '.').replace(/[^\d.]/g, ''))
       .matches(/^\d+(\.\d*)?$/)
-      .withMessage('Tham số bổ sung phải là số dương'),
+      .withMessage('Tham số bổ sung phải là số dương')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -1186,23 +1250,27 @@ app.post(
     const assessor = req.user.username;
 
     try {
-      const indicatorsRes = await pool.query('SELECT * FROM Indicators');
+      const [indicatorsRes, scoringLevelsRes] = await Promise.all([
+        pool.query('SELECT * FROM Indicators'),
+        pool.query('SELECT * FROM ScoringLevels')
+      ]);
       const indicators = indicatorsRes.rows;
-      const scoringLevelsRes = await pool.query('SELECT * FROM ScoringLevels');
       const scoringLevels = scoringLevelsRes.rows;
 
       const insertValues = [];
       const historyValues = [];
+
       for (const [code, data] of Object.entries(formData)) {
-        const indicator = indicators.find((i) => i.code === code);
+        const indicator = indicators.find(i => i.code === code);
         if (!indicator) {
           console.warn(`Không tìm thấy chỉ số ${code}`);
           continue;
         }
 
-        let value = data.value_calculated ? parseFloat(data.value_calculated) : null;
-        let additionalParams = data.params || {};
+        const value = data.value_calculated ? parseFloat(data.value_calculated) : null;
+        const additionalParams = data.params || {};
 
+        // Xác thực tham số bổ sung
         for (const [param, paramValue] of Object.entries(additionalParams)) {
           if (!/^\d+(\.\d*)?$/.test(paramValue)) {
             console.error(`Giá trị không hợp lệ cho ${param} của ${indicator.code}: ${paramValue}`);
@@ -1210,6 +1278,7 @@ app.post(
           }
         }
 
+        // Kiểm tra giá trị phần trăm
         if (value && indicator.unit_code === 'percent' && (value < 0 || value > 100)) {
           return res.redirect(`/cndl?error=${encodeURIComponent(`Giá trị cho ${indicator.code} phải từ 0-100%`)}`);
         }
@@ -1220,17 +1289,18 @@ app.post(
         if (value) {
           calculatedScore = evaluateFormula(indicator.formula, value, additionalParams);
           levelData = scoringLevels
-            .filter((sl) => sl.indicator_id === indicator.indicator_id)
+            .filter(sl => sl.indicator_id === indicator.indicator_id)
             .reduce((prev, current) => {
               return Math.abs(current.score_value - calculatedScore) < Math.abs(prev.score_value - calculatedScore) ? current : prev;
-            }, scoringLevels.find((sl) => sl.indicator_id === indicator.indicator_id) || { level: 1, score_value: 0, description: 'Không có mô tả' });
+            }, scoringLevels.find(sl => sl.indicator_id === indicator.indicator_id) || levelData);
         }
 
+        // Lấy giá trị cũ để ghi lịch sử
         const oldQuery = await pool.query(
           `SELECT value, score_awarded, level, description FROM Assessments_Template WHERE city = $1 AND year = $2 AND indicator_code = $3`,
           [city, year, indicator.code]
         );
-        const oldValues = oldQuery.rows[0] ? oldQuery.rows[0] : null;
+        const oldValues = oldQuery.rows[0] || null;
 
         const insertRow = [
           city,
@@ -1263,7 +1333,7 @@ app.post(
           assessor,
           oldValues ? 'update' : 'insert',
           req.ip,
-          req.get('User-Agent'),
+          req.get('User-Agent')
         ]);
       }
 
@@ -1294,11 +1364,58 @@ app.post(
 
       res.redirect(`/dashboard?year=${year}&success=${encodeURIComponent('Dữ liệu đã được lưu thành công')}`);
     } catch (err) {
-      console.error('Lỗi POST /cndl/submit:', err.message, err.stack);
+      console.error('Lỗi POST /cndl:', err.message, err.stack);
       res.redirect(`/cndl?error=${encodeURIComponent('Lỗi khi lưu dữ liệu: ' + err.message)}`);
     }
   }
 );
+
+// Route POST /cndl/preview để hỗ trợ tính năng xem trước
+app.post(
+  '/cndl/preview',
+  authenticateToken,
+  [
+    body('indicator_code').notEmpty().withMessage('Mã chỉ số không được để trống'),
+    body('value').optional().trim().matches(/^\d+(\.\d*)?$/).withMessage('Giá trị phải là số dương'),
+    body('params.*').optional().trim().matches(/^\d+(\.\d*)?$/).withMessage('Tham số bổ sung phải là số dương')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg });
+    }
+
+    const { indicator_code, value, params } = req.body;
+
+    try {
+      const indicatorRes = await pool.query('SELECT * FROM Indicators WHERE code = $1', [indicator_code]);
+      const indicator = indicatorRes.rows[0];
+
+      if (!indicator) {
+        return res.status(404).json({ error: 'Không tìm thấy chỉ số' });
+      }
+
+      const calculatedValue = value ? evaluateFormula(indicator.formula, value, params || {}) : 0;
+      const scoringLevelsRes = await pool.query('SELECT * FROM ScoringLevels WHERE indicator_id = $1', [indicator.indicator_id]);
+      const scoringLevels = scoringLevelsRes.rows;
+
+      const levelData = scoringLevels.reduce((prev, current) => {
+        return Math.abs(current.score_value - calculatedValue) < Math.abs(prev.score_value - calculatedValue) ? current : prev;
+      }, scoringLevels[0] || { level: 1, score_value: 0, description: 'Không có mô tả' });
+
+      res.json({
+        calculatedValue: Math.round(calculatedValue * 100) / 100,
+        level: levelData.level,
+        score: levelData.score_value || Math.round(calculatedValue),
+        description: levelData.description
+      });
+    } catch (err) {
+      console.error('Lỗi POST /cndl/preview:', err.message);
+      res.status(500).json({ error: 'Lỗi khi tính toán xem trước: ' + err.message });
+    }
+  }
+);
+
 
 // Endpoint GET /edit_cndl/:id
 app.get('/edit_cndl/:id', authenticateToken, async (req, res) => {
