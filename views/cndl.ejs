@@ -115,18 +115,9 @@
             animation: fadeIn 0.5s ease-in-out;
         }
         @media (max-width: 768px) {
-            .main-content {
-                padding: 15px;
-                margin: 10px;
-            }
-            .field-header h5 {
-                font-size: 1.1rem;
-            }
-            .sidebar {
-                margin-bottom: 20px;
-                position: relative;
-                top: 0;
-            }
+            .main-content { padding: 15px; margin: 10px; }
+            .field-header h5 { font-size: 1.1rem; }
+            .sidebar { margin-bottom: 20px; position: relative; top: 0; }
         }
     </style>
 </head>
@@ -163,7 +154,7 @@
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
                 <h2>Cập Nhật Dữ Liệu - <%= city || 'TP. Hồ Chí Minh' %></h2>
-                <p>Nhập dữ liệu chỉ số cho năm được chọn</p>
+                <p>Nhập dữ liệu chỉ số cho năm được chọn. Hệ thống sẽ tự động tính giá trị dựa trên công thức.</p>
 
                 <% if (success) { %>
                     <div class="alert alert-success"><%= success %></div>
@@ -173,7 +164,7 @@
                 <% } %>
 
                 <form action="/cndl/submit" method="POST">
-                    <div class="form-floating">
+                    <div class="form-floating mb-4">
                         <input type="number" class="form-control" id="year" name="year" required min="2000" max="2100" value="<%= year || new Date().getFullYear() %>">
                         <label for="year">Chọn Năm</label>
                         <div class="invalid-feedback">Năm phải từ 2000 đến 2100.</div>
@@ -190,29 +181,25 @@
                                     <div class="indicator-item">
                                         <h6><%= ind.name %> (<%= ind.code %>)</h6>
                                         <p><strong>Đơn vị:</strong> <%= ind.unit_code %> | <strong>Công thức:</strong> <%= ind.formula %></p>
-                                        <p>(Nhập các biến dưới, hệ thống sẽ tính value tự động dựa trên recipe)</p>
+                                        <p>Nhập các giá trị biến dưới đây để hệ thống tự động tính toán:</p>
 
                                         <% if (ind.variables && ind.variables.length > 0) { %>
                                             <% ind.variables.forEach(varItem => { %>
                                                 <div class="form-floating variable-input">
-                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>[params][<%= varItem.var_name %>]" required min="0" step="any">
+                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>[params][<%= varItem.var_name %>]" required min="0" step="any" oninput="autoCalculate('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">
                                                     <label for="<%= ind.code %>_<%= varItem.var_name %>"><%= varItem.var_name %>: <%= varItem.var_desc %></label>
-                                                    <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
+                                                    <div class="invalid-feedback">Giá trị phải là số ≥ 0.</div>
                                                 </div>
                                             <% }); %>
+                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="autoCalculate('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
+                                            <p id="<%= ind.code %>_preview" class="mt-2 text-info"></p>
+                                            <input type="hidden" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated">
                                         <% } else { %>
                                             <div class="form-floating">
                                                 <input type="number" class="form-control" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated" required min="0" step="any">
-                                                <label for="<%= ind.code %>_value_calculated">Giá trị <%= ind.name %></label>
-                                                <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
+                                                <label for="<%= ind.code %>_value_calculated">Giá trị <%= ind.name %> (<%= ind.unit_code %>)</label>
+                                                <div class="invalid-feedback">Giá trị phải là số ≥ 0.</div>
                                             </div>
-                                        <% } %>
-
-                                        <input type="hidden" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated_hidden" <% if (ind.variables && ind.variables.length > 0) { %>value=""<% } %>>
-
-                                        <% if (ind.variables && ind.variables.length > 0) { %>
-                                            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="calculateValue('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
-                                            <p id="<%= ind.code %>_preview" class="mt-2"></p>
                                         <% } %>
                                     </div>
                                 <% }); %>
@@ -227,36 +214,52 @@
     </div>
 
     <script>
-        function calculateValue(code, formula) {
+        function autoCalculate(code, formula) {
+            const inputs = document.querySelectorAll(`[name^="${code}[params]"]`);
             let vars = {};
-            document.querySelectorAll(`[name^="${code}[params]"]`).forEach(input => {
-                let varName = input.name.match(/\[params\]\[(\w+)\]/)[1];
-                vars[varName] = parseFloat(input.value) || 0;
+            let allFilled = true;
+
+            inputs.forEach(input => {
+                const varName = input.name.match(/\[params\]\[(\w+)\]/)[1];
+                const value = parseFloat(input.value);
+                if (isNaN(value) || value < 0) {
+                    allFilled = false;
+                    return;
+                }
+                vars[varName] = value;
             });
 
-            let evalFormula = formula;
-            for (let [key, val] of Object.entries(vars)) {
-                evalFormula = evalFormula.replace(new RegExp(key, 'g'), val);
+            const previewElement = document.getElementById(`${code}_preview`);
+            const hiddenInput = document.getElementById(`${code}_value_calculated`);
+
+            if (!allFilled) {
+                previewElement.innerText = 'Vui lòng nhập đầy đủ các giá trị ≥ 0';
+                hiddenInput.value = '';
+                return;
             }
 
-            let result;
+            let evalFormula = formula;
+            for (const [key, val] of Object.entries(vars)) {
+                evalFormula = evalFormula.replace(new RegExp(`\\b${key}\\b`, 'g'), val);
+            }
+
             try {
-                result = math.evaluate(evalFormula);
+                const result = math.evaluate(evalFormula);
                 if (typeof result !== 'number' || isNaN(result)) {
                     throw new Error('Kết quả không hợp lệ');
                 }
+                previewElement.innerText = `Kết quả: ${result.toFixed(2)} ${document.querySelector(`[name="${code}[value_calculated]"]`) ? document.querySelector(`[name="${code}[value_calculated]"]`).closest('.indicator-item').querySelector('p').textContent.match(/Đơn vị: (\w+)/)[1] : ''}`;
+                hiddenInput.value = result.toFixed(2);
             } catch (e) {
-                result = `Lỗi tính toán: ${e.message}`;
+                previewElement.innerText = `Lỗi tính toán: ${e.message}`;
+                hiddenInput.value = '';
             }
-
-            document.getElementById(`${code}_preview`).innerText = `Value preview: ${result}`;
-            document.getElementById(`${code}_value_calculated_hidden`).value = typeof result === 'number' ? result : '';
         }
 
         document.querySelector('form').addEventListener('submit', (e) => {
             let valid = true;
             document.querySelectorAll('input[type="number"]').forEach(input => {
-                if (input.value < 0) {
+                if (input.value === '' || parseFloat(input.value) < 0) {
                     input.classList.add('is-invalid');
                     valid = false;
                 } else {
@@ -265,7 +268,7 @@
             });
             if (!valid) {
                 e.preventDefault();
-                alert('Vui lòng nhập các giá trị số ≥ 0.');
+                alert('Vui lòng nhập đầy đủ các giá trị số ≥ 0.');
             }
         });
     </script>
