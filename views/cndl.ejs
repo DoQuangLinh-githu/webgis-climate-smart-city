@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGIS - Cập Nhật Dữ Liệu</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <title>Cập Nhật Dữ Liệu - WebGIS Climate Smart City</title>
+    <!-- Font Awesome cho icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-
+    <!-- Math.js cho tính toán client-side -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
     <style>
         :root {
             --primary-color: #007bff;
@@ -172,6 +172,16 @@
             };
             return iconMap[domainId] || 'fas fa-cog'; // Icon mặc định
         }
+
+        // Hàm parse recipe_description thành danh sách biến (giả định server-side)
+        function parseRecipe(recipe) {
+            if (!recipe) return [];
+            const lines = recipe.split('\n').filter(line => line.trim().startsWith('✓'));
+            return lines.map(line => {
+                const match = line.match(/✓\s*(\w+):\s*(.+)/);
+                return match ? { var_name: match[1], var_desc: match[2] } : null;
+            }).filter(v => v);
+        }
     %>
     <div class="container-fluid main-container">
         <div class="row">
@@ -181,7 +191,7 @@
                     <h4 class="text-center">WebGIS</h4>
                     <h5 class="text-center">Climate Smart City</h5>
                     <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a Pea></li>
                         <li class="nav-item"><a class="nav-link active" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
                         <% if (user && user.role === 'admin') { %>
                             <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
@@ -204,130 +214,121 @@
                 </div>
             </nav>
 
-            <!-- Main content -->
+            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Cập Nhật Dữ Liệu - <%= city || 'TP. Hồ Chí Minh' %></h1>
-                    <p>Nhập dữ liệu chỉ số cho năm được chọn</p>
-                </div>
+                <h2>Cập Nhật Dữ Liệu - <%= city || 'TP. Hồ Chí Minh' %></h2>
+                <p>Nhập dữ liệu chỉ số cho năm được chọn</p>
 
-                <% if (error) { %>
-                    <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
-                <% } %>
                 <% if (success) { %>
-                    <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
+                    <div class="alert alert-success"><%= success %></div>
+                <% } %>
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%= error %></div>
                 <% } %>
 
-                <form action="/cndl" method="POST" id="updateForm" novalidate>
-                    <!-- Phần chọn năm -->
-                    <div class="field-card">
-                        <div class="field-header">
-                            <h5><i class="fas fa-calendar"></i> Chọn Năm</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-floating">
-                                <input type="number" class="form-control" id="year" name="year" value="<%= year || new Date().getFullYear() %>" required min="2000" max="2100">
-                                <label for="year">Năm</label>
-                                <div class="invalid-feedback">Năm phải từ 2000 đến 2100.</div>
-                            </div>
-                        </div>
+                <form action="/cndl/submit" method="POST">
+                    <div class="form-floating">
+                        <input type="number" class="form-control" id="year" name="year" required min="2000" max="2100" value="<%= year || new Date().getFullYear() %>">
+                        <label for="year">Chọn Năm</label>
+                        <div class="invalid-feedback">Năm phải từ 2000 đến 2100.</div>
                     </div>
 
-                    <!-- Phần nhập dữ liệu các lĩnh vực -->
                     <% domains.forEach(domain => { %>
                         <div class="field-card">
                             <div class="field-header">
-                                <h5><i class="<%= domain.icon || getDefaultIcon(domain.domain_id) %>"></i> <%= domain.name %></h5>
-                                <small class="text-white-50">Max score: <%= domain.max_score %></small>
+                                <h5><i class="<%= getDefaultIcon(domain.domain_id) %>"></i> <%= domain.name %></h5>
+                                <span>Max score: <%= domain.max_score %></span>
                             </div>
-                            <div class="card-body">
+                            <div class="p-3">
                                 <% indicators.filter(ind => ind.domain_id === domain.domain_id).forEach(ind => { %>
                                     <div class="indicator-item">
                                         <h6><%= ind.name %> (<%= ind.code %>)</h6>
-                                        <p>Đơn vị: <%= ind.unit_code %> | Công thức: <%= ind.formula || 'Không có công thức' %> | (Nhập giá trị, hệ thống sẽ tự ánh xạ mức)</p>
-                                        <div class="form-floating">
-                                            <input type="number" 
-                                                   class="form-control <%= (ind.unit_code === 'percent') ? 'percent-input' : '' %>" 
-                                                   id="indicator_<%= ind.code %>" 
-                                                   name="indicators[<%= ind.code %>][value]" 
-                                                   placeholder="Nhập giá trị (ví dụ: 25 cho %)" 
-                                                   step="0.01" 
-                                                   min="0">
-                                            <label for="indicator_<%= ind.code %>">Giá trị</label>
-                                            <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
-                                        </div>
+                                        <p><strong>Đơn vị:</strong> <%= ind.unit_code %> | <strong>Công thức:</strong> <%= ind.formula %></p>
+                                        <p>(Nhập các biến dưới, hệ thống sẽ tính value tự động dựa trên recipe)</p>
+
+                                        <!-- Parse recipe_description thành variables -->
+                                        <% const variables = parseRecipe(ind.recipe_description); %>
+                                        <% if (variables.length > 0) { %>
+                                            <% variables.forEach(varItem => { %>
+                                                <div class="form-floating variable-input">
+                                                    <input type="number" class="form-control" id="<%= ind.code %>_<%= varItem.var_name %>" name="<%= ind.code %>_<%= varItem.var_name %>" required min="0" step="any">
+                                                    <label for="<%= ind.code %>_<%= varItem.var_name %>"><%= varItem.var_name %>: <%= varItem.var_desc %></label>
+                                                    <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
+                                                </div>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <!-- Fallback cho indicator định tính -->
+                                            <div class="form-floating">
+                                                <input type="number" class="form-control" name="<%= ind.code %>_value" id="<%= ind.code %>_value" required min="0" step="any">
+                                                <label for="<%= ind.code %>_value">Giá trị <%= ind.name %></label>
+                                                <div class="invalid-feedback">Giá trị không hợp lệ (phải là số ≥ 0).</div>
+                                            </div>
+                                        <% } %>
+
+                                        <!-- Hidden input cho value cuối -->
+                                        <input type="hidden" name="<%= ind.code %>_value_calculated" id="<%= ind.code %>_value_calculated">
+
+                                        <!-- Button tính preview -->
+                                        <button type="button" class="btn btn-primary btn-sm mt-2" onclick="calculateValue('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
+                                        <p id="<%= ind.code %>_preview" class="mt-2"></p>
                                     </div>
-                                <% }) %>
+                                <% }); %>
                             </div>
                         </div>
-                    <% }) %>
+                    <% }); %>
 
-                    <!-- Nút lưu dữ liệu -->
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary" id="submitBtn">
-                            <span class="btn-text"><i class="fas fa-save"></i> Lưu Dữ Liệu</span>
-                            <span class="loading spinner-border spinner-border-sm text-light" role="status"></span>
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary">Lưu Dữ Liệu</button>
                 </form>
             </main>
         </div>
     </div>
 
-    <!-- Thư viện JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Validation phía client
-        (function () {
-            'use strict';
-            const form = document.getElementById('updateForm');
-            const submitBtn = document.getElementById('submitBtn');
-            const yearInput = document.getElementById('year');
-
-            // Xử lý khi submit form
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                } else {
-                    submitBtn.disabled = true;
-                    submitBtn.querySelector('.btn-text').style.display = 'none';
-                    submitBtn.querySelector('.loading').style.display = 'inline-block';
-                }
-                form.classList.add('was-validated');
-            });
-
-            // Validation cho trường năm
-            yearInput.addEventListener('input', function () {
-                if (this.value < 2000 || this.value > 2100) {
-                    this.setCustomValidity('Năm phải từ 2000 đến 2100.');
-                } else {
-                    this.setCustomValidity('');
+        // Hàm tính preview client-side
+        function calculateValue(code, formula) {
+            let vars = {};
+            document.querySelectorAll(`[name^="${code}_"]`).forEach(input => {
+                if (input.name !== `${code}_value_calculated`) {
+                    let varName = input.name.replace(`${code}_`, '');
+                    vars[varName] = parseFloat(input.value) || 0;
                 }
             });
 
-            // Validation cho các trường phần trăm
-            document.querySelectorAll('.percent-input').forEach(input => {
-                input.addEventListener('input', function () {
-                    const value = parseFloat(this.value);
-                    if (value < 0 || value > 100 || isNaN(value)) {
-                        this.setCustomValidity('Giá trị % phải từ 0 đến 100.');
-                    } else {
-                        this.setCustomValidity('');
-                    }
-                });
-            });
+            let evalFormula = formula;
+            for (let [key, val] of Object.entries(vars)) {
+                evalFormula = evalFormula.replace(new RegExp(key, 'g'), val);
+            }
 
-            // Xử lý định dạng số cho tất cả các trường nhập số
+            let result;
+            try {
+                result = math.evaluate(evalFormula);
+                if (typeof result !== 'number' || isNaN(result)) {
+                    throw new Error('Kết quả không hợp lệ');
+                }
+            } catch (e) {
+                result = `Lỗi tính toán: ${e.message}`;
+            }
+
+            document.getElementById(`${code}_preview`).innerText = `Value preview: ${result}`;
+            document.getElementById(`${code}_value_calculated`).value = typeof result === 'number' ? result : '';
+        }
+
+        // Client-side validation
+        document.querySelector('form').addEventListener('submit', (e) => {
+            let valid = true;
             document.querySelectorAll('input[type="number"]').forEach(input => {
-                input.addEventListener('input', function () {
-                    this.value = this.value.replace(',', '.').replace(/[^\d.]/g, '');
-                    if (this.value === '' || parseFloat(this.value) < 0) {
-                        this.value = '';
-                    }
-                });
+                if (input.value < 0) {
+                    input.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
             });
-        })();
+            if (!valid) {
+                e.preventDefault();
+                alert('Vui lòng nhập các giá trị số ≥ 0.');
+            }
+        });
     </script>
 </body>
 </html>
