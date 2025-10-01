@@ -114,6 +114,8 @@
             padding: 15px 20px;
             animation: fadeIn 0.5s ease-in-out;
         }
+        .preview-valid { color: var(--success-color); font-weight: bold; }
+        .preview-invalid { color: var(--danger-color); font-weight: bold; }
         @media (max-width: 768px) {
             .main-content { padding: 15px; margin: 10px; }
             .field-header h5 { font-size: 1.1rem; }
@@ -180,8 +182,8 @@
                                 <% indicators.filter(ind => ind.domain_id === domain.domain_id).forEach(ind => { %>
                                     <div class="indicator-item">
                                         <h6><%= ind.name %> (<%= ind.code %>)</h6>
-                                        <p><strong>Đơn vị:</strong> <%= ind.unit_code %> | <strong>Công thức:</strong> <%= ind.formula %></p>
-                                        <p>Nhập các giá trị biến dưới đây để hệ thống tự động tính toán:</p>
+                                        <p><strong>Đơn vị:</strong> <%= ind.unit_code %> | <strong>Công thức:</strong> <%= ind.formula || 'Không có công thức' %></p>
+                                        <p>Nhập các giá trị dưới đây để hệ thống tự động tính toán:</p>
 
                                         <% if (ind.variables && ind.variables.length > 0) { %>
                                             <% ind.variables.forEach(varItem => { %>
@@ -192,7 +194,7 @@
                                                 </div>
                                             <% }); %>
                                             <button type="button" class="btn btn-primary btn-sm mt-2" onclick="autoCalculate('<%= ind.code %>', '<%= ind.formula.replace(/"/g, '\\"') %>')">Tính Preview</button>
-                                            <p id="<%= ind.code %>_preview" class="mt-2 text-info"></p>
+                                            <p id="<%= ind.code %>_preview" class="mt-2"></p>
                                             <input type="hidden" name="<%= ind.code %>[value_calculated]" id="<%= ind.code %>_value_calculated">
                                         <% } else { %>
                                             <div class="form-floating">
@@ -224,9 +226,11 @@
                 const value = parseFloat(input.value);
                 if (isNaN(value) || value < 0) {
                     allFilled = false;
-                    return;
+                    input.classList.add('is-invalid');
+                } else {
+                    vars[varName] = value;
+                    input.classList.remove('is-invalid');
                 }
-                vars[varName] = value;
             });
 
             const previewElement = document.getElementById(`${code}_preview`);
@@ -234,6 +238,7 @@
 
             if (!allFilled) {
                 previewElement.innerText = 'Vui lòng nhập đầy đủ các giá trị ≥ 0';
+                previewElement.className = 'mt-2 preview-invalid';
                 hiddenInput.value = '';
                 return;
             }
@@ -248,10 +253,15 @@
                 if (typeof result !== 'number' || isNaN(result)) {
                     throw new Error('Kết quả không hợp lệ');
                 }
-                previewElement.innerText = `Kết quả: ${result.toFixed(2)} ${document.querySelector(`[name="${code}[value_calculated]"]`) ? document.querySelector(`[name="${code}[value_calculated]"]`).closest('.indicator-item').querySelector('p').textContent.match(/Đơn vị: (\w+)/)[1] : ''}`;
+                const unit = document.querySelector(`[name="${code}[value_calculated]"]`) 
+                    ? document.querySelector(`[name="${code}[value_calculated]"]`).closest('.indicator-item').querySelector('p').textContent.match(/Đơn vị: (\w+)/)[1] 
+                    : '';
+                previewElement.innerText = `Kết quả: ${result.toFixed(2)} ${unit}`;
+                previewElement.className = 'mt-2 preview-valid';
                 hiddenInput.value = result.toFixed(2);
             } catch (e) {
                 previewElement.innerText = `Lỗi tính toán: ${e.message}`;
+                previewElement.className = 'mt-2 preview-invalid';
                 hiddenInput.value = '';
             }
         }
