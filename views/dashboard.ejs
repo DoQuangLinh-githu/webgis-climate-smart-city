@@ -211,95 +211,99 @@
           </div>
         </div>
       </nav>
-
             <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Dashboard - TP. Hồ Chí Minh</h1>
-                    <p>Tổng quan hệ thống đánh giá Climate Smart City</p>
+<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard - TP. Hồ Chí Minh</h1>
+        <p>Tổng quan hệ thống đánh giá Climate Smart City</p>
+    </div>
+
+    <% if (error) { %>
+        <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
+    <% } %>
+    <% if (success) { %>
+        <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
+    <% } %>
+
+    <!-- Row for Điểm Tổng Hợp (full width) -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="field-card text-center">
+                <div class="field-header">
+                    <h5><i class="fas fa-chart-line"></i> Điểm Tổng Hợp</h5>
                 </div>
-
-                <% if (error) { %>
-                    <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
-                <% } %>
-                <% if (success) { %>
-                    <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
-                <% } %>
-
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="fas fa-chart-line"></i> Điểm Tổng Hợp</h5>
-                            </div>
-                            <div class="card-body">
-                                <h3><%= totalScore || 0 %></h3>
-                                <p>Điểm Tổng Hợp</p>
-                                <p class="level-badge level-<%= overallLevel || 1 %>">Level <%= overallLevel || 1 %></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="fas fa-bolt"></i> Năng Lượng</h5>
-                            </div>
-                            <div class="card-body">
-                                <h3><%= domainScores[1] || 0 %></h3>
-                                <p>/ <%= domains.find(d => d.domain_id === 1)?.max_score || 100 %> điểm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="fas fa-city"></i> Quy Hoạch</h5>
-                            </div>
-                            <div class="card-body">
-                                <h3><%= domainScores[2] || 0 %></h3>
-                                <p>/ <%= domains.find(d => d.domain_id === 2)?.max_score || 100 %> điểm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="fas fa-bus"></i> Giao Thông</h5>
-                            </div>
-                            <div class="card-body">
-                                <h3><%= domainScores[3] || 0 %></h3>
-                                <p>/ <%= domains.find(d => d.domain_id === 3)?.max_score || 120 %> điểm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="fas fa-tint"></i> Quản Lý Nước</h5>
-                            </div>
-                            <div class="card-body">
-                                <h3><%= domainScores[4] || 0 %></h3>
-                                <p>/ <%= domains.find(d => d.domain_id === 4)?.max_score || 100 %> điểm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <div class="field-card">
-                            <div class="field-header">
-                                <h5><i class="fas fa-recycle"></i> Quản Lý Chất Thải</h5>
-                            </div>
-                            <div class="card-body">
-                                <h3><%= domainScores[5] || 0 %></h3>
-                                <p>/ <%= domains.find(d => d.domain_id === 5)?.max_score || 100 %> điểm</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body">
+                    <h3><%= totalScore || 0 %></h3>
+                    <p>Điểm Tổng Hợp</p>
+                    <p class="level-badge level-<%= overallLevel || 1 %>">Level <%= overallLevel || 1 %></p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row for Domain Cards (evenly spaced) -->
+    <div class="row">
+        <div class="col-md-2 col-6">
+            <div class="field-card">
+                <div class="field-header">
+                    <h5><i class="fas fa-bolt"></i> Năng Lượng</h5>
+                </div>
+                <div class="card-body">
+                    <h3><%= domainScores[1] || 0 %></h3>
+                    <p>/ <%= domains.find(d => d.domain_id === 1)?.max_score || 100 %> điểm</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="field-card">
+                <div class="field-header">
+                    <h5><i class="fas fa-city"></i> Quy Hoạch</h5>
+                </div>
+                <div class="card-body">
+                    <h3><%= domainScores[2] || 0 %></h3>
+                    <p>/ <%= domains.find(d => d.domain_id === 2)?.max_score || 100 %> điểm</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="field-card">
+                <div class="field-header">
+                    <h5><i class="fas fa-bus"></i> Giao Thông</h5>
+                </div>
+                <div class="card-body">
+                    <h3><%= domainScores[3] || 0 %></h3>
+                    <p>/ <%= domains.find(d => d.domain_id === 3)?.max_score || 120 %> điểm</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="field-card">
+                <div class="field-header">
+                    <h5><i class="fas fa-tint"></i> Quản Lý Nước</h5>
+                </div>
+                <div class="card-body">
+                    <h3><%= domainScores[4] || 0 %></h3>
+                    <p>/ <%= domains.find(d => d.domain_id === 4)?.max_score || 100 %> điểm</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-6">
+            <div class="field-card">
+                <div class="field-header">
+                    <h5><i class="fas fa-recycle"></i> Quản Lý Chất Thải</h5>
+                </div>
+                <div class="card-body">
+                    <h3><%= domainScores[5] || 0 %></h3>
+                    <p>/ <%= domains.find(d => d.domain_id === 5)?.max_score || 100 %> điểm</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
                 <!-- 
                 <div class="row">
                     <div class="col-md-8">
