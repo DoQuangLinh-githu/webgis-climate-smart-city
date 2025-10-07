@@ -242,32 +242,34 @@
 <body>
     <div class="main-container">
         <!-- Sidebar -->
-        <nav class="sidebar">
-            <h4>WebGIS</h4>
-            <h5>Climate Smart City</h5>
-            <div class="clock-container">
-                <div class="clock-time" id="clockTime"></div>
-                <div class="clock-date" id="clockDate"></div>
-            </div>
-            <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
-                <% if (user.role === 'admin') { %>
-                <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
-                <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
-                <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
-                <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
-                <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/tongdiem"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
-                <% } %>
-                <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
-            </ul>
-            <hr>
-            <div class="text-center">
-                <p>Người dùng: <strong><%= user.username %></strong></p>
-                <span class="badge bg-primary"><%= user.role === 'admin' ? 'Quản trị' : 'Người dùng' %></span>
-            </div>
-        </nav>
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+        <div class="position-sticky pt-3">
+          <h4 class="text-center">WebGIS</h4>
+          <h5 class="text-center">Climate Smart City</h5>
+          <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
+            <% if (user && user.role === 'admin') { %>
+            <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+            <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+            <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
+            <% } %>
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+          </ul>
+          <hr>
+          <div class="text-center">
+            <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
+            <% if (user && user.role === 'admin') { %>
+              <span class="badge bg-primary">Quản trị</span>
+            <% } else { %>
+              <span class="badge bg-secondary">Người dùng</span>
+            <% } %>
+          </div>
+        </div>
+      </nav>
 
         <!-- Main Content -->
         <main class="main-content">
