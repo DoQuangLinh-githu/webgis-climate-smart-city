@@ -63,7 +63,7 @@ app.use(
   rateLimit({
     windowMs,
     max: maxRequests,
-    keyGenerator: (req) => req.ip, // Sử dụng IP từ Express
+    keyGenerator: (req) => req.ip,
     message: {
       error: 'Quá nhiều yêu cầu từ IP này. Vui lòng thử lại sau.',
       retryAfter: Math.ceil(windowMs / 1000),
@@ -843,59 +843,59 @@ async function initializeDatabase() {
       ('domain', 5, 'Quản lý chất thải', 0.19);
     `);
 
-    // Chèn dữ liệu vào bảng IndicatorWeights
+    // Chèn dữ liệu vào bảng IndicatorWeights (corrected)
     await pool.query(`
       INSERT INTO IndicatorWeights (indicator_id, indicator_code, domain_id, weight_within_domain) VALUES
-      (1, 'ENIRE', 1, 0.125),
+      (1, 'ENI_RWE', 1, 0.125),
       (2, 'SENIRE', 1, 0.125),
-      (3, 'CO2red', 1, 0.125),
-      (4, 'EIsave', 1, 0.125),
-      (5, 'EILR', 1, 0.125),
-      (6, 'SLI', 1, 0.125),
-      (7, 'GBpromo', 1, 0.125),
-      (8, 'GBI', 1, 0.125),
-      (9, 'RS-water', 2, 0.1429),
+      (3, 'EI_Save', 1, 0.125),
+      (4, 'EI_LR', 1, 0.125),
+      (5, 'SLI', 1, 0.125),
+      (6, 'GBpromo', 1, 0.125),
+      (7, 'VNGBI', 1, 0.125),
+      (8, 'R_CO2e', 2, 0.1429),
+      (9, 'R_S_water', 2, 0.1429),
       (10, 'Rcover', 2, 0.1429),
-      (11, 'Rland-p', 2, 0.1429),
-      (12, 'Biodiv', 2, 0.1429),
+      (11, 'Rland_p', 2, 0.1429),
+      (12, 'UBI_PNRA', 2, 0.1429),
       (13, 'GISapp', 2, 0.1429),
       (14, 'DISaster', 2, 0.1429),
       (15, 'ClimateAct', 2, 0.1429),
       (16, 'NMT', 3, 0.1),
-      (17, 'CleanPT', 3, 0.1),
-      (18, 'PTaccess', 3, 0.1),
+      (17, 'PT_c', 3, 0.1),
+      (18, 'PT1000', 3, 0.1),
       (19, 'STL', 3, 0.1),
-      (20, 'RroadIT', 3, 0.1),
+      (20, 'SRRW', 3, 0.1),
       (21, 'RoadCap', 3, 0.1),
       (22, 'AQstation', 3, 0.1),
       (23, 'AQdata', 3, 0.1),
       (24, 'CleanAirPlan', 3, 0.1),
-      (25, 'AQI', 3, 0.1),
+      (25, 'AQI_TDE', 3, 0.1),
       (26, 'WImanage', 4, 0.125),
-      (27, 'WIloss', 4, 0.125),
-      (28, 'WIreuse', 4, 0.125),
+      (27, 'WI_loss', 4, 0.125),
+      (28, 'WI_rr', 4, 0.125),
       (29, 'FloodRisk', 4, 0.125),
       (30, 'Ewater', 4, 0.125),
       (31, 'Ewwater', 4, 0.125),
       (32, 'DigWater', 4, 0.125),
-      (33, 'SafeWater', 4, 0.125),
+      (33, 'R_USWA', 4, 0.125),
       (34, 'WasteInit', 5, 0.125),
-      (35, 'Landfill', 5, 0.125),
+      (35, 'R_USWA_waste', 5, 0.125),
       (36, 'RRWI', 5, 0.125),
       (37, 'ConsWaste', 5, 0.125),
-      (38, 'WetWaste', 5, 0.125),
+      (38, 'WWT_I', 5, 0.125),
       (39, 'DigWaste', 5, 0.125),
       (40, 'LandfillEff', 5, 0.125),
-      (41, 'GHGred', 5, 0.125);
+      (41, 'GHGIs', 5, 0.125);
     `);
 
-    // Chèn dữ liệu mẫu vào Assessments_Template
+    // Chèn dữ liệu mẫu vào Assessments_Template (corrected)
     await pool.query(`
       INSERT INTO Assessments_Template (city, year, domain_id, indicator_id, indicator_code, value, unit_code, score_awarded, assessor, date, level, description)
       VALUES
-      ('TP. Hồ Chí Minh', 2025, 1, 1, 'ENIRE', '10', 'percent', 3, 'admin', CURRENT_DATE, 1, 'Mô tả Mức 1 - có thể chỉnh sửa'),
-      ('TP. Hồ Chí Minh', 2025, 1, 6, 'SLI', '12', 'percent or count', 4, 'admin', CURRENT_DATE, 2, 'Mô tả Mức 2 - có thể chỉnh sửa'),
-      ('TP. Hồ Chí Minh', 2025, 1, 7, 'GBpromo', '21', 'score', 6, 'admin', CURRENT_DATE, 3, 'Có cơ quan quản lý công trình xanh');
+      ('TP. Hồ Chí Minh', 2025, 1, 1, 'ENI_RWE', '10', 'percent', 3, 'admin', CURRENT_DATE, 1, 'Mô tả Mức 1 - có thể chỉnh sửa'),
+      ('TP. Hồ Chí Minh', 2025, 1, 5, 'SLI', '12', 'percent or count', 4, 'admin', CURRENT_DATE, 2, 'Mô tả Mức 2 - có thể chỉnh sửa'),
+      ('TP. Hồ Chí Minh', 2025, 1, 6, 'GBpromo', '4', 'score', 4, 'admin', CURRENT_DATE, 2, 'Hệ thống văn bản pháp luật về công trình xanh được ban hành');
     `);
 
     // Chèn dữ liệu mẫu vào users
@@ -967,7 +967,7 @@ app.get('/', async (req, res) => {
     await fs.access(viewPath); // Kiểm tra sự tồn tại của index.ejs
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private'); // Ngăn cache
     
-    // Lấy năm từ query hoặc mặc định là năm hiện tại
+    // Lấy year từ query hoặc mặc định là năm hiện tại
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const city = 'TP. Hồ Chí Minh';
     const cacheKey = `data:${city}:${year}`;
@@ -1055,7 +1055,7 @@ app.get('/index', async (req, res) => {
     await fs.access(viewPath);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     
-    // Lấy năm từ query hoặc mặc định là năm hiện tại
+    // Lấy year từ query hoặc mặc định là năm hiện tại
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const city = 'TP. Hồ Chí Minh';
     const cacheKey = `data:${city}:${year}`;
@@ -2075,10 +2075,8 @@ app.post(
 
       // Log to edit_history
       await pool.query(
-        `
-        INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        `,
+        `INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           'users',
           username,
@@ -2218,7 +2216,7 @@ app.get('/lichsu', authenticateToken, async (req, res) => {
       LIMIT 100
       `
     );
-    res.render('history', {
+    res.render('lichsu', {
       user,
       history: historyRes.rows,
       error: req.query.error || null,
@@ -2226,7 +2224,7 @@ app.get('/lichsu', authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error('Lỗi GET /lichsu:', err);
-    res.render('history', {
+    res.render('lichsu', {
       user: req.user,
       history: [],
       error: 'Lỗi khi lấy lịch sử',

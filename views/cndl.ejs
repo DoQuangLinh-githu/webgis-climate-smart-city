@@ -178,6 +178,12 @@
             box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
 
+        .btn-secondary {
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+
         .alert {
             border-radius: 8px;
             padding: 16px;
@@ -228,7 +234,7 @@
             .accordion-button {
                 font-size: 1rem;
             }
-            .btn-primary {
+            .btn-primary, .btn-secondary {
                 width: 100%;
             }
         }
@@ -242,38 +248,42 @@
 <body>
     <div class="main-container">
         <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
-        <div class="position-sticky pt-3">
-          <h4 class="text-center">WebGIS</h4>
-          <h5 class="text-center">Climate Smart City</h5>
-          <ul class="nav flex-column">
-            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
-            <% if (user && user.role === 'admin') { %>
-            <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
-            <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
-            <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
-            <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
-            <% } %>
-            <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
-            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
-          </ul>
-          <hr>
-          <div class="text-center">
-            <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
-            <% if (user && user.role === 'admin') { %>
-              <span class="badge bg-primary">Quản trị</span>
-            <% } else { %>
-              <span class="badge bg-secondary">Người dùng</span>
-            <% } %>
-          </div>
-        </div>
-      </nav>
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="position-sticky pt-3">
+                <h4 class="text-center">WebGIS</h4>
+                <h5 class="text-center">Climate Smart City</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
+                    <% if (user && user.role === 'admin') { %>
+                        <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
+                    <% } %>
+                    <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+                </ul>
+                <hr>
+                <div class="text-center">
+                    <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
+                    <% if (user && user.role === 'admin') { %>
+                        <span class="badge bg-primary">Quản trị</span>
+                    <% } else { %>
+                        <span class="badge bg-secondary">Người dùng</span>
+                    <% } %>
+                </div>
+                <div class="clock-container">
+                    <div class="clock-time" id="clockTime"></div>
+                    <div class="clock-date" id="clockDate"></div>
+                </div>
+            </div>
+        </nav>
 
         <!-- Main Content -->
         <main class="main-content">
-            <% if (user.role === 'admin') { %>
+            <% if (user && user.role === 'admin') { %>
                 <h2 class="mb-4">Tính toán các chỉ số môi trường</h2>
                 <p class="text-muted mb-4">Nhập các giá trị để tính toán các chỉ số môi trường cho từng lĩnh vực.</p>
                 <% if (error) { %>
@@ -285,879 +295,903 @@
                 <form action="/cndl" method="POST" id="cndlForm">
                     <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
                     <input type="hidden" name="city" value="TP. Hồ Chí Minh">
+                    <div class="accordion" id="domainAccordion">
                         <!-- Domain 1: Năng lượng & Công trình xanh -->
-<div class="accordion-item">
-    <h2 class="accordion-header" id="heading1">
-        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-            Năng lượng & Công trình xanh
-        </button>
-    </h2>
-    <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#domainAccordion">
-        <div class="accordion-body">
-            <!-- Indicator 1 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tiêu thụ điện từ các nguồn năng lượng tái tạo</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên năng lượng tái tạo và tổng tiêu thụ."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="E_RE" name="ENI_RWE[params][E_RE]" class="form-control" step="any" required>
-                        <label for="E_RE">Năng lượng tái tạo sử dụng (E_RE, kWh)</label>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+                                    Năng lượng & Công trình xanh
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#domainAccordion">
+                                <div class="accordion-body">
+                                    <!-- Indicator 1 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tiêu thụ điện từ các nguồn năng lượng tái tạo</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên năng lượng tái tạo và tổng tiêu thụ."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="E_RE" name="ENI_RWE[params][E_RE]" class="form-control" step="any">
+                                                <label for="E_RE">Năng lượng tái tạo sử dụng (E_RE, kWh)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="EC" name="ENI_RWE[params][EC]" class="form-control" step="any">
+                                                <label for="EC">Tổng năng lượng tiêu thụ (EC, kWh)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="L_ATC" name="ENI_RWE[params][L_AT&C]" class="form-control" step="any">
+                                                <label for="L_ATC">Tổn thất năng lượng (L_AT&C, kWh)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="P_RE" name="ENI_RWE[params][P_RE]" class="form-control" step="any">
+                                                <label for="P_RE">Công suất năng lượng tái tạo (P_RE, kW)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="P_total" name="ENI_RWE[params][P_total]" class="form-control" step="any">
+                                                <label for="P_total">Tổng công suất (P_total, kW)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('ENI_RWE')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 2 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Chỉ số phần trăm năng lượng điện từ các nguồn năng lượng tái tạo trong tổng cung năng lượng."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="SE_RE" name="SENIRE[params][SE_RE]" class="form-control" step="any">
+                                                <label for="SE_RE">Tổng lượng điện từ nguồn năng lượng tái tạo trong thành phố (SE_RE, kWh)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="ES" name="SENIRE[params][ES]" class="form-control" step="any">
+                                                <label for="ES">Tổng lượng điện cung cấp trong thành phố (ES, kWh)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('SENIRE')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 3 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Chỉ số tiết kiệm điện</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng điện tiết kiệm và tổng tiêu thụ điện."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="E_Save" name="EI_Save[params][E_Save]" class="form-control" step="any">
+                                                <label for="E_Save">Lượng điện tiết kiệm (E_Save, kWh)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="E_C" name="EI_Save[params][E_C]" class="form-control" step="any">
+                                                <label for="E_C">Tổng tiêu thụ điện (E_C, kWh)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('EI_Save')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 4 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Hiệu quả vận hành hệ thống điện thông minh</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên điện năng đưa vào và giao đến người tiêu dùng."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="E_input" name="EI_LR[params][E_input]" class="form-control" step="any">
+                                                <label for="E_input">Tổng sản lượng điện đưa vào (E_input, kWh)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="E_delivered" name="EI_LR[params][E_delivered]" class="form-control" step="any">
+                                                <label for="E_delivered">Tổng điện năng giao đến (E_delivered, kWh)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('EI_LR')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 5 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Hệ thống chiếu sáng đường phố tiết kiệm năng lượng</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số đèn tiết kiệm năng lượng và tự động hóa."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="SL_e" name="SLI[params][SL_e]" class="form-control" step="any">
+                                                <label for="SL_e">Số đèn đường tiết kiệm năng lượng (SL_e, cái)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="SL_s" name="SLI[params][SL_s]" class="form-control" step="any">
+                                                <label for="SL_s">Số đèn đường thông minh (SL_s, cái)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="SL" name="SLI[params][SL]" class="form-control" step="any">
+                                                <label for="SL">Tổng số đèn đường (SL, cái)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('SLI')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 6 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mức độ thúc đẩy các công trình xanh</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá dựa trên chính sách thúc đẩy công trình xanh."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="GBpromo" name="GBpromo[params][GBpromo]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="GBpromo">Điểm đánh giá (GBpromo, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('GBpromo')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 7 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Xây dựng các công trình xanh</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số tòa nhà xanh và diện tích xây dựng."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="B_P" name="VNGBI[params][B_P]" class="form-control" step="any">
+                                                <label for="B_P">Số tòa nhà được chứng nhận trước (B_P, cái)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="B_AC" name="VNGBI[params][B_AC]" class="form-control" step="any">
+                                                <label for="B_AC">Số tòa nhà được phê duyệt xây dựng (B_AC, cái)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="S_GB" name="VNGBI[params][S_GB]" class="form-control" step="any">
+                                                <label for="S_GB">Diện tích xây dựng công trình xanh (S_GB, km²)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="S_BC" name="VNGBI[params][S_BC]" class="form-control" step="any">
+                                                <label for="S_BC">Tổng diện tích xây dựng hoàn thành (S_BC, km²)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('VNGBI')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 8 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Giảm phát thải CO2 từ tiêu thụ nhiên liệu hóa thạch</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng phát thải CO2 từ năng lượng hóa thạch."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="CO2eb" name="R_CO2e[params][CO2eb]" class="form-control" step="any">
+                                                <label for="CO2eb">Phát thải CO2 kịch bản BAU (CO2eb, tCO2e)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="CO2et" name="R_CO2e[params][CO2et]" class="form-control" step="any">
+                                                <label for="CO2et">Phát thải CO2 kịch bản chuyển đổi (CO2et, tCO2e)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('R_CO2e')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Domain 2: Quy hoạch đô thị, phủ xanh & đa dạng sinh học -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                                    Quy hoạch đô thị, phủ xanh & đa dạng sinh học
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#domainAccordion">
+                                <div class="accordion-body">
+                                    <!-- Indicator 9 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích mặt nước và không gian mở."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="S_water_present" name="R_S_water[params][S_water_present]" class="form-control" step="any">
+                                                <label for="S_water_present">Diện tích mặt nước hiện tại (S_water_present, ha)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="S_water_plan" name="R_S_water[params][S_water_plan]" class="form-control" step="any">
+                                                <label for="S_water_plan">Diện tích mặt nước quy hoạch (S_water_plan, ha)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="S_op_present" name="R_S_water[params][S_op_present]" class="form-control" step="any">
+                                                <label for="S_op_present">Diện tích không gian mở hiện tại (S_op_present, ha)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="S_op_plan" name="R_S_water[params][S_op_plan]" class="form-control" step="any">
+                                                <label for="S_op_plan">Diện tích không gian mở quy hoạch (S_op_plan, ha)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('R_S_water')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 10 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ phủ xanh trong thành phố</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích cây xanh công cộng và dân số."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="S_pp" name="Rcover[params][S_pp]" class="form-control" step="any">
+                                                <label for="S_pp">Diện tích cây xanh công cộng (S_pp, m²)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="P" name="Rcover[params][P]" class="form-control" step="any">
+                                                <label for="P">Tổng dân số (P, người)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('Rcover')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 11 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích đất cây xanh và tổng diện tích đất xây dựng."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="S_land_p" name="Rland_p[params][S_land_p]" class="form-control" step="any">
+                                                <label for="S_land_p">Diện tích đất cây xanh đô thị (S_land_p, ha)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="S_total_land" name="Rland_p[params][S_total_land]" class="form-control" step="any">
+                                                <label for="S_total_land">Tổng diện tích đất xây dựng đô thị (S_total_land, ha)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('Rland_p')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 12 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Đa dạng sinh học đô thị</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích tự nhiên và phục hồi sinh thái."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="A_natural" name="UBI_PNRA[params][A_natural]" class="form-control" step="any">
+                                                <label for="A_natural">Diện tích khu vực tự nhiên (A_natural, ha)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="A_restored" name="UBI_PNRA[params][A_restored]" class="form-control" step="any">
+                                                <label for="A_restored">Diện tích khu vực phục hồi sinh thái (A_restored, ha)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="A_city" name="UBI_PNRA[params][A_city]" class="form-control" step="any">
+                                                <label for="A_city">Tổng diện tích thành phố (A_city, ha)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('UBI_PNRA')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 13 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Ứng dụng GIS và dữ liệu số trong quy hoạch đô thị</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ ứng dụng GIS trong quy hoạch."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="GISapp" name="GISapp[params][GISapp]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="GISapp">Điểm đánh giá (GISapp, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('GISapp')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 14 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Hệ thống cảnh báo & quản lý thiên tai thông minh</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hệ thống cảnh báo thiên tai."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="DISaster" name="DISaster[params][DISaster]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="DISaster">Điểm đánh giá (DISaster, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('DISaster')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 15 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Kế hoạch hành động về khí hậu</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá chất lượng kế hoạch hành động khí hậu."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="ClimateAct" name="ClimateAct[params][ClimateAct]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="ClimateAct">Điểm đánh giá (ClimateAct, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('ClimateAct')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Domain 3: Giao thông đô thị & chất lượng không khí -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+                                    Giao thông đô thị & chất lượng không khí
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#domainAccordion">
+                                <div class="accordion-body">
+                                    <!-- Indicator 16 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tỷ lệ đường dành cho xe đạp và đi bộ."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="NMT_L" name="NMT[params][NMT_L]" class="form-control" step="any">
+                                                <label for="NMT_L">Chiều dài mạng lưới giao thông phi cơ giới (NMT_L, km)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="L_R" name="NMT[params][L_R]" class="form-control" step="any">
+                                                <label for="L_R">Tổng chiều dài mạng lưới giao thông (L_R, km)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('NMT')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 17 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số phương tiện công cộng sạch."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="PT_c" name="PT_c[params][PT_c]" class="form-control" step="any">
+                                                <label for="PT_c">Số phương tiện công cộng sạch (PT_c, phương tiện)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="PT" name="PT_c[params][PT]" class="form-control" step="any">
+                                                <label for="PT">Tổng số phương tiện công cộng (PT, phương tiện)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('PT_c')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 18 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mức độ dễ tiếp cận phương tiện công cộng</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số phương tiện công cộng trên 1000 dân."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="PT_F" name="PT1000[params][PT_F]" class="form-control" step="any">
+                                                <label for="PT_F">Số lượng phương tiện công cộng (PT_F, phương tiện)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="P" name="PT1000[params][P]" class="form-control" step="any">
+                                                <label for="P">Dân số ước tính (P, người)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('PT1000')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 19 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số đèn giao thông thông minh."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="STL_S" name="STL[params][STL_S]" class="form-control" step="any">
+                                                <label for="STL_S">Số đèn giao thông thông minh (STL_S, chốt đèn)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="TL" name="STL[params][TL]" class="form-control" step="any">
+                                                <label for="TL">Tổng số đèn giao thông (TL, chốt đèn)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('STL')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 20 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên chiều dài đường có thông tin giao thông trực tuyến."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="SRRW_L" name="SRRW[params][SRRW_L]" class="form-control" step="any">
+                                                <label for="SRRW_L">Chiều dài đường có thông tin giao thông trực tuyến (SRRW_L, km)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="TSR" name="SRRW[params][TSR]" class="form-control" step="any">
+                                                <label for="TSR">Tổng chiều dài đường phố (TSR, km)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('SRRW')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 21 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Khả năng thông hành và mức phục vụ của đường phố</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ phục vụ của đường phố."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="RoadCap" name="RoadCap[params][RoadCap]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="RoadCap">Điểm đánh giá (RoadCap, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('RoadCap')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 22 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mật độ trạm quan trắc không khí tự động, liên tục</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số trạm quan trắc trên diện tích."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="AQstation" name="AQstation[params][AQstation]" class="form-control" step="any">
+                                                <label for="AQstation">Số trạm quan trắc không khí (AQstation, trạm)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="A_city" name="AQstation[params][A_city]" class="form-control" step="any">
+                                                <label for="A_city">Tổng diện tích thành phố (A_city, ha)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('AQstation')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 23 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Khả năng cung cấp dữ liệu & cảnh báo AQI thời gian thực</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá khả năng cung cấp dữ liệu AQI."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="AQdata" name="AQdata[params][AQdata]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="AQdata">Điểm đánh giá (AQdata, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('AQdata')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 24 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Kế hoạch hành động vì không khí sạch</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá chất lượng kế hoạch không khí sạch."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="CleanAirPlan" name="CleanAirPlan[params][CleanAirPlan]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="CleanAirPlan">Điểm đánh giá (CleanAirPlan, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('CleanAirPlan')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 25 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng)</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số ngày AQI vượt ngưỡng."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="AQI_exceed_days" name="AQI_TDE[params][AQI_exceed_days]" class="form-control" step="any">
+                                                <label for="AQI_exceed_days">Số ngày AQI vượt ngưỡng (AQI_exceed_days, ngày)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('AQI_TDE')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Domain 4: Quản lý nước -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading4">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+                                    Quản lý nước
+                                </button>
+                            </h2>
+                            <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="heading4" data-bs-parent="#domainAccordion">
+                                <div class="accordion-body">
+                                    <!-- Indicator 26 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Đánh giá mức độ quản lý tài nguyên nước</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả quản lý nước."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="WImanage" name="WImanage[params][WImanage]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="WImanage">Điểm đánh giá (WImanage, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('WImanage')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 27 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Chỉ số giảm thất thoát nguồn nước</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng nước sản xuất và nước bán."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="W_P" name="WI_loss[params][W_P]" class="form-control" step="any">
+                                                <label for="W_P">Lượng nước sản xuất (W_P, m³/tháng)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_S" name="WI_loss[params][W_S]" class="form-control" step="any">
+                                                <label for="W_S">Lượng nước bán (W_S, m³/tháng)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('WI_loss')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 28 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Chỉ số tái sử dụng nước thải</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng nước thải tái sử dụng và nước cấp."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="W_rr" name="WI_rr[params][W_rr]" class="form-control" step="any">
+                                                <label for="W_rr">Lượng nước thải tái sử dụng (W_rr, m³)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_s" name="WI_rr[params][W_s]" class="form-control" step="any">
+                                                <label for="W_s">Lượng nước cấp (W_s, m³)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('WI_rr')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 29 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Quản lý rủi ro ngập lụt đô thị</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá quản lý rủi ro ngập lụt."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="FloodRisk" name="FloodRisk[params][FloodRisk]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="FloodRisk">Điểm đánh giá (FloodRisk, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('FloodRisk')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 30 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Hệ thống cấp nước sạch tiết kiệm năng lượng</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả năng lượng của hệ thống cấp nước."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="Ewater" name="Ewater[params][Ewater]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="Ewater">Điểm đánh giá (Ewater, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('Ewater')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 31 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Hệ thống quản lý nước thải tiết kiệm năng lượng</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả năng lượng của hệ thống nước thải."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="Ewwater" name="Ewwater[params][Ewwater]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="Ewwater">Điểm đánh giá (Ewwater, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('Ewwater')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 32 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Ứng dụng công nghệ số trong quản lý nước</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ số hóa trong quản lý nước."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="DigWater" name="DigWater[params][DigWater]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="DigWater">Điểm đánh giá (DigWater, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('DigWater')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 33 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ tiếp cận nước sạch đô thị</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số dân được cấp nước an toàn."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="P_W" name="R_USWA[params][P_W]" class="form-control" step="any">
+                                                <label for="P_W">Số dân được cấp nước an toàn (P_W, người)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="P_S" name="R_USWA[params][P_S]" class="form-control" step="any">
+                                                <label for="P_S">Tổng dân số phục vụ (P_S, người)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('R_USWA')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Domain 5: Quản lý chất thải -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading5">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
+                                    Quản lý chất thải
+                                </button>
+                            </h2>
+                            <div id="collapse5" class="accordion-collapse collapse" aria-labelledby="heading5" data-bs-parent="#domainAccordion">
+                                <div class="accordion-body">
+                                    <!-- Indicator 34 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Các sáng kiến giảm thiểu chất thải</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Số lượng sáng kiến giảm thiểu chất thải."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="Waste_Init" name="WasteInit[params][Waste_Init]" class="form-control" step="any">
+                                                <label for="Waste_Init">Số sáng kiến giảm thiểu (Waste_Init, sáng kiến)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('WasteInit')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 35 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Tỷ lệ chôn lấp rác thải sinh hoạt</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng rác thải chôn lấp và tổng rác thải."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="W_landfill" name="R_landfill[params][W_landfill]" class="form-control" step="any">
+                                                <label for="W_landfill">Lượng rác thải chôn lấp (W_landfill, tấn)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_waste_generate" name="R_landfill[params][W_waste_generate]" class="form-control" step="any">
+                                                <label for="W_waste_generate">Tổng lượng rác thải sinh hoạt (W_waste_generate, tấn)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('R_landfill')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 36 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mức độ rác thải khô được thu hồi và tái chế</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng rác thải tái chế và tái sử dụng."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="W_RU" name="RRWI[params][W_RU]" class="form-control" step="any">
+                                                <label for="W_RU">Lượng rác thải tái sử dụng (W_RU, tấn/năm)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_RRC" name="RRWI[params][W_RRC]" class="form-control" step="any">
+                                                <label for="W_RRC">Lượng rác thải tái chế (W_RRC, tấn/năm)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_G" name="RRWI[params][W_G]" class="form-control" step="any">
+                                                <label for="W_G">Tổng lượng rác thải sinh ra (W_G, tấn/năm)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('RRWI')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 37 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Quản lý chất thải xây dựng</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng chất thải xây dựng được xử lý và tái chế."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="W_Cons_deli_cp" name="ConsWaste[params][W_Cons_deli_cp]" class="form-control" step="any">
+                                                <label for="W_Cons_deli_cp">Chất thải xây dựng chuyển đến điểm tập kết (W_Cons_deli_cp, tấn)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_Cons" name="ConsWaste[params][W_Cons]" class="form-control" step="any">
+                                                <label for="W_Cons">Tổng chất thải xây dựng phát sinh (W_Cons, tấn)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_Cons_rr" name="ConsWaste[params][W_Cons_rr]" class="form-control" step="any">
+                                                <label for="W_Cons_rr">Chất thải xây dựng tái chế/tái sử dụng (W_Cons_rr, tấn)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_Cons_deli_reduce" name="ConsWaste[params][W_Cons_deli_reduce]" class="form-control" step="any">
+                                                <label for="W_Cons_deli_reduce">Chất thải xây dựng chuyển đến cơ sở xử lý (W_Cons_deli_reduce, tấn)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('ConsWaste')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 38 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Mức độ xử lý chất thải ướt</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng chất thải ướt được xử lý."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="W_T" name="WWT_I[params][W_T]" class="form-control" step="any">
+                                                <label for="W_T">Lượng chất thải ướt xử lý (W_T, tấn)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="W_G" name="WWT_I[params][W_G]" class="form-control" step="any">
+                                                <label for="W_G">Tổng lượng chất thải ướt sinh ra (W_G, tấn)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('WWT_I')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 39 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Chỉ số chuyển đổi số trong quản lý chất thải</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ số hóa trong quản lý chất thải."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="DigWaste" name="DigWaste[params][DigWaste]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="DigWaste">Điểm đánh giá (DigWaste, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('DigWaste')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 40 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Hiệu quả vận hành bãi chôn lấp</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả vận hành bãi chôn lấp."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <select id="LandfillEff" name="LandfillEff[params][LandfillEff]" class="form-control">
+                                                    <option value="" disabled selected>Chọn điểm</option>
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                </select>
+                                                <label for="LandfillEff">Điểm đánh giá (LandfillEff, 1-5)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('LandfillEff')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                    <!-- Indicator 41 -->
+                                    <div class="field-card">
+                                        <div class="field-header">
+                                            <h5>Cải thiện phát thải khí nhà kính trong quản lý chất thải</h5>
+                                            <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng giảm phát thải khí nhà kính từ các phương pháp xử lý chất thải."></i>
+                                        </div>
+                                        <div class="card-body p-3">
+                                            <div class="form-floating">
+                                                <input type="number" id="GHGs_Landfill" name="GHGIs[params][GHGs_Landfill]" class="form-control" step="any">
+                                                <label for="GHGs_Landfill">Giảm phát thải từ chôn lấp (GHGs_Landfill, tCO₂e/ngày)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="GHGs_WTE" name="GHGIs[params][GHGs_WTE]" class="form-control" step="any">
+                                                <label for="GHGs_WTE">Giảm phát thải từ đốt phát điện (GHGs_WTE, tCO₂e/ngày)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="GHGs_Recycling" name="GHGIs[params][GHGs_Recycling]" class="form-control" step="any">
+                                                <label for="GHGs_Recycling">Giảm phát thải từ tái chế (GHGs_Recycling, tCO₂e/ngày)</label>
+                                            </div>
+                                            <div class="form-floating">
+                                                <input type="number" id="GHGs_Composting" name="GHGIs[params][GHGs_Composting]" class="form-control" step="any">
+                                                <label for="GHGs_Composting">Giảm phát thải từ xử lý sinh học (GHGs_Composting, tCO₂e/ngày)</label>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary mt-2" onclick="calculatePreview('GHGIs')">Xem trước kết quả</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-floating">
-                        <input type="number" id="EC" name="ENI_RWE[params][EC]" class="form-control" step="any" required>
-                        <label for="EC">Tổng năng lượng tiêu thụ (EC, kWh)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="L_ATC" name="ENI_RWE[params][L_AT&C]" class="form-control" step="any" required>
-                        <label for="L_ATC">Tổn thất năng lượng (L_AT&C, kWh)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="P_RE" name="ENI_RWE[params][P_RE]" class="form-control" step="any" required>
-                        <label for="P_RE">Công suất năng lượng tái tạo (P_RE, kW)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="P_total" name="ENI_RWE[params][P_total]" class="form-control" step="any" required>
-                        <label for="P_total">Tổng công suất (P_total, kW)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 2 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Chỉ số phần trăm năng lượng điện từ các nguồn năng lượng tái tạo trong tổng cung năng lượng."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="SE_RE" name="SENIRE[percent][SE_RE]" class="form-control" step="any" required>
-                        <label for="SE_RE">Tổng lượng điện từ nguồn năng lượng tái tạo trong thành phố (SE_RE, kWh)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="ES" name="SENIRE[percent][ES]" class="form-control" step="any" required>
-                        <label for="ES">Tổng lượng điện cung cấp trong thành phố (ES, kWh)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 3 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Chỉ số tiết kiệm điện</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng điện tiết kiệm và tổng tiêu thụ điện."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="E_Save" name="EI_Save[params][E_Save]" class="form-control" step="any" required>
-                        <label for="E_Save">Lượng điện tiết kiệm (E_Save, kWh)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="E_C" name="EI_Save[params][E_C]" class="form-control" step="any" required>
-                        <label for="E_C">Tổng tiêu thụ điện (E_C, kWh)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 4 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Hiệu quả vận hành hệ thống điện thông minh</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên điện năng đưa vào và giao đến người tiêu dùng."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="E_input" name="EI_LR[params][E_input]" class="form-control" step="any" required>
-                        <label for="E_input">Tổng sản lượng điện đưa vào (E_input, kWh)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="E_delivered" name="EI_LR[params][E_delivered]" class="form-control" step="any" required>
-                        <label for="E_delivered">Tổng điện năng giao đến (E_delivered, kWh)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 5 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Hệ thống chiếu sáng đường phố tiết kiệm năng lượng</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số đèn tiết kiệm năng lượng và tự động hóa."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="SL_e" name="SLI[params][SL_e]" class="form-control" step="any" required>
-                        <label for="SL_e">Số đèn đường tiết kiệm năng lượng (SL_e, cái)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="SL_s" name="SLI[params][SL_s]" class="form-control" step="any" required>
-                        <label for="SL_s">Số đèn đường thông minh (SL_s, cái)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="SL" name="SLI[params][SL]" class="form-control" step="any" required>
-                        <label for="SL">Tổng số đèn đường (SL, cái)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 6 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mức độ thúc đẩy các công trình xanh</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá dựa trên chính sách thúc đẩy công trình xanh."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="GBpromo" name="GBpromo[params][GBpromo]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="GBpromo">Điểm đánh giá (GBpromo, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 7 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Xây dựng các công trình xanh</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số tòa nhà xanh và diện tích xây dựng."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="B_P" name="VNGBI[params][B_P]" class="form-control" step="any" required>
-                        <label for="B_P">Số tòa nhà được chứng nhận trước (B_P, cái)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="B_AC" name="VNGBI[params][B_AC]" class="form-control" step="any" required>
-                        <label for="B_AC">Số tòa nhà được phê duyệt xây dựng (B_AC, cái)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="S_GB" name="VNGBI[params][S_GB]" class="form-control" step="any" required>
-                        <label for="S_GB">Diện tích xây dựng công trình xanh (S_GB, km²)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="S_BC" name="VNGBI[params][S_BC]" class="form-control" step="any" required>
-                        <label for="S_BC">Tổng diện tích xây dựng hoàn thành (S_BC, km²)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 8 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Giảm phát thải CO2 từ tiêu thụ nhiên liệu hóa thạch</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng phát thải CO2 từ năng lượng hóa thạch."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="CO2eb" name="R_CO2e[params][CO2eb]" class="form-control" step="any" required>
-                        <label for="CO2eb">Phát thải CO2 kịch bản BAU (CO2eb, tCO2e)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="CO2et" name="R_CO2e[params][CO2et]" class="form-control" step="any" required>
-                        <label for="CO2et">Phát thải CO2 kịch bản chuyển đổi (CO2et, tCO2e)</label>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <button type="submit" class="btn btn-primary mt-3">Lưu Dữ Liệu</button>
+                </form>
+            <% } else { %>
+                <div class="alert alert-warning">Bạn không có quyền truy cập chức năng này.</div>
+            <% } %>
+        </main>
     </div>
-</div>
-<!-- Domain 2: Quy hoạch đô thị, phủ xanh & đa dạng sinh học -->
-<div class="accordion-item">
-    <h2 class="accordion-header" id="heading2">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
-            Quy hoạch đô thị, phủ xanh & đa dạng sinh học
-        </button>
-    </h2>
-    <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#domainAccordion">
-        <div class="accordion-body">
-            <!-- Indicator 9 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích mặt nước và không gian mở."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="S_water_present" name="R_S_water[params][S_water_present]" class="form-control" step="any" required>
-                        <label for="S_water_present">Diện tích mặt nước hiện tại (S_water_present, ha)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="S_water_plan" name="R_S_water[params][S_water_plan]" class="form-control" step="any" required>
-                        <label for="S_water_plan">Diện tích mặt nước quy hoạch (S_water_plan, ha)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="S_op_present" name="R_S_water[params][S_op_present]" class="form-control" step="any" required>
-                        <label for="S_op_present">Diện tích không gian mở hiện tại (S_op_present, ha)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="S_op_plan" name="R_S_water[params][S_op_plan]" class="form-control" step="any" required>
-                        <label for="S_op_plan">Diện tích không gian mở quy hoạch (S_op_plan, ha)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 10 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ phủ xanh trong thành phố</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích cây xanh công cộng và dân số."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="S_pp" name="Rcover[params][S_pp]" class="form-control" step="any" required>
-                        <label for="S_pp">Diện tích cây xanh công cộng (S_pp, m²)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="P" name="Rcover[params][P]" class="form-control" step="any" required>
-                        <label for="P">Tổng dân số (P, người)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 11 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích đất cây xanh và tổng diện tích đất xây dựng."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="S_land_p" name="Rland_p[params][S_land_p]" class="form-control" step="any" required>
-                        <label for="S_land_p">Diện tích đất cây xanh đô thị (S_land_p, ha)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="S_total_land" name="Rland_p[params][S_total_land]" class="form-control" step="any" required>
-                        <label for="S_total_land">Tổng diện tích đất xây dựng đô thị (S_total_land, ha)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 12 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Đa dạng sinh học đô thị</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên diện tích tự nhiên và phục hồi sinh thái."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="A_natural" name="UBI_PNRA[params][A_natural]" class="form-control" step="any" required>
-                        <label for="A_natural">Diện tích khu vực tự nhiên (A_natural, ha)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="A_restored" name="UBI_PNRA[params][A_restored]" class="form-control" step="any" required>
-                        <label for="A_restored">Diện tích khu vực phục hồi sinh thái (A_restored, ha)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="A_city" name="UBI_PNRA[params][A_city]" class="form-control" step="any" required>
-                        <label for="A_city">Tổng diện tích thành phố (A_city, ha)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 13 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Ứng dụng GIS và dữ liệu số trong quy hoạch đô thị</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ ứng dụng GIS trong quy hoạch."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="GISapp" name="GISapp[params][GISapp]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="GISapp">Điểm đánh giá (GISapp, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 14 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Hệ thống cảnh báo & quản lý thiên tai thông minh</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hệ thống cảnh báo thiên tai."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="DISaster" name="DISaster[params][DISaster]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="DISaster">Điểm đánh giá (DISaster, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 15 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Kế hoạch hành động về khí hậu</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá chất lượng kế hoạch hành động khí hậu."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="ClimateAct" name="ClimateAct[params][ClimateAct]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="ClimateAct">Điểm đánh giá (ClimateAct, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Domain 3: Giao thông đô thị & chất lượng không khí -->
-<div class="accordion-item">
-    <h2 class="accordion-header" id="heading3">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
-            Giao thông đô thị & chất lượng không khí
-        </button>
-    </h2>
-    <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#domainAccordion">
-        <div class="accordion-body">
-            <!-- Indicator 16 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tỷ lệ đường dành cho xe đạp và đi bộ."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="NMT_L" name="NMT[params][NMT_L]" class="form-control" step="any" required>
-                        <label for="NMT_L">Chiều dài mạng lưới giao thông phi cơ giới (NMT_L, km)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="L_R" name="NMT[params][L_R]" class="form-control" step="any" required>
-                        <label for="L_R">Tổng chiều dài mạng lưới giao thông (L_R, km)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 17 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số phương tiện công cộng sạch."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="PT_c" name="PT_c[params][PT_c]" class="form-control" step="any" required>
-                        <label for="PT_c">Số phương tiện công cộng sạch (PT_c, phương tiện)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="PT" name="PT_c[params][PT]" class="form-control" step="any" required>
-                        <label for="PT">Tổng số phương tiện công cộng (PT, phương tiện)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 18 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mức độ dễ tiếp cận phương tiện công cộng</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số phương tiện công cộng trên 1000 dân."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="PT_F" name="PT1000[params][PT_F]" class="form-control" step="any" required>
-                        <label for="PT_F">Số lượng phương tiện công cộng (PT_F, phương tiện)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="P" name="PT1000[params][P]" class="form-control" step="any" required>
-                        <label for="P">Dân số ước tính (P, người)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 19 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số đèn giao thông thông minh."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="STL_S" name="STL[params][STL_S]" class="form-control" step="any" required>
-                        <label for="STL_S">Số đèn giao thông thông minh (STL_S, chốt đèn)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="TL" name="STL[params][TL]" class="form-control" step="any" required>
-                        <label for="TL">Tổng số đèn giao thông (TL, chốt đèn)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 20 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên chiều dài đường có thông tin giao thông trực tuyến."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="SRRW_L" name="SRRW[params][SRRW_L]" class="form-control" step="any" required>
-                        <label for="SRRW_L">Chiều dài đường có thông tin giao thông trực tuyến (SRRW_L, km)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="TSR" name="SRRW[params][TSR]" class="form-control" step="any" required>
-                        <label for="TSR">Tổng chiều dài đường phố (TSR, km)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 21 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Khả năng thông hành và mức phục vụ của đường phố</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ phục vụ của đường phố."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="RoadCap" name="RoadCap[params][RoadCap]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="RoadCap">Điểm đánh giá (RoadCap, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 22 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mật độ trạm quan trắc không khí tự động, liên tục</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số trạm quan trắc trên diện tích."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="AQstation" name="AQstation[params][AQstation]" class="form-control" step="any" required>
-                        <label for="AQstation">Số trạm quan trắc không khí (AQstation, trạm)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="A_city" name="AQstation[params][A_city]" class="form-control" step="any" required>
-                        <label for="A_city">Tổng diện tích thành phố (A_city, ha)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 23 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Khả năng cung cấp dữ liệu & cảnh báo AQI thời gian thực</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá khả năng cung cấp dữ liệu AQI."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="AQdata" name="AQdata[params][AQdata]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="AQdata">Điểm đánh giá (AQdata, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 24 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Kế hoạch hành động vì không khí sạch</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá chất lượng kế hoạch không khí sạch."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="CleanAirPlan" name="CleanAirPlan[params][CleanAirPlan]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="CleanAirPlan">Điểm đánh giá (CleanAirPlan, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 25 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng)</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số ngày AQI vượt ngưỡng."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="AQI_exceed_days" name="AQI_TDE[params][AQI_exceed_days]" class="form-control" step="any" required>
-                        <label for="AQI_exceed_days">Số ngày AQI vượt ngưỡng (AQI_exceed_days, ngày)</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Domain 4: Quản lý nước -->
-<div class="accordion-item">
-    <h2 class="accordion-header" id="heading4">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
-            Quản lý nước
-        </button>
-    </h2>
-    <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="heading4" data-bs-parent="#domainAccordion">
-        <div class="accordion-body">
-            <!-- Indicator 26 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Đánh giá mức độ quản lý tài nguyên nước</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả quản lý nước."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="WImanage" name="WImanage[params][WImanage]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="WImanage">Điểm đánh giá (WImanage, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 27 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Chỉ số giảm thất thoát nguồn nước</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng nước sản xuất và nước bán."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="W_P" name="WI_loss[params][W_P]" class="form-control" step="any" required>
-                        <label for="W_P">Lượng nước sản xuất (W_P, m³/tháng)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_S" name="WI_loss[params][W_S]" class="form-control" step="any" required>
-                        <label for="W_S">Lượng nước bán (W_S, m³/tháng)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 28 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Chỉ số tái sử dụng nước thải</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng nước thải tái sử dụng và nước cấp."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="W_rr" name="WI_rr[params][W_rr]" class="form-control" step="any" required>
-                        <label for="W_rr">Lượng nước thải tái sử dụng (W_rr, m³)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_s" name="WI_rr[params][W_s]" class="form-control" step="any" required>
-                        <label for="W_s">Lượng nước cấp (W_s, m³)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 29 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Quản lý rủi ro ngập lụt đô thị</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá quản lý rủi ro ngập lụt."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="FloodRisk" name="FloodRisk[params][FloodRisk]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="FloodRisk">Điểm đánh giá (FloodRisk, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 30 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Hệ thống cấp nước sạch tiết kiệm năng lượng</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả năng lượng của hệ thống cấp nước."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="Ewater" name="Ewater[params][Ewater]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="Ewater">Điểm đánh giá (Ewater, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 31 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Hệ thống quản lý nước thải tiết kiệm năng lượng</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả năng lượng của hệ thống nước thải."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="Ewwater" name="Ewwater[params][Ewwater]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="Ewwater">Điểm đánh giá (Ewwater, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 32 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Ứng dụng công nghệ số trong quản lý nước</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ số hóa trong quản lý nước."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="DigWater" name="DigWater[params][DigWater]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="DigWater">Điểm đánh giá (DigWater, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 33 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ tiếp cận nước sạch đô thị</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên số dân được cấp nước an toàn."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="P_W" name="R_USWA[params][P_W]" class="form-control" step="any" required>
-                        <label for="P_W">Số dân được cấp nước an toàn (P_W, người)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="P_S" name="R_USWA[params][P_S]" class="form-control" step="any" required>
-                        <label for="P_S">Tổng dân số phục vụ (P_S, người)</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Domain 5: Quản lý chất thải -->
-<div class="accordion-item">
-    <h2 class="accordion-header" id="heading5">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
-            Quản lý chất thải
-        </button>
-    </h2>
-    <div id="collapse5" class="accordion-collapse collapse" aria-labelledby="heading5" data-bs-parent="#domainAccordion">
-        <div class="accordion-body">
-            <!-- Indicator 34 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Các sáng kiến giảm thiểu chất thải</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Số lượng sáng kiến giảm thiểu chất thải."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="Waste_Init" name="WasteInit[params][Waste_Init]" class="form-control" step="any" required>
-                        <label for="Waste_Init">Số sáng kiến giảm thiểu (Waste_Init, sáng kiến)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 35 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Tỷ lệ chôn lấp rác thải sinh hoạt</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng rác thải chôn lấp và tổng rác thải."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="W_landfill" name="R_USWA[params][W_landfill]" class="form-control" step="any" required>
-                        <label for="W_landfill">Lượng rác thải chôn lấp (W_landfill, tấn)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_waste_generate" name="R_USWA[params][W_waste_generate]" class="form-control" step="any" required>
-                        <label for="W_waste_generate">Tổng lượng rác thải sinh hoạt (W_waste_generate, tấn)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 36 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mức độ rác thải khô được thu hồi và tái chế</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng rác thải tái chế và tái sử dụng."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="W_RU" name="RRWI[params][W_RU]" class="form-control" step="any" required>
-                        <label for="W_RU">Lượng rác thải tái sử dụng (W_RU, tấn/năm)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_RRC" name="RRWI[params][W_RRC]" class="form-control" step="any" required>
-                        <label for="W_RRC">Lượng rác thải tái chế (W_RRC, tấn/năm)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_G" name="RRWI[params][W_G]" class="form-control" step="any" required>
-                        <label for="W_G">Tổng lượng rác thải sinh ra (W_G, tấn/năm)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 37 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Quản lý chất thải xây dựng</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng chất thải xây dựng được xử lý và tái chế."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="W_Cons_deli_cp" name="ConsWaste[params][W_Cons_deli_cp]" class="form-control" step="any" required>
-                        <label for="W_Cons_deli_cp">Chất thải xây dựng chuyển đến điểm tập kết (W_Cons_deli_cp, tấn)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_Cons" name="ConsWaste[params][W_Cons]" class="form-control" step="any" required>
-                        <label for="W_Cons">Tổng chất thải xây dựng phát sinh (W_Cons, tấn)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_Cons_rr" name="ConsWaste[params][W_Cons_rr]" class="form-control" step="any" required>
-                        <label for="W_Cons_rr">Chất thải xây dựng tái chế/tái sử dụng (W_Cons_rr, tấn)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_Cons_deli_reduce" name="ConsWaste[params][W_Cons_deli_reduce]" class="form-control" step="any" required>
-                        <label for="W_Cons_deli_reduce">Chất thải xây dựng chuyển đến cơ sở xử lý (W_Cons_deli_reduce, tấn)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 38 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Mức độ xử lý chất thải ướt</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng chất thải ướt được xử lý."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="W_T" name="WWT_I[params][W_T]" class="form-control" step="any" required>
-                        <label for="W_T">Lượng chất thải ướt xử lý (W_T, tấn)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="W_G" name="WWT_I[params][W_G]" class="form-control" step="any" required>
-                        <label for="W_G">Tổng lượng chất thải ướt sinh ra (W_G, tấn)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 39 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Chỉ số chuyển đổi số trong quản lý chất thải</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá mức độ số hóa trong quản lý chất thải."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="DigWaste" name="DigWaste[params][DigWaste]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="DigWaste">Điểm đánh giá (DigWaste, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 40 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Hiệu quả vận hành bãi chôn lấp</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Đánh giá hiệu quả vận hành bãi chôn lấp."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <select id="LandfillEff" name="LandfillEff[params][LandfillEff]" class="form-control" required>
-                            <option value="" disabled selected>Chọn điểm</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                        <label for="LandfillEff">Điểm đánh giá (LandfillEff, 1-5)</label>
-                    </div>
-                </div>
-            </div>
-            <!-- Indicator 41 -->
-            <div class="field-card">
-                <div class="field-header">
-                    <h5>Cải thiện phát thải khí nhà kính trong quản lý chất thải</h5>
-                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng giảm phát thải khí nhà kính từ các phương pháp xử lý chất thải."></i>
-                </div>
-                <div class="card-body p-3">
-                    <div class="form-floating">
-                        <input type="number" id="GHGs_Landfill" name="GHGIs[params][GHGs_Landfill]" class="form-control" step="any" required>
-                        <label for="GHGs_Landfill">Giảm phát thải từ chôn lấp (GHGs_Landfill, tCO₂e/ngày)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="GHGs_WTE" name="GHGIs[params][GHGs_WTE]" class="form-control" step="any" required>
-                        <label for="GHGs_WTE">Giảm phát thải từ đốt phát điện (GHGs_WTE, tCO₂e/ngày)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="GHGs_Recycling" name="GHGIs[params][GHGs_Recycling]" class="form-control" step="any" required>
-                        <label for="GHGs_Recycling">Giảm phát thải từ tái chế (GHGs_Recycling, tCO₂e/ngày)</label>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" id="GHGs_Composting" name="GHGIs[params][GHGs_Composting]" class="form-control" step="any" required>
-                        <label for="GHGs_Composting">Giảm phát thải từ xử lý sinh học (GHGs_Composting, tCO₂e/ngày)</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<button type="submit" class="btn btn-primary">Lưu Dữ Liệu</button>
-    </form>
-
-    <!-- Thêm JavaScript để xử lý gửi form -->
-    <script>
-      document.getElementById('cndlForm').addEventListener('submit', async function(event) {
-        event.preventDefault(); // Ngăn làm mới trang
-        if (confirm('Bạn chắc chắn muốn lưu dữ liệu?')) {
-          try {
-            const response = await fetch('/cndl', {
-              method: 'POST',
-              body: new FormData(this),
-            });
-            const result = await response.json();
-            alert(result.message || result.error);
-            if (response.ok) {
-              this.reset(); // Xóa form sau khi lưu thành công
-            }
-          } catch (error) {
-            alert('Lỗi khi lưu dữ liệu: ' + error.message);
-          }
-        }
-      });
-    </script>
-  <% } %>
-</main>
 
     <!-- Preview Modal -->
     <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
@@ -1203,23 +1237,20 @@
                 month: '2-digit',
                 year: 'numeric',
             };
-
             const timeString = now.toLocaleTimeString('vi-VN', options);
             const dateString = now.toLocaleDateString('vi-VN', dateOptions);
-
             document.getElementById('clockTime').textContent = timeString;
             document.getElementById('clockDate').textContent = dateString;
         }
-
         updateClock();
         const clockInterval = setInterval(updateClock, 1000);
         window.addEventListener('unload', () => clearInterval(clockInterval));
 
         // Calculate preview
         async function calculatePreview(indicatorCode) {
-            const form = document.querySelector('form');
+            const form = document.getElementById('cndlForm');
             const params = {};
-            form.querySelectorAll(`input[name^="${indicatorCode}[params]"]`).forEach(input => {
+            form.querySelectorAll(`[name^="${indicatorCode}[params]"]`).forEach(input => {
                 const paramName = input.name.match(/\[params\]\[(.+)\]/)[1];
                 params[paramName] = input.value;
             });
@@ -1231,22 +1262,67 @@
                     body: JSON.stringify({ indicator_code: indicatorCode, params })
                 });
                 const result = await response.json();
-                if (result.error) {
-                    alert('Lỗi: ' + result.error);
-                    return;
-                }
 
-                document.getElementById('previewValue').textContent = result.calculatedValue;
-                document.getElementById('previewLevel').textContent = result.level;
-                document.getElementById('previewScore').textContent = result.score;
-                document.getElementById('previewDescription').textContent = result.description;
-
-                const modal = new bootstrap.Modal(document.getElementById('previewModal'));
-                modal.show();
-            } catch (err) {
-                alert('Lỗi khi xem trước: ' + err.message);
+            if (!response.ok) {
+                throw new Error(result.error || 'Lỗi không xác định từ server.');
             }
+
+            // Update modal with preview results
+            document.getElementById('previewValue').textContent = result.calculatedValue || 'N/A';
+            document.getElementById('previewLevel').textContent = result.level || 'N/A';
+            document.getElementById('previewScore').textContent = result.score || 'N/A';
+            document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả.';
+
+            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+            modal.show();
+        } catch (err) {
+            alert('Lỗi khi xem trước: ' + err.message);
         }
-    </script>
+    }
+
+    // Form submission handler
+    document.getElementById('cndlForm').addEventListener('submit', async function(event) {
+        // Không dùng preventDefault để cho phép gửi form mặc định
+        const form = this;
+        const inputs = form.querySelectorAll('input, select');
+        let allFilled = true;
+
+        // Validate all required fields
+        inputs.forEach(input => {
+            if (input.hasAttribute('required') && !input.value) {
+                allFilled = false;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        if (!allFilled) {
+            alert('Vui lòng điền đầy đủ các trường bắt buộc.');
+            event.preventDefault(); // Chỉ ngăn submit nếu validation thất bại
+            return;
+        }
+
+        if (!confirm('Bạn chắc chắn muốn lưu dữ liệu?')) {
+            event.preventDefault();
+            return;
+        }
+
+        // Form sẽ gửi dữ liệu qua POST mặc định tới /cndl
+        // Backend cần xử lý FormData với cấu trúc nested như ENI_RWE[params][E_RE]
+    });
+
+    // Add invalid feedback styling
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .is-invalid {
+            border-color: var(--danger-color) !important;
+        }
+        .is-invalid:focus {
+            box-shadow: 0 0 6px rgba(220, 53, 69, 0.2);
+        }
+    `;
+    document.head.appendChild(style);
+</script>
 </body>
 </html>
