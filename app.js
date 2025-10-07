@@ -1392,7 +1392,6 @@ app.get('/cndl', authenticateToken, async (req, res) => {
   }
 });
 
-// Route POST /cndl
 app.post(
   '/cndl',
   authenticateToken,
@@ -1438,6 +1437,51 @@ app.post(
         'WImanage', 'WI_loss', 'WI_rr', 'FloodRisk', 'Ewater', 'Ewwater', 'DigWater', 'R_USWA',
         'WasteInit', 'R_USWA_waste', 'RRWI', 'ConsWaste', 'WWT_I', 'DigWaste', 'LandfillEff', 'GHGIs'
       ];
+
+      // 🔹 Định nghĩa công thức tính
+      const formulas = {
+        'ENI_RWE': (p) => ((p.E_RE - p['L_AT&C']) / p.EC * 100 + p.P_RE / p.P_total * 100) || 0,
+        'SENIRE': (p) => (p.SE_RE / p.ES * 100) || 0,
+        'EI_Save': (p) => (p.E_Save / p.E_C * 100) || 0,
+        'EI_LR': (p) => (p.E_delivered / p.E_input * 100) || 0,
+        'SLI': (p) => ((p.SL_e + p.SL_s) / p.SL * 100) || 0,
+        'GBpromo': (p) => parseFloat(p.GBpromo) || 0,
+        'VNGBI': (p) => ((p.B_P + p.B_AC) / (p.S_GB / p.S_BC) * 100) || 0,
+        'R_CO2e': (p) => ((p.CO2eb - p.CO2et) / p.CO2eb * 100) || 0,
+        'R_S_water': (p) => ((p.S_water_present + p.S_op_present) / (p.S_water_plan + p.S_op_plan) * 100) || 0,
+        'Rcover': (p) => ((p.S_pp / p.P) / 12 * 100) || 0,
+        'Rland_p': (p) => (p.S_land_p / p.S_total_land * 100) || 0,
+        'UBI_PNRA': (p) => ((p.A_natural + p.A_restored) / p.A_city * 100) || 0,
+        'GISapp': (p) => parseFloat(p.GISapp) || 0,
+        'DISaster': (p) => parseFloat(p.DISaster) || 0,
+        'ClimateAct': (p) => parseFloat(p.ClimateAct) || 0,
+        'NMT': (p) => (p.NMT_L / p.L_R * 100) || 0,
+        'PT_c': (p) => (p.PT_c / p.PT * 100) || 0,
+        'PT1000': (p) => (p.PT_F * 1000 / p.P) || 0,
+        'STL': (p) => (p.STL_S / p.TL * 100) || 0,
+        'SRRW': (p) => (p.SRRW_L / p.TSR * 100) || 0,
+        'RoadCap': (p) => parseFloat(p.RoadCap) || 0,
+        'AQstation': (p) => (p.AQstation / p.A_city) || 0,
+        'AQdata': (p) => parseFloat(p.AQdata) || 0,
+        'CleanAirPlan': (p) => parseFloat(p.CleanAirPlan) || 0,
+        'AQI_TDE': (p) => parseFloat(p.AQI_exceed_days) || 0,
+        'WImanage': (p) => parseFloat(p.WImanage) || 0,
+        'WI_loss': (p) => ((p.W_P - p.W_S) / p.W_P * 100) || 0,
+        'WI_rr': (p) => (p.W_rr / p.W_s * 100) || 0,
+        'FloodRisk': (p) => parseFloat(p.FloodRisk) || 0,
+        'Ewater': (p) => parseFloat(p.Ewater) || 0,
+        'Ewwater': (p) => parseFloat(p.Ewwater) || 0,
+        'DigWater': (p) => parseFloat(p.DigWater) || 0,
+        'R_USWA': (p) => (p.P_W / p.P_S * 100) || 0,
+        'WasteInit': (p) => parseFloat(p.Waste_Init) || 0,
+        'R_USWA_waste': (p) => (p.W_landfill / p.W_waste_generate * 100) || 0,
+        'RRWI': (p) => ((p.W_RU + p.W_RRC) / p.W_G * 100) || 0,
+        'ConsWaste': (p) => ((p.W_Cons_deli_cp + p.W_Cons_rr + p.W_Cons_deli_reduce) / p.W_Cons * 100) || 0,
+        'WWT_I': (p) => (p.W_T / p.W_G * 100) || 0,
+        'DigWaste': (p) => parseFloat(p.DigWaste) || 0,
+        'LandfillEff': (p) => parseFloat(p.LandfillEff) || 0,
+        'GHGIs': (p) => (parseFloat(p.GHGs_Landfill) || 0) + (parseFloat(p.GHGs_WTE) || 0) + (parseFloat(p.GHGs_Recycling) || 0) + (parseFloat(p.GHGs_Composting) || 0)
+      };
 
       for (const indicator_code of indicatorCodes) {
         if (!req.body[indicator_code]) {
@@ -1555,29 +1599,12 @@ app.post(
     }
   }
 );
-
-// Route POST /cndl/preview
+// Route POST /cndl/preview — Xem trước kết quả chỉ số
 app.post(
   '/cndl/preview',
   authenticateToken,
   [
     body('indicator_code').notEmpty().withMessage('Mã chỉ số không được để trống'),
-    body('value')
-      .optional()
-      .trim()
-      .customSanitizer(value => {
-        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
-        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
-      })
-      .custom(value => {
-        if (value === '') return true; // Cho phép rỗng vì .optional()
-        const num = parseFloat(value);
-        if (isNaN(num) || num <= 0) {
-          throw new Error('Giá trị phải là số dương lớn hơn 0');
-        }
-        return true;
-      })
-      .withMessage('Giá trị phải là số dương lớn hơn 0'),
     body('params.*')
       .optional()
       .trim()
@@ -1586,14 +1613,13 @@ app.post(
         return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
       })
       .custom(value => {
-        if (value === '') return true; // Cho phép rỗng vì .optional()
+        if (value === '') return true;
         const num = parseFloat(value);
-        if (isNaN(num) || num <= 0) {
-          throw new Error('Tham số bổ sung phải là số dương lớn hơn 0');
+        if (isNaN(num) || num < 0) {
+          throw new Error('Tham số phải là số dương hoặc 0');
         }
         return true;
       })
-      .withMessage('Tham số bổ sung phải là số dương lớn hơn 0')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -1601,43 +1627,33 @@ app.post(
       return res.status(400).json({ error: errors.array()[0].msg });
     }
 
-    const { indicator_code, value, params } = req.body;
+    const { indicator_code, params } = req.body;
 
     try {
-      const indicatorRes = await pool.query('SELECT * FROM Indicators WHERE code = $1', [indicator_code]);
-      const indicator = indicatorRes.rows[0];
-
-      if (!indicator) {
-        return res.status(404).json({ error: 'Không tìm thấy chỉ số' });
+      // Dùng công thức cứng để tính preview
+      const formula = formulas[indicator_code];
+      if (!formula) {
+        return res.status(400).json({ error: `Chưa có công thức cho chỉ số ${indicator_code}` });
       }
 
-      // Xác thực tham số bổ sung
-      for (const [param, paramValue] of Object.entries(params || {})) {
-        const numValue = parseFloat(paramValue);
-        if (isNaN(numValue) || numValue <= 0) {
-          return res.status(400).json({
-            error: `Tham số ${param} phải là số dương lớn hơn 0`
-          });
-        }
+      const calculatedValue = formula(params);
+      if (isNaN(calculatedValue)) {
+        return res.status(400).json({ error: 'Giá trị tính toán không hợp lệ' });
       }
 
-      const calculatedValue = value ? evaluateFormula(indicator.formula, parseFloat(value), params || {}) : 0;
-      const scoringLevelsRes = await pool.query('SELECT * FROM ScoringLevels WHERE indicator_id = $1', [indicator.indicator_id]);
-      const scoringLevels = scoringLevelsRes.rows;
-
-      const levelData = scoringLevels.reduce((prev, current) => {
-        return Math.abs(current.score_value - calculatedValue) < Math.abs(prev.score_value - calculatedValue) ? current : prev;
-      }, scoringLevels[0] || { level: 1, score_value: 0, description: 'Không có mô tả' });
+      const level = calculatedValue >= 80 ? 'Tốt' : calculatedValue >= 50 ? 'Trung bình' : 'Thấp';
+      const score = Math.min(5, (calculatedValue / 20).toFixed(1));
+      const description = `Giá trị chỉ số tạm tính: ${calculatedValue.toFixed(2)} (${level})`;
 
       res.json({
         calculatedValue: Math.round(calculatedValue * 100) / 100,
-        level: levelData.level,
-        score: levelData.score_value || Math.round(calculatedValue),
-        description: levelData.description
+        level,
+        score,
+        description
       });
     } catch (err) {
       console.error('Lỗi POST /cndl/preview:', err.message);
-      res.status(500).json({ error: 'Lỗi khi tính toán xem trước: ' + err.message });
+      res.status(500).json({ error: 'Lỗi khi xử lý xem trước: ' + err.message });
     }
   }
 );
