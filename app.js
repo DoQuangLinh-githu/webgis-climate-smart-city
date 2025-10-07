@@ -1396,170 +1396,162 @@ app.get('/cndl', authenticateToken, async (req, res) => {
 app.post(
   '/cndl',
   authenticateToken,
+  checkRole('admin'),
   [
     body('year').isInt({ min: 2000, max: 2100 }).withMessage('Năm phải từ 2000 đến 2100'),
-    body('*.value_calculated')
-      .optional()
-      .trim()
-      .customSanitizer(value => {
-        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
-        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
-      })
-      .custom(value => {
-        if (value === '') return true; // Cho phép rỗng vì .optional()
-        const num = parseFloat(value);
-        if (isNaN(num) || num <= 0) {
-          throw new Error('Giá trị phải là số dương lớn hơn 0, ví dụ: 45 hoặc 45.5');
-        }
-        return true;
-      })
-      .withMessage('Giá trị phải là số dương lớn hơn 0, ví dụ: 45 hoặc 45.5'),
     body('*.params.*')
       .optional()
       .trim()
       .customSanitizer(value => {
-        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
-        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
+        let sanitized = value.replace(',', '.').replace(/[^\d.]/g, '');
+        if ((sanitized.match(/\./g) || []).length > 1) return '';
+        return sanitized;
       })
+      .matches(/^\d+(\.\d*)?$/)
+      .withMessage('Tham số bổ sung phải là số dương')
       .custom(value => {
-        if (value === '') return true; // Cho phép rỗng vì .optional()
-        const num = parseFloat(value);
-        if (isNaN(num) || num <= 0) {
-          throw new Error('Tham số bổ sung phải là số dương lớn hơn 0');
-        }
+        if (value.startsWith('-')) throw new Error('Tham số bổ sung phải là số dương');
         return true;
-      })
-      .withMessage('Tham số bổ sung phải là số dương lớn hơn 0')
+      }),
   ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Lỗi validation:', errors.array());
-      return res.redirect(`/cndl?error=${encodeURIComponent(errors.array()[0].msg)}`);
+      const errorMsg = errors.array().map(err => `${err.param}: ${err.msg}`).join('; ');
+      return res.redirect(`/cndl?error=${encodeURIComponent(errorMsg)}`);
     }
 
-    const { year, ...formData } = req.body;
-    const city = 'TP. Hồ Chí Minh';
-    const assessor = req.user.username;
-
     try {
-      const [indicatorsRes, scoringLevelsRes] = await Promise.all([
-        pool.query('SELECT * FROM Indicators'),
-        pool.query('SELECT * FROM ScoringLevels')
-      ]);
-      const indicators = indicatorsRes.rows;
-      const scoringLevels = scoringLevelsRes.rows;
+      const year = req.body.year || new Date().getFullYear();
+      const city = req.body.city || 'TP. Hồ Chí Minh';
+      const assessor = req.user.username;
+      const ip = req.ip;
+      const userAgent = req.get('User-Agent');
 
-      const insertValues = [];
-      const historyValues = [];
+      console.log('Request body:', req.body); // Log for debugging
 
-      for (const [code, data] of Object.entries(formData)) {
-        const indicator = indicators.find(i => i.code === code);
-        if (!indicator) {
-          console.warn(`Không tìm thấy chỉ số ${code}`);
+      const indicatorCodes = [
+        'ENI_RWE', 'SENIRE', 'EI_Save', 'EI_LR', 'SLI', 'GBpromo', 'VNGBI', 'R_CO2e',
+        'R_S_water', 'Rcover', 'Rland_p', 'UBI_PNRA', 'GISapp', 'DISaster', 'ClimateAct',
+        'NMT', 'PT_c', 'PT1000', 'STL', 'SRRW', 'RoadCap', 'AQstation', 'AQdata', 'CleanAirPlan', 'AQI_TDE',
+        'WImanage', 'WI_loss', 'WI_rr', 'FloodRisk', 'Ewater', 'Ewwater', 'DigWater', 'R_USWA',
+        'WasteInit', 'R_USWA_waste', 'RRWI', 'ConsWaste', 'WWT_I', 'DigWaste', 'LandfillEff', 'GHGIs'
+      ];
+
+      for (const indicator_code of indicatorCodes) {
+        if (!req.body[indicator_code]) {
+          console.warn(`Không tìm thấy dữ liệu cho chỉ số ${indicator_code}`);
           continue;
         }
+        const data = req.body[indicator_code];
+        const params = data.params || {};
 
-        const value = data.value_calculated ? parseFloat(data.value_calculated) : null;
-        const additionalParams = data.params || {};
-
-        // Xác thực tham số bổ sung
-        for (const [param, paramValue] of Object.entries(additionalParams)) {
-          const numValue = parseFloat(paramValue);
-          if (isNaN(numValue) || numValue <= 0) {
-            console.error(`Giá trị không hợp lệ cho ${param} của ${indicator.code}: ${paramValue}`);
-            return res.redirect(`/cndl?error=${encodeURIComponent(`Tham số ${param} của ${indicator.code} phải là số dương lớn hơn 0`)}`);
+        // Validate params
+        for (const [key, value] of Object.entries(params)) {
+          if (!value || isNaN(parseFloat(value)) || parseFloat(value) < 0) {
+            console.warn(`Tham số không hợp lệ: ${indicator_code}.${key} = ${value}`);
+            return res.redirect(`/cndl?error=${encodeURIComponent(`Tham số ${indicator_code}.${key} không hợp lệ`)}`);
           }
         }
 
-        // Kiểm tra giá trị phần trăm
-        if (value && indicator.unit_code === 'percent' && (value < 0 || value > 100)) {
-          return res.redirect(`/cndl?error=${encodeURIComponent(`Giá trị cho ${indicator.code} phải từ 0-100%`)}`);
+        const indicatorRes = await pool.query(
+          'SELECT indicator_id, domain_id, unit_code FROM Indicators WHERE code = $1',
+          [indicator_code]
+        );
+        if (indicatorRes.rows.length === 0) {
+          console.warn(`Không tìm thấy chỉ số ${indicator_code} trong bảng Indicators`);
+          continue;
+        }
+        const { indicator_id, domain_id, unit_code } = indicatorRes.rows[0];
+
+        let value;
+        try {
+          value = formulas[indicator_code](params);
+          if (isNaN(value) || value === undefined) {
+            console.warn(`Giá trị không hợp lệ cho ${indicator_code}, params:`, params);
+            value = 0;
+          }
+        } catch (err) {
+          console.error(`Lỗi khi tính chỉ số ${indicator_code}:`, err.message);
+          value = 0;
         }
 
-        let calculatedScore = 0;
-        let levelData = { level: 1, score_value: 0, description: 'Không có mô tả' };
-
-        if (value) {
-          calculatedScore = evaluateFormula(indicator.formula, value, additionalParams);
-          levelData = scoringLevels
-            .filter(sl => sl.indicator_id === indicator.indicator_id)
-            .reduce((prev, current) => {
-              return Math.abs(current.score_value - calculatedScore) < Math.abs(prev.score_value - calculatedScore) ? current : prev;
-            }, scoringLevels.find(sl => sl.indicator_id === indicator.indicator_id) || levelData);
+        if (unit_code === 'percent' && (value < 0 || value > 100)) {
+          console.warn(`Giá trị cho ${indicator_code} phải từ 0-100%, nhận được: ${value}`);
+          value = Math.max(0, Math.min(100, value));
         }
 
-        // Lấy giá trị cũ để ghi lịch sử
+        const levelsRes = await pool.query(
+          'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
+          [indicator_code]
+        );
+        let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
+        for (const level of levelsRes.rows) {
+          const { min_value, max_value } = parseRange(level.criteria);
+          if ((min_value === null || value >= min_value) && (max_value === null || value <= max_value)) {
+            selectedLevel = { level: level.level, score_value: level.score_value, description: level.description };
+            break;
+          }
+        }
+
         const oldQuery = await pool.query(
-          `SELECT value, score_awarded, level, description FROM Assessments_Template WHERE city = $1 AND year = $2 AND indicator_code = $3`,
-          [city, year, indicator.code]
+          'SELECT value, score_awarded, level, description FROM Assessments_Template WHERE city = $1 AND year = $2 AND indicator_code = $3',
+          [city, year, indicator_code]
         );
         const oldValues = oldQuery.rows[0] || null;
 
-        const insertRow = [
-          city,
-          year,
-          indicator.domain_id,
-          indicator.indicator_id,
-          indicator.code,
-          value || null,
-          indicator.unit_code,
-          levelData.score_value || Math.round(calculatedScore),
-          assessor,
-          new Date(),
-          levelData.level,
-          levelData.description
-        ];
-
-        insertValues.push(insertRow);
-
-        historyValues.push([
-          'Assessments_Template',
-          `${city}_${year}_${indicator.code}`,
-          oldValues ? JSON.stringify(oldValues) : null,
-          JSON.stringify({
-            value,
-            level: levelData.level,
-            score: levelData.score_value || Math.round(calculatedScore),
-            description: levelData.description,
-            params: additionalParams
-          }),
-          assessor,
-          oldValues ? 'update' : 'insert',
-          req.ip,
-          req.get('User-Agent')
-        ]);
-      }
-
-      if (insertValues.length > 0) {
         await pool.query(
           `INSERT INTO Assessments_Template (city, year, domain_id, indicator_id, indicator_code, value, unit_code, score_awarded, assessor, date, level, description)
-           VALUES ${insertValues.map((_, i) => `($${i * 12 + 1}, $${i * 12 + 2}, $${i * 12 + 3}, $${i * 12 + 4}, $${i * 12 + 5}, $${i * 12 + 6}, $${i * 12 + 7}, $${i * 12 + 8}, $${i * 12 + 9}, $${i * 12 + 10}, $${i * 12 + 11}, $${i * 12 + 12})`).join(',')}
-           ON CONFLICT (city, year, indicator_code)
-           DO UPDATE SET
-             value = EXCLUDED.value,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_DATE, $10, $11)
+           ON CONFLICT (city, year, indicator_code) DO UPDATE SET 
+             value = EXCLUDED.value, 
              unit_code = EXCLUDED.unit_code,
-             score_awarded = EXCLUDED.score_awarded,
-             assessor = EXCLUDED.assessor,
-             date = EXCLUDED.date,
-             level = EXCLUDED.level,
+             score_awarded = EXCLUDED.score_awarded, 
+             assessor = EXCLUDED.assessor, 
+             date = CURRENT_DATE, 
+             level = EXCLUDED.level, 
              description = EXCLUDED.description`,
-          insertValues.flat()
+          [
+            city,
+            year,
+            domain_id,
+            indicator_id,
+            indicator_code,
+            value,
+            unit_code,
+            selectedLevel.score_value,
+            assessor,
+            selectedLevel.level,
+            selectedLevel.description
+          ]
         );
 
-        if (historyValues.length > 0) {
-          await pool.query(
-            `INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent)
-             VALUES ${historyValues.map((_, i) => `($${i * 8 + 1}, $${i * 8 + 2}, $${i * 8 + 3}, $${i * 8 + 4}, $${i * 8 + 5}, $${i * 8 + 6}, $${i * 8 + 7}, $${i * 8 + 8})`).join(',')}`,
-            historyValues.flat()
-          );
-        }
+        await pool.query(
+          `INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent, timestamp)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)`,
+          [
+            'Assessments_Template',
+            `${city}_${year}_${indicator_code}`,
+            oldValues ? JSON.stringify(oldValues) : null,
+            JSON.stringify({
+              value,
+              score_awarded: selectedLevel.score_value,
+              level: selectedLevel.level,
+              description: selectedLevel.description
+            }),
+            assessor,
+            oldValues ? 'update' : 'insert',
+            ip,
+            userAgent
+          ]
+        );
       }
 
       res.redirect(`/dashboard?year=${year}&success=${encodeURIComponent('Dữ liệu đã được lưu thành công')}`);
     } catch (err) {
-      console.error('Lỗi POST /cndl:', err.message, err.stack);
-      res.redirect(`/cndl?error=${encodeURIComponent('Lỗi khi lưu dữ liệu: ' + err.message)}`);
+      console.error('Lỗi POST /cndl:', err.message);
+      res.redirect(`/cndl?error=${encodeURIComponent(`Lỗi khi lưu dữ liệu: ${err.message}`)}`);
     }
   }
 );
