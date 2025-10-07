@@ -1401,15 +1401,39 @@ app.post(
     body('*.value_calculated')
       .optional()
       .trim()
-      .customSanitizer(value => value.replace(',', '.').replace(/[^\d.]/g, ''))
-      .matches(/^\d+(\.\d*)?$/)
-      .withMessage('Giá trị phải là số dương, ví dụ: 45 hoặc 45.5'),
+      .customSanitizer(value => {
+        // Chuẩn hóa: thay dấu phẩy thành dấu chấm, loại bỏ ký tự không hợp lệ
+        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
+        // Xử lý nhiều dấu chấm (lấy dấu chấm đầu tiên)
+        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
+      })
+      .custom(value => {
+        if (value === '') return true; // Cho phép rỗng vì .optional()
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+          throw new Error('Giá trị phải là số dương lớn hơn 0, ví dụ: 45 hoặc 45.5');
+        }
+        return true;
+      })
+      .withMessage('Giá trị phải là số dương lớn hơn 0, ví dụ: 45 hoặc 45.5'),
     body('*.params.*')
       .optional()
       .trim()
-      .customSanitizer(value => value.replace(',', '.').replace(/[^\d.]/g, ''))
-      .matches(/^\d+(\.\d*)?$/)
-      .withMessage('Tham số bổ sung phải là số dương')
+      .customSanitizer(value => {
+        // Chuẩn hóa: thay dấu phẩy thành dấu chấm, loại bỏ ký tự không hợp lệ
+        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
+        // Xử lý nhiều dấu chấm (lấy dấu chấm đầu tiên)
+        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
+      })
+      .custom(value => {
+        if (value === '') return true; // Cho phép rỗng vì .optional()
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+          throw new Error('Tham số bổ sung phải là số dương lớn hơn 0');
+        }
+        return true;
+      })
+      .withMessage('Tham số bổ sung phải là số dương lớn hơn 0')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -1445,9 +1469,10 @@ app.post(
 
         // Xác thực tham số bổ sung
         for (const [param, paramValue] of Object.entries(additionalParams)) {
-          if (!/^\d+(\.\d*)?$/.test(paramValue)) {
+          const numValue = parseFloat(paramValue);
+          if (isNaN(numValue) || numValue <= 0) {
             console.error(`Giá trị không hợp lệ cho ${param} của ${indicator.code}: ${paramValue}`);
-            continue;
+            return res.redirect(`/cndl?error=${encodeURIComponent(`Tham số ${param} của ${indicator.code} phải là số dương lớn hơn 0`)}`);
           }
         }
 
@@ -1543,14 +1568,44 @@ app.post(
   }
 );
 
-// Route POST /cndl/preview để hỗ trợ tính năng xem trước
+// Route POST /cndl/preview
 app.post(
   '/cndl/preview',
   authenticateToken,
   [
     body('indicator_code').notEmpty().withMessage('Mã chỉ số không được để trống'),
-    body('value').optional().trim().matches(/^\d+(\.\d*)?$/).withMessage('Giá trị phải là số dương'),
-    body('params.*').optional().trim().matches(/^\d+(\.\d*)?$/).withMessage('Tham số bổ sung phải là số dương')
+    body('value')
+      .optional()
+      .trim()
+      .customSanitizer(value => {
+        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
+        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
+      })
+      .custom(value => {
+        if (value === '') return true; // Cho phép rỗng vì .optional()
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+          throw new Error('Giá trị phải là số dương lớn hơn 0');
+        }
+        return true;
+      })
+      .withMessage('Giá trị phải là số dương lớn hơn 0'),
+    body('params.*')
+      .optional()
+      .trim()
+      .customSanitizer(value => {
+        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
+        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
+      })
+      .custom(value => {
+        if (value === '') return true; // Cho phép rỗng vì .optional()
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+          throw new Error('Tham số bổ sung phải là số dương lớn hơn 0');
+        }
+        return true;
+      })
+      .withMessage('Tham số bổ sung phải là số dương lớn hơn 0')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -1568,7 +1623,17 @@ app.post(
         return res.status(404).json({ error: 'Không tìm thấy chỉ số' });
       }
 
-      const calculatedValue = value ? evaluateFormula(indicator.formula, value, params || {}) : 0;
+      // Xác thực tham số bổ sung
+      for (const [param, paramValue] of Object.entries(params || {})) {
+        const numValue = parseFloat(paramValue);
+        if (isNaN(numValue) || numValue <= 0) {
+          return res.status(400).json({
+            error: `Tham số ${param} phải là số dương lớn hơn 0`
+          });
+        }
+      }
+
+      const calculatedValue = value ? evaluateFormula(indicator.formula, parseFloat(value), params || {}) : 0;
       const scoringLevelsRes = await pool.query('SELECT * FROM ScoringLevels WHERE indicator_id = $1', [indicator.indicator_id]);
       const scoringLevels = scoringLevelsRes.rows;
 
