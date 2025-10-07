@@ -1402,9 +1402,7 @@ app.post(
       .optional()
       .trim()
       .customSanitizer(value => {
-        // Chuẩn hóa: thay dấu phẩy thành dấu chấm, loại bỏ ký tự không hợp lệ
         const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
-        // Xử lý nhiều dấu chấm (lấy dấu chấm đầu tiên)
         return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
       })
       .custom(value => {
@@ -1420,9 +1418,7 @@ app.post(
       .optional()
       .trim()
       .customSanitizer(value => {
-        // Chuẩn hóa: thay dấu phẩy thành dấu chấm, loại bỏ ký tự không hợp lệ
         const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
-        // Xử lý nhiều dấu chấm (lấy dấu chấm đầu tiên)
         return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
       })
       .custom(value => {
@@ -1653,7 +1649,6 @@ app.post(
     }
   }
 );
-
 
 // Endpoint GET /edit_cndl/:id
 app.get('/edit_cndl/:id', authenticateToken, async (req, res) => {
