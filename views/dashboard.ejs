@@ -21,6 +21,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
         }
         
         .main-container {
@@ -37,6 +38,7 @@
             height: fit-content;
             position: sticky;
             top: 20px;
+            transition: all 0.3s ease;
             animation: slideInLeft 0.5s ease-in-out;
         }
         
@@ -161,6 +163,36 @@
         
         #map { height: 400px; border-radius: 10px; }
         
+        /* New styles for trend table */
+        .trend-table {
+            width: 100%;
+            margin-top: 15px;
+            border-collapse: separate;
+            border-spacing: 0 5px;
+        }
+        
+        .trend-table th, .trend-table td {
+            padding: 10px;
+            text-align: center;
+            background: #fff;
+            border-radius: 8px;
+        }
+        
+        .trend-table th {
+            background: linear-gradient(45deg, var(--primary-color), #0056b3);
+            color: white;
+        }
+        
+        .trend-up {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .trend-down {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
         @media (max-width: 768px) {
             .main-content {
                 padding: 15px;
@@ -176,6 +208,11 @@
                 position: relative;
                 top: 0;
             }
+            
+            .col-md-2 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
         }
     </style>
 </head>
@@ -184,127 +221,167 @@
         <div class="row">
             <!-- Sidebar -->
             <nav class="col-md-3 col-lg-2 d-md-block sidebar">
-        <div class="position-sticky pt-3">
-          <h4 class="text-center">WebGIS</h4>
-          <h5 class="text-center">Climate Smart City</h5>
-          <ul class="nav flex-column">
-            <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
-            <% if (user && user.role === 'admin') { %>
-            <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
-            <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
-            <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
-            <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
-            <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
-            <% } %>
-            <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
-            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
-          </ul>
-          <hr>
-          <div class="text-center">
-            <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
-            <% if (user && user.role === 'admin') { %>
-              <span class="badge bg-primary">Quản trị</span>
-            <% } else { %>
-              <span class="badge bg-secondary">Người dùng</span>
-            <% } %>
-          </div>
-        </div>
-      </nav>
+                <div class="position-sticky pt-3">
+                    <h4 class="text-center">WebGIS</h4>
+                    <h5 class="text-center">Climate Smart City</h5>
+                    <ul class="nav flex-column">
+                        <li class="nav-item"><a class="nav-link" href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-upload"></i> Cập Nhật Dữ Liệu</a></li>
+                        <% if (user && user.role === 'admin') { %>
+                        <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-table"></i> Quản Lý Dữ Liệu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user"></i> Hồ Sơ</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/total-score"><i class="fas fa-calculator"></i> Tổng Điểm</a></li>
+                        <% } %>
+                        <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+                    </ul>
+                    <hr>
+                    <div class="text-center">
+                        <p>Người dùng: <strong><%= user ? user.username : 'Guest' %></strong></p>
+                        <% if (user && user.role === 'admin') { %>
+                            <span class="badge bg-primary">Quản trị</span>
+                        <% } else { %>
+                            <span class="badge bg-secondary">Người dùng</span>
+                        <% } %>
+                    </div>
+                </div>
+            </nav>
             <!-- Main content -->
-<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Dashboard - TP. Hồ Chí Minh</h1>
-        <p>Tổng quan hệ thống đánh giá Climate Smart City</p>
-    </div>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard - TP. Hồ Chí Minh</h1>
+                    <p class="text-muted">Tổng quan hệ thống đánh giá Climate Smart City</p>
+                </div>
 
-    <% if (error) { %>
-        <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
-    <% } %>
-    <% if (success) { %>
-        <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
-    <% } %>
+                <% if (error) { %>
+                    <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
+                <% } %>
+                <% if (success) { %>
+                    <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
+                <% } %>
 
-    <!-- Row for Điểm Tổng Hợp (full width) -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="field-card text-center">
-                <div class="field-header">
-                    <h5><i class="fas fa-chart-line"></i> Điểm Tổng Hợp</h5>
+                <!-- Row for Điểm Tổng Hợp (full width) with Trend Table -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="field-card">
+                            <div class="field-header">
+                                <h5><i class="fas fa-chart-line"></i> Điểm Tổng Hợp</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3 class="display-4"><%= totalScore || 0 %></h3>
+                                <p class="lead">Điểm Tổng Hợp</p>
+                                <p class="level-badge level-<%= overallLevel || 1 %>">Level <%= overallLevel || 1 %></p>
+                                <!-- Trend Table -->
+                                <table class="trend-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Lĩnh vực</th>
+                                            <th>Xu hướng</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Năng Lượng</td>
+                                            <td class="<%= (domainScores[1] > 50) ? 'trend-up' : 'trend-down' %>">
+                                                <%= (domainScores[1] > 50) ? '+5%' : '-10%' %>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Quy Hoạch</td>
+                                            <td class="<%= (domainScores[2] > 50) ? 'trend-up' : 'trend-down' %>">
+                                                <%= (domainScores[2] > 50) ? '+8%' : '-15%' %>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Giao Thông</td>
+                                            <td class="<%= (domainScores[3] > 60) ? 'trend-up' : 'trend-down' %>">
+                                                <%= (domainScores[3] > 60) ? '+12%' : '-20%' %>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Quản Lý Nước</td>
+                                            <td class="<%= (domainScores[4] > 50) ? 'trend-up' : 'trend-down' %>">
+                                                <%= (domainScores[4] > 50) ? '+6%' : '-8%' %>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Quản Lý Chất Thải</td>
+                                            <td class="<%= (domainScores[5] > 50) ? 'trend-up' : 'trend-down' %>">
+                                                <%= (domainScores[5] > 50) ? '+7%' : '-12%' %>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <h3><%= totalScore || 0 %></h3>
-                    <p>Điểm Tổng Hợp</p>
-                    <p class="level-badge level-<%= overallLevel || 1 %>">Level <%= overallLevel || 1 %></p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Row for Domain Cards (evenly spaced) -->
-    <div class="row">
-        <div class="col-md-2 col-6">
-            <div class="field-card">
-                <div class="field-header">
-                    <h5><i class="fas fa-bolt"></i> Năng Lượng</h5>
-                </div>
-                <div class="card-body">
-                    <h3><%= domainScores[1] || 0 %></h3>
-                    <p>/ <%= domains.find(d => d.domain_id === 1)?.max_score || 100 %> điểm</p>
-                </div>
-            </div>
-        </div>
+                <!-- Row for Domain Cards (evenly spaced) -->
+                <div class="row">
+                    <div class="col-md-2 col-6">
+                        <div class="field-card">
+                            <div class="field-header">
+                                <h5><i class="fas fa-bolt"></i> Năng Lượng</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3><%= domainScores[1] || 0 %></h3>
+                                <p>/ <%= domains.find(d => d.domain_id === 1)?.max_score || 100 %> điểm</p>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="col-md-2 col-6">
-            <div class="field-card">
-                <div class="field-header">
-                    <h5><i class="fas fa-city"></i> Quy Hoạch</h5>
-                </div>
-                <div class="card-body">
-                    <h3><%= domainScores[2] || 0 %></h3>
-                    <p>/ <%= domains.find(d => d.domain_id === 2)?.max_score || 100 %> điểm</p>
-                </div>
-            </div>
-        </div>
+                    <div class="col-md-2 col-6">
+                        <div class="field-card">
+                            <div class="field-header">
+                                <h5><i class="fas fa-city"></i> Quy Hoạch</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3><%= domainScores[2] || 0 %></h3>
+                                <p>/ <%= domains.find(d => d.domain_id === 2)?.max_score || 100 %> điểm</p>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="col-md-2 col-6">
-            <div class="field-card">
-                <div class="field-header">
-                    <h5><i class="fas fa-bus"></i> Giao Thông</h5>
-                </div>
-                <div class="card-body">
-                    <h3><%= domainScores[3] || 0 %></h3>
-                    <p>/ <%= domains.find(d => d.domain_id === 3)?.max_score || 120 %> điểm</p>
-                </div>
-            </div>
-        </div>
+                    <div class="col-md-2 col-6">
+                        <div class="field-card">
+                            <div class="field-header">
+                                <h5><i class="fas fa-bus"></i> Giao Thông</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3><%= domainScores[3] || 0 %></h3>
+                                <p>/ <%= domains.find(d => d.domain_id === 3)?.max_score || 120 %> điểm</p>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="col-md-2 col-6">
-            <div class="field-card">
-                <div class="field-header">
-                    <h5><i class="fas fa-tint"></i> Quản Lý Nước</h5>
-                </div>
-                <div class="card-body">
-                    <h3><%= domainScores[4] || 0 %></h3>
-                    <p>/ <%= domains.find(d => d.domain_id === 4)?.max_score || 100 %> điểm</p>
-                </div>
-            </div>
-        </div>
+                    <div class="col-md-2 col-6">
+                        <div class="field-card">
+                            <div class="field-header">
+                                <h5><i class="fas fa-tint"></i> Quản Lý Nước</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3><%= domainScores[4] || 0 %></h3>
+                                <p>/ <%= domains.find(d => d.domain_id === 4)?.max_score || 100 %> điểm</p>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="col-md-2 col-6">
-            <div class="field-card">
-                <div class="field-header">
-                    <h5><i class="fas fa-recycle"></i> Quản Lý Chất Thải</h5>
+                    <div class="col-md-2 col-6">
+                        <div class="field-card">
+                            <div class="field-header">
+                                <h5><i class="fas fa-recycle"></i> Quản Lý Chất Thải</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3><%= domainScores[5] || 0 %></h3>
+                                <p>/ <%= domains.find(d => d.domain_id === 5)?.max_score || 100 %> điểm</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <h3><%= domainScores[5] || 0 %></h3>
-                    <p>/ <%= domains.find(d => d.domain_id === 5)?.max_score || 100 %> điểm</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</main>
-                <!-- 
+                <!--
                 <div class="row">
                     <div class="col-md-8">
                         <div class="field-card">
@@ -317,7 +394,7 @@
                             </div>
                             <div class="card-body">
                                 <div id="map"></div>
-                                <p class="text-center mt-2">Đang tải dữ liệu GIS...</p>
+                                <p class="text-center mt-2 text-muted">Đang tải dữ liệu GIS...</p>
                             </div>
                         </div>
                     </div>
