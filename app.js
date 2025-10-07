@@ -26,57 +26,6 @@ app.set('trust proxy', 1);
 // 🚫 Không dùng Redis
 console.warn("⚠️ Redis đã được tắt, hệ thống chỉ sử dụng PostgreSQL.");
 
-// ==== Evaluate Formula ====
-function evaluateFormula(formula, value, additionalParams = {}) {
-  try {
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) throw new Error('Giá trị không hợp lệ để tính công thức');
-
-    if (formula.includes('value *')) {
-      const multiplier = parseFloat(formula.split('value *')[1].trim());
-      if (isNaN(multiplier)) throw new Error('Hệ số nhân không hợp lệ');
-      return numValue * multiplier;
-    } else if (formula.includes('100 - value')) {
-      return 100 - numValue;
-    } else if (
-      [
-        'Qualitative/score by policy',
-        'Scale 1-5',
-        'Data availability & integration',
-        'Existence and quality of plan',
-        'Composite',
-        'Count density',
-        'Number of days AQI > threshold',
-        'Digitalization level',
-        'Number/quality of initiatives',
-        'Operational efficiency',
-        'GHG reduction measures',
-        'Level of service',
-      ].includes(formula)
-    ) {
-      return numValue;
-    } else if (formula.includes('avg(')) {
-      const params = formula.match(/avg\(([^)]+)\)/)[1].split(',').map((p) => p.trim());
-      const values = params.map((param) => additionalParams[param] || numValue);
-      if (values.some((v) => isNaN(parseFloat(v)))) throw new Error('Tham số không hợp lệ cho hàm avg');
-      return values.reduce((sum, val) => sum + parseFloat(val), 0) / values.length;
-    } else {
-      let evalFormula = formula;
-      for (const [key, val] of Object.entries(additionalParams)) {
-        evalFormula = evalFormula.replace(new RegExp(key, 'g'), val);
-      }
-      evalFormula = evalFormula.replace('value', numValue.toString());
-
-      const result = math.evaluate(evalFormula);
-      if (typeof result !== 'number' || isNaN(result)) throw new Error('Kết quả công thức không hợp lệ');
-      return result;
-    }
-  } catch (err) {
-    console.error(`Lỗi xử lý công thức "${formula}":`, err.message);
-    return parseFloat(value) || 0;
-  }
-}
-
 // ==== View Engine ====
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -236,6 +185,225 @@ async function getCachedOrQuery(key, query) {
   }
 }
 
+// Middleware xác thực token
+function authenticateToken(req, res, next) {
+  const token = req.cookies.token;
+  if (!token) return res.redirect('/?error=Vui lòng đăng nhập');
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error('Lỗi xác thực token:', err);
+    res.clearCookie('token');
+    res.redirect('/?error=Token không hợp lệ');
+  }
+}
+
+// Middleware kiểm tra vai trò
+function checkRole(role) {
+  return (req, res, next) => {
+    if (req.user && req.user.role === role) {
+      next();
+    } else {
+      res.redirect('/?error=Không có quyền truy cập');
+    }
+  };
+}
+
+// Định nghĩa công thức cứng cho từng chỉ số
+const formulas = {
+  'ENI_RWE': (params) => ((params.E_RE - params['L_AT&C']) / params.EC * 100 + params.P_RE / params.P_total * 100) || 0,
+  'SENIRE': (params) => (params.SE_RE / params.ES * 100) || 0,
+  'EI_Save': (params) => (params.E_Save / params.E_C * 100) || 0,
+  'EI_LR': (params) => (params.E_delivered / params.E_input * 100) || 0,
+  'SLI': (params) => ((params.SL_e + params.SL_s) / params.SL * 100) || 0,
+  'GBpromo': (params) => parseFloat(params.GBpromo) || 0,
+  'VNGBI': (params) => ((params.B_P + params.B_AC) / (params.S_GB / params.S_BC) * 100) || 0,
+  'R_CO2e': (params) => ((params.CO2eb - params.CO2et) / params.CO2eb * 100) || 0,
+  'R_S_water': (params) => ((params.S_water_present + params.S_op_present) / (params.S_water_plan + params.S_op_plan) * 100) || 0,
+  'Rcover': (params) => ((params.S_pp / params.P) / 12 * 100) || 0,
+  'Rland_p': (params) => (params.S_land_p / params.S_total_land * 100) || 0,
+  'UBI_PNRA': (params) => ((params.A_natural + params.A_restored) / params.A_city * 100) || 0,
+  'GISapp': (params) => parseFloat(params.GISapp) || 0,
+  'DISaster': (params) => parseFloat(params.DISaster) || 0,
+  'ClimateAct': (params) => parseFloat(params.ClimateAct) || 0,
+  'NMT': (params) => (params.NMT_L / params.L_R * 100) || 0,
+  'PT_c': (params) => (params.PT_c / params.PT * 100) || 0,
+  'PT1000': (params) => (params.PT_F * 1000 / params.P) || 0,
+  'STL': (params) => (params.STL_S / params.TL * 100) || 0,
+  'SRRW': (params) => (params.SRRW_L / params.TSR * 100) || 0,
+  'RoadCap': (params) => parseFloat(params.RoadCap) || 0,
+  'AQstation': (params) => (params.AQstation / params.A_city) || 0,
+  'AQdata': (params) => parseFloat(params.AQdata) || 0,
+  'CleanAirPlan': (params) => parseFloat(params.CleanAirPlan) || 0,
+  'AQI_TDE': (params) => parseFloat(params.AQI_exceed_days) || 0,
+  'WImanage': (params) => parseFloat(params.WImanage) || 0,
+  'WI_loss': (params) => ((params.W_P - params.W_S) / params.W_P * 100) || 0,
+  'WI_rr': (params) => (params.W_rr / params.W_s * 100) || 0,
+  'FloodRisk': (params) => parseFloat(params.FloodRisk) || 0,
+  'Ewater': (params) => parseFloat(params.Ewater) || 0,
+  'Ewwater': (params) => parseFloat(params.Ewwater) || 0,
+  'DigWater': (params) => parseFloat(params.DigWater) || 0,
+  'R_USWA': (params) => (params.P_W / params.P_S * 100) || 0,
+  'WasteInit': (params) => parseFloat(params.Waste_Init) || 0,
+  'R_USWA_waste': (params) => (params.W_landfill / params.W_waste_generate * 100) || 0,
+  'RRWI': (params) => ((params.W_RU + params.W_RRC) / params.W_G * 100) || 0,
+  'ConsWaste': (params) => ((params.W_Cons_deli_cp + params.W_Cons_rr + params.W_Cons_deli_reduce) / params.W_Cons * 100) || 0,
+  'WWT_I': (params) => (params.W_T / params.W_G * 100) || 0,
+  'DigWaste': (params) => parseFloat(params.DigWaste) || 0,
+  'LandfillEff': (params) => parseFloat(params.LandfillEff) || 0,
+  'GHGIs': (params) => (parseFloat(params.GHGs_Landfill) || 0) + (parseFloat(params.GHGs_WTE) || 0) + (parseFloat(params.GHGs_Recycling) || 0) + (parseFloat(params.GHGs_Composting) || 0)
+};
+
+// Route POST /cndl
+app.post(
+  '/cndl',
+  authenticateToken,
+  checkRole('admin'),
+  [
+    body('year').isInt({ min: 2000, max: 2100 }).withMessage('Năm phải từ 2000 đến 2100'),
+    body('*.params.*')
+      .optional()
+      .trim()
+      .customSanitizer(value => value.replace(',', '.').replace(/[^\d.]/g, ''))
+      .matches(/^\d+(\.\d*)?$/)
+      .withMessage('Tham số bổ sung phải là số dương')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Lỗi validation:', errors.array());
+      return res.redirect(`/cndl?error=${encodeURIComponent(errors.array()[0].msg)}`);
+    }
+
+    try {
+      const year = req.body.year || new Date().getFullYear();
+      const city = req.body.city || 'TP. Hồ Chí Minh';
+      const assessor = req.user.username;
+      const ip = req.ip;
+      const userAgent = req.get('User-Agent');
+
+      const indicatorCodes = [
+        'ENI_RWE', 'SENIRE', 'EI_Save', 'EI_LR', 'SLI', 'GBpromo', 'VNGBI', 'R_CO2e',
+        'R_S_water', 'Rcover', 'Rland_p', 'UBI_PNRA', 'GISapp', 'DISaster', 'ClimateAct',
+        'NMT', 'PT_c', 'PT1000', 'STL', 'SRRW', 'RoadCap', 'AQstation', 'AQdata', 'CleanAirPlan', 'AQI_TDE',
+        'WImanage', 'WI_loss', 'WI_rr', 'FloodRisk', 'Ewater', 'Ewwater', 'DigWater', 'R_USWA',
+        'WasteInit', 'R_USWA_waste', 'RRWI', 'ConsWaste', 'WWT_I', 'DigWaste', 'LandfillEff', 'GHGIs'
+      ];
+
+      for (const indicator_code of indicatorCodes) {
+        if (!req.body[indicator_code]) {
+          console.warn(`Không tìm thấy dữ liệu cho chỉ số ${indicator_code}`);
+          continue;
+        }
+        const data = req.body[indicator_code];
+        const params = data.params || {};
+
+        // Lấy indicator_id, domain_id từ bảng Indicators
+        const indicatorRes = await pool.query(
+          'SELECT indicator_id, domain_id, unit_code FROM Indicators WHERE code = $1',
+          [indicator_code]
+        );
+        if (indicatorRes.rows.length === 0) {
+          console.warn(`Không tìm thấy chỉ số ${indicator_code} trong bảng Indicators`);
+          continue;
+        }
+        const { indicator_id, domain_id, unit_code } = indicatorRes.rows[0];
+
+        // Tính giá trị chỉ số
+        let value;
+        try {
+          value = formulas[indicator_code](params);
+        } catch (err) {
+          console.error(`Lỗi khi tính chỉ số ${indicator_code}:`, err.message);
+          value = 0;
+        }
+
+        // Kiểm tra giá trị phần trăm
+        if (unit_code === 'percent' && (value < 0 || value > 100)) {
+          console.warn(`Giá trị cho ${indicator_code} phải từ 0-100%, nhận được: ${value}`);
+          value = Math.max(0, Math.min(100, value)); // Giới hạn giá trị trong khoảng 0-100
+        }
+
+        // Xác định level, score, description
+        const levelsRes = await pool.query(
+          'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
+          [indicator_code]
+        );
+        let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
+        for (const level of levelsRes.rows) {
+          const { min_value, max_value } = parseRange(level.criteria);
+          if ((min_value === null || value >= min_value) && (max_value === null || value <= max_value)) {
+            selectedLevel = { level: level.level, score_value: level.score_value, description: level.description };
+            break;
+          }
+        }
+
+        // Lấy giá trị cũ để ghi lịch sử
+        const oldQuery = await pool.query(
+          'SELECT value, score_awarded, level, description FROM Assessments_Template WHERE city = $1 AND year = $2 AND indicator_code = $3',
+          [city, year, indicator_code]
+        );
+        const oldValues = oldQuery.rows[0] || null;
+
+        // Lưu vào Assessments_Template
+        await pool.query(
+          `INSERT INTO Assessments_Template (city, year, domain_id, indicator_id, indicator_code, value, unit_code, score_awarded, assessor, date, level, description)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_DATE, $10, $11)
+           ON CONFLICT (city, year, indicator_code) DO UPDATE SET 
+             value = EXCLUDED.value, 
+             unit_code = EXCLUDED.unit_code,
+             score_awarded = EXCLUDED.score_awarded, 
+             assessor = EXCLUDED.assessor, 
+             date = CURRENT_DATE, 
+             level = EXCLUDED.level, 
+             description = EXCLUDED.description`,
+          [
+            city,
+            year,
+            domain_id,
+            indicator_id,
+            indicator_code,
+            value,
+            unit_code,
+            selectedLevel.score_value,
+            assessor,
+            selectedLevel.level,
+            selectedLevel.description
+          ]
+        );
+
+        // Ghi lịch sử vào edit_history
+        await pool.query(
+          `INSERT INTO edit_history (table_name, record_id, old_values, new_values, changed_by, change_type, ip_address, user_agent, timestamp)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)`,
+          [
+            'Assessments_Template',
+            `${city}_${year}_${indicator_code}`,
+            oldValues ? JSON.stringify(oldValues) : null,
+            JSON.stringify({
+              value,
+              score_awarded: selectedLevel.score_value,
+              level: selectedLevel.level,
+              description: selectedLevel.description
+            }),
+            assessor,
+            oldValues ? 'update' : 'insert',
+            ip,
+            userAgent
+          ]
+        );
+      }
+
+      res.redirect(`/dashboard?year=${year}&success=${encodeURIComponent('Dữ liệu đã được lưu thành công')}`);
+    } catch (err) {
+      console.error('Lỗi POST /cndl:', err.message);
+      res.redirect(`/cndl?error=${encodeURIComponent(`Lỗi khi lưu dữ liệu: ${err.message}`)}`);
+    }
+  }
+);
+
 // Khởi tạo cơ sở dữ liệu
 let dbInitialized = false;
 async function initializeDatabase() {
@@ -244,7 +412,7 @@ async function initializeDatabase() {
   try {
     console.log('🛠️ Khởi tạo cấu trúc cơ sở dữ liệu...');
 
-    // Xóa các bảng theo thứ tự ngược với phụ thuộc, bao gồm các bảng phụ thuộc
+    // Xóa các bảng theo thứ tự ngược với phụ thuộc
     await pool.query(`
       DROP TABLE IF EXISTS Assessments_Template CASCADE;
       DROP TABLE IF EXISTS IndicatorWeights CASCADE;
@@ -262,7 +430,6 @@ async function initializeDatabase() {
     `);
 
     // Tạo các bảng theo đúng thứ tự
-    // Bảng: Units
     await pool.query(`
       CREATE TABLE Units (
         unit_code VARCHAR(50) PRIMARY KEY,
@@ -270,7 +437,6 @@ async function initializeDatabase() {
       );
     `);
 
-    // Bảng: Domains
     await pool.query(`
       CREATE TABLE Domains (
         domain_id INTEGER PRIMARY KEY,
@@ -280,7 +446,6 @@ async function initializeDatabase() {
       );
     `);
 
-    // Bảng: Indicators
     await pool.query(`
       CREATE TABLE Indicators (
         indicator_id INTEGER PRIMARY KEY,
@@ -293,7 +458,6 @@ async function initializeDatabase() {
       );
     `);
 
-    // Bảng: ScoringLevels
     await pool.query(`
       CREATE TABLE ScoringLevels (
         indicator_id INTEGER,
@@ -301,12 +465,12 @@ async function initializeDatabase() {
         level INTEGER,
         description TEXT,
         score_value INTEGER,
+        criteria TEXT,
         PRIMARY KEY (indicator_id, level),
         FOREIGN KEY (indicator_id) REFERENCES Indicators(indicator_id)
       );
     `);
 
-    // Bảng: DomainWeights
     await pool.query(`
       CREATE TABLE DomainWeights (
         item_type TEXT,
@@ -316,7 +480,6 @@ async function initializeDatabase() {
       );
     `);
 
-    // Bảng: IndicatorWeights
     await pool.query(`
       CREATE TABLE IndicatorWeights (
         indicator_id INTEGER REFERENCES Indicators(indicator_id),
@@ -326,61 +489,60 @@ async function initializeDatabase() {
       );
     `);
 
-// Trong hàm initializeDatabase, cập nhật tạo bảng Assessments_Template
-await pool.query(`
-  CREATE TABLE Assessments_Template (
-    assessment_id SERIAL PRIMARY KEY,
-    city TEXT,
-    year INTEGER,
-    domain_id INTEGER REFERENCES Domains(domain_id),
-    indicator_id INTEGER REFERENCES Indicators(indicator_id),
-    indicator_code VARCHAR(50),
-    value TEXT,
-    unit_code VARCHAR(50) REFERENCES Units(unit_code),
-    score_awarded INTEGER,
-    assessor TEXT,
-    date DATE,
-    level INTEGER,
-    description TEXT,
-    CONSTRAINT unique_city_year_indicator UNIQUE (city, year, indicator_code)
-  );
-`);
+    await pool.query(`
+      CREATE TABLE Assessments_Template (
+        assessment_id SERIAL PRIMARY KEY,
+        city TEXT,
+        year INTEGER,
+        domain_id INTEGER REFERENCES Domains(domain_id),
+        indicator_id INTEGER REFERENCES Indicators(indicator_id),
+        indicator_code VARCHAR(50),
+        value TEXT,
+        unit_code VARCHAR(50) REFERENCES Units(unit_code),
+        score_awarded INTEGER,
+        assessor TEXT,
+        date DATE,
+        level INTEGER,
+        description TEXT,
+        CONSTRAINT unique_city_year_indicator UNIQUE (city, year, indicator_code)
+      );
+    `);
 
-await pool.query(`
-  CREATE TABLE users (
-    username VARCHAR(50) PRIMARY KEY,
-    password TEXT NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'user'
-  );
-`);
+    await pool.query(`
+      CREATE TABLE users (
+        username VARCHAR(50) PRIMARY KEY,
+        password TEXT NOT NULL,
+        role VARCHAR(20) NOT NULL DEFAULT 'user'
+      );
+    `);
 
-await pool.query(`
-  CREATE TABLE edit_history (
-    id SERIAL PRIMARY KEY,
-    table_name TEXT,
-    record_id TEXT,
-    old_values JSONB,
-    new_values JSONB,
-    changed_by TEXT,
-    change_type TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ip_address TEXT,
-    user_agent TEXT
-  );
-`);
+    await pool.query(`
+      CREATE TABLE edit_history (
+        id SERIAL PRIMARY KEY,
+        table_name TEXT,
+        record_id TEXT,
+        old_values JSONB,
+        new_values JSONB,
+        changed_by TEXT,
+        change_type TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ip_address TEXT,
+        user_agent TEXT
+      );
+    `);
 
-await pool.query(`
-  CREATE TABLE file_uploads (
-    id SERIAL PRIMARY KEY,
-    filename TEXT,
-    original_name TEXT,
-    mimetype TEXT,
-    size INTEGER,
-    uploaded_by TEXT,
-    file_path TEXT,
-    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+    await pool.query(`
+      CREATE TABLE file_uploads (
+        id SERIAL PRIMARY KEY,
+        filename TEXT,
+        original_name TEXT,
+        mimetype TEXT,
+        size INTEGER,
+        uploaded_by TEXT,
+        file_path TEXT,
+        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
 
     // TRUNCATE tất cả các bảng để xóa dữ liệu cũ và reset identity
     await pool.query(`
@@ -418,257 +580,257 @@ await pool.query(`
     // Chèn dữ liệu vào bảng Indicators
     await pool.query(`
       INSERT INTO Indicators (indicator_id, domain_id, name, code, max_score, unit_code, formula) VALUES
-      (1, 1, 'Tiêu thụ điện từ các nguồn năng lượng tái tạo', 'ENIRE', 15, 'percent', 'ENIRE = E_RE / EC *100'),
-      (2, 1, 'Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp', 'SENIRE', 15, 'percent', 'SENIRE = SE_RE / ES *100'),
-      (3, 1, 'Giảm phát thải CO2 từ tiêu thụ nhiên liệu hóa thạch', 'CO2red', 15, 'tCO2e/GDP', 'see document formula'),
-      (4, 1, 'Chỉ số tiết kiệm điện', 'EIsave', 10, 'kWh or percent', 'EIsave = E_save / E_C *100'),
-      (5, 1, 'Hiệu quả vận hành hệ thống điện thông minh', 'EILR', 10, 'percent', 'EILR = (E_input - E_delivered)/E_input losses'),
-      (6, 1, 'Hệ thống chiếu sáng đường phố tiết kiệm năng lượng', 'SLI', 10, 'percent or count', 'SLI = (SL_e + SL_s)/SL *100'),
-      (7, 1, 'Mức độ thúc đẩy các công trình xanh', 'GBpromo', 10, 'score', 'Qualitative/score by policy'),
-      (8, 1, 'Xây dựng các công trình xanh', 'GBI', 15, 'percent or area', 'GBI = S_GB / S_BC *100'),
-      (9, 2, 'Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở', 'RS-water', 15, 'percent', 'avg(RS-water, R_so-op)'),
-      (10, 2, 'Tỷ lệ phủ xanh trong thành phố (m²/người)', 'Rcover', 15, 'm2/person', 'Rcover = S_pp / P'),
-      (11, 2, 'Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị', 'Rland-p', 15, 'percent', 'Rland-p = S_land-p / S_total-land *100'),
-      (12, 2, 'Đa dạng sinh học đô thị', 'Biodiv', 15, 'score', 'Qualitative scale'),
+      (1, 1, 'Tiêu thụ điện từ các nguồn năng lượng tái tạo', 'ENI_RWE', 15, 'percent', '(E_RE - L_AT&C)/EC *100 + P_RE/P_total *100'),
+      (2, 1, 'Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp', 'SENIRE', 15, 'percent', 'SE_RE / ES *100'),
+      (3, 1, 'Chỉ số tiết kiệm điện', 'EI_Save', 10, 'kWh or percent', 'E_Save / E_C *100'),
+      (4, 1, 'Hiệu quả vận hành hệ thống điện thông minh', 'EI_LR', 10, 'percent', 'E_delivered / E_input *100'),
+      (5, 1, 'Hệ thống chiếu sáng đường phố tiết kiệm năng lượng', 'SLI', 10, 'percent or count', '(SL_e + SL_s)/SL *100'),
+      (6, 1, 'Mức độ thúc đẩy các công trình xanh', 'GBpromo', 10, 'score', 'Qualitative/score by policy'),
+      (7, 1, 'Xây dựng các công trình xanh', 'VNGBI', 15, 'percent or area', '(B_P + B_AC)/(S_GB / S_BC) *100'),
+      (8, 2, 'Giảm phát thải CO2 từ tiêu thụ nhiên liệu hóa thạch', 'R_CO2e', 15, 'percent', '(CO2eb - CO2et)/CO2eb *100'),
+      (9, 2, 'Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở', 'R_S_water', 15, 'percent', '(S_water_present + S_op_present)/(S_water_plan + S_op_plan) *100'),
+      (10, 2, 'Tỷ lệ phủ xanh trong thành phố (m²/người)', 'Rcover', 15, 'm2/person', '(S_pp / P) / 12 *100'),
+      (11, 2, 'Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị', 'Rland_p', 15, 'percent', 'S_land_p / S_total_land *100'),
+      (12, 2, 'Đa dạng sinh học đô thị', 'UBI_PNRA', 15, 'percent', '(A_natural + A_restored)/A_city *100'),
       (13, 2, 'Ứng dụng GIS và dữ liệu số trong quy hoạch đô thị', 'GISapp', 10, 'score', 'Scale 1-5'),
       (14, 2, 'Hệ thống cảnh báo & quản lý thiên tai thông minh', 'DISaster', 15, 'score', 'Scale 1-5'),
       (15, 2, 'Kế hoạch hành động về khí hậu', 'ClimateAct', 15, 'score', 'Scale/qualitative'),
-      (16, 3, 'Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới', 'NMT', 15, 'percent', 'NMT = L_NMT / L_R *100'),
-      (17, 3, 'Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch', 'CleanPT', 15, 'percent', 'Share of clean tech vehicles in fleet'),
-      (18, 3, 'Mức độ dễ tiếp cận phương tiện công cộng', 'PTaccess', 10, 'vehicles per 1000 or score', 'PT per 1000'),
-      (19, 3, 'Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh', 'STL', 10, 'percent', 'STL = STL_s / TL *100'),
-      (20, 3, 'Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến', 'RroadIT', 10, 'percent', 'percent of streets integrated'),
+      (16, 3, 'Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới', 'NMT', 15, 'percent', 'NMT_L / L_R *100'),
+      (17, 3, 'Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch', 'PT_c', 15, 'percent', 'PT_c / PT *100'),
+      (18, 3, 'Mức độ dễ tiếp cận phương tiện công cộng', 'PT1000', 10, 'vehicles per 1000 or score', 'PT_F * 1000 / P'),
+      (19, 3, 'Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh', 'STL', 10, 'percent', 'STL_S / TL *100'),
+      (20, 3, 'Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến', 'SRRW', 10, 'percent', 'SRRW_L / TSR *100'),
       (21, 3, 'Khả năng thông hành và mức phục vụ của đường phố', 'RoadCap', 10, 'score', 'Level of service'),
-      (22, 3, 'Mật độ trạm quan trắc không khí tự động, liên tục', 'AQstation', 10, 'stations per area', 'Count density'),
+      (22, 3, 'Mật độ trạm quan trắc không khí tự động, liên tục', 'AQstation', 10, 'stations per area', 'AQstation / A_city'),
       (23, 3, 'Khả năng cung cấp dữ liệu & cảnh báo AQ thời gian thực', 'AQdata', 10, 'score', 'Data availability & integration'),
       (24, 3, 'Kế hoạch hành động vì không khí sạch', 'CleanAirPlan', 15, 'score', 'Existence and quality of plan'),
-      (25, 3, 'Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng)', 'AQI', 10, 'days', 'Number of days AQI > threshold'),
+      (25, 3, 'Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng)', 'AQI_TDE', 10, 'days', 'Number of days AQI > threshold'),
       (26, 4, 'Đánh giá mức độ quản lý tài nguyên nước', 'WImanage', 15, 'score', 'Composite'),
-      (27, 4, 'Chỉ số giảm thất thoát nguồn nước', 'WIloss', 10, 'percent', 'WIloss = (W_P - W_S) / W_P *100'),
-      (28, 4, 'Chỉ số tái sử dụng nước thải', 'WIreuse', 15, 'percent', 'W_rr / W_s *100'),
+      (27, 4, 'Chỉ số giảm thất thoát nguồn nước', 'WI_loss', 10, 'percent', '(W_P - W_S) / W_P *100'),
+      (28, 4, 'Chỉ số tái sử dụng nước thải', 'WI_rr', 15, 'percent', 'W_rr / W_s *100'),
       (29, 4, 'Quản lý rủi ro ngập lụt đô thị', 'FloodRisk', 15, 'score', 'Scale 1-5'),
       (30, 4, 'Hệ thống cấp nước sạch tiết kiệm năng lượng', 'Ewater', 10, 'score', 'Energy efficiency metric'),
       (31, 4, 'Hệ thống quản lý nước thải tiết kiệm năng lượng', 'Ewwater', 10, 'score', 'Energy efficiency metric'),
       (32, 4, 'Ứng dụng công nghệ số trong quản lý nước', 'DigWater', 10, 'score', 'Digitalization level'),
-      (33, 4, 'Tỷ lệ tiếp cận nước sạch đô thị', 'SafeWater', 15, 'percent', 'Population served / population'),
+      (33, 4, 'Tỷ lệ tiếp cận nước sạch đô thị', 'R_USWA', 15, 'percent', 'P_W / P_S *100'),
       (34, 5, 'Các sáng kiến giảm thiểu chất thải', 'WasteInit', 10, 'score', 'Number/quality of initiatives'),
-      (35, 5, 'Tỷ lệ chôn lấp rác thải sinh hoạt', 'Landfill', 15, 'percent', 'Landfilled / Generated *100'),
-      (36, 5, 'Mức độ rác thải khô được thu hồi và tái chế', 'RRWI', 10, 'percent', 'Recycled & reused / generated *100'),
+      (35, 5, 'Tỷ lệ chôn lấp rác thải sinh hoạt', 'R_USWA_waste', 15, 'percent', 'W_landfill / W_waste_generate *100'),
+      (36, 5, 'Mức độ rác thải khô được thu hồi và tái chế', 'RRWI', 10, 'percent', '(W_RU + W_RRC) / W_G *100'),
       (37, 5, 'Quản lý chất thải xây dựng', 'ConsWaste', 10, 'score', 'Management level'),
-      (38, 5, 'Mức độ xử lý chất thải ướt', 'WetWaste', 10, 'percent or ton', 'WetWaste treated / generated'),
+      (38, 5, 'Mức độ xử lý chất thải ướt', 'WWT_I', 10, 'percent or ton', 'W_T / W_G *100'),
       (39, 5, 'Chỉ số chuyển đổi số trong quản lý chất thải', 'DigWaste', 10, 'score', 'Digitalization level'),
       (40, 5, 'Hiệu quả vận hành bãi chôn lấp', 'LandfillEff', 15, 'score', 'Operational efficiency'),
-      (41, 5, 'Cải thiện phát thải khí nhà kính trong quản lý chất thải', 'GHGred', 15, 'tCO2e/year', 'GHG reduction measures');
+      (41, 5, 'Cải thiện phát thải khí nhà kính trong quản lý chất thải', 'GHGIs', 15, 'tCO2e/year', 'GHGs_Landfill + GHGs_WTE + GHGs_Recycling + GHGs_Composting');
     `);
 
     // Chèn dữ liệu vào bảng ScoringLevels
     await pool.query(`
-      INSERT INTO ScoringLevels (indicator_id, indicator_code, level, description, score_value) VALUES
-      (1, 'ENIRE', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (1, 'ENIRE', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (1, 'ENIRE', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (1, 'ENIRE', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (1, 'ENIRE', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (2, 'SENIRE', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (2, 'SENIRE', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (2, 'SENIRE', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (2, 'SENIRE', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (2, 'SENIRE', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (3, 'CO2red', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (3, 'CO2red', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (3, 'CO2red', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (3, 'CO2red', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (3, 'CO2red', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (4, 'EIsave', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2),
-      (4, 'EIsave', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4),
-      (4, 'EIsave', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6),
-      (4, 'EIsave', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8),
-      (4, 'EIsave', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10),
-      (5, 'EILR', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2),
-      (5, 'EILR', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4),
-      (5, 'EILR', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6),
-      (5, 'EILR', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8),
-      (5, 'EILR', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10),
-      (6, 'SLI', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2),
-      (6, 'SLI', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4),
-      (6, 'SLI', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6),
-      (6, 'SLI', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8),
-      (6, 'SLI', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10),
-      (7, 'GBpromo', 1, 'Các quy trình về công trình xanh chỉ mới áp dụng ở các quận/huyện', 2),
-      (7, 'GBpromo', 2, 'Hệ thống văn bản pháp luật về công trình xanh được ban hành từ cơ quan quản lý ở thành phố. Hệ thống văn bản pháp luật về tiết kiệm năng lượng được ban hành từ cơ quan quản lý ở thành phố. Triển khai các hệ thống ISO liên quan về công trình xanh', 4),
-      (7, 'GBpromo', 3, 'Các chứng nhận về tòa nhà xanh đã được áp dụng. Cơ quan riêng biệt về quản lý công trình xanh', 6),
-      (7, 'GBpromo', 4, 'Chương trình/chiến lược/quy hoạch các công trình xanh đáp ứng tiêu chuẩn ISO và cấp chứng nhận', 8),
-      (7, 'GBpromo', 5, 'Cán bộ của cơ quan về quản lý công trình xanh và các bên liên quan được đào tạo thường xuyên. Các ấn phẩm về công trình xanh được xuất bản. Các hội thảo về công trình xanh được tổ chức thường xuyên', 10),
-      (8, 'GBI', 1, 'Không có tòa nhà xanh nào được chứng nhận', 3),
-      (8, 'GBI', 2, 'Lên đến 10% trong năm cơ sở được chứng nhận', 6),
-      (8, 'GBI', 3, 'Lên đến 40% trong năm cơ sở được chứng nhận', 9),
-      (8, 'GBI', 4, 'Lên đến 60% trong năm cơ sở được chứng nhận', 12),
-      (8, 'GBI', 5, 'Tất cả các tòa nhà trong năm cơ sở được chứng nhận', 15),
-      (9, 'RS-water', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (9, 'RS-water', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (9, 'RS-water', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (9, 'RS-water', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (9, 'RS-water', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (10, 'Rcover', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (10, 'Rcover', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (10, 'Rcover', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (10, 'Rcover', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (10, 'Rcover', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (11, 'Rland-p', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (11, 'Rland-p', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (11, 'Rland-p', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (11, 'Rland-p', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (11, 'Rland-p', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (12, 'Biodiv', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (12, 'Biodiv', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (12, 'Biodiv', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (12, 'Biodiv', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (12, 'Biodiv', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (13, 'GISapp', 1, 'Chưa ứng dụng GIS (quy hoạch thủ công, rời rạc, không có số hóa)', 2),
-      (13, 'GISapp', 2, 'GIS cơ bản (bản đồ tĩnh, số hóa < 50%, chưa phân tích chuyên sâu)', 4),
-      (13, 'GISapp', 3, 'Tích hợp thông tin quy hoạch (dữ liệu số hóa 50–75%, cập nhật định kỳ, quản lý công khai)', 6),
-      (13, 'GISapp', 4, 'Phân tích không gian nâng cao (dữ liệu số hóa 75–90%, cập nhật hàng tháng)', 8),
-      (13, 'GISapp', 5, 'GIS thời gian thực (Digital Twin), dữ liệu số hóa >90%, mô phỏng/ra quyết định tức thời', 10),
-      (14, 'DISaster', 1, 'Hệ thống cảnh báo thủ công/truyền thống. Dự báo, ứng phó dựa vào kinh nghiệm, bản đồ giấy, thông tin rời rạc; không có trạm quan trắc tự động; cảnh báo sớm gần như không có.', 3),
-      (14, 'DISaster', 2, 'Có một vài trạm quan trắc tự động nhưng mật độ thấp (<1 trạm/100 km²), kết nối dữ liệu rời rạc, cảnh báo phần lớn thủ công; chỉ có SMS/loa truyền thống.', 6),
-      (14, 'DISaster', 3, 'Đã tích hợp GIS; dữ liệu trạm quan trắc quản lý trên bản đồ số, mật độ trạm 1–2 trạm/100 km²; chưa AI/IoT; cảnh báo tự động đạt 30–50%.', 9),
-      (14, 'DISaster', 4, 'Đã áp dụng AI, IoT (cảm biến, phân tích tự động), mật độ trạm >2 trạm/100 km²; cảnh báo tự động đạt 50–80%; dữ liệu cập nhật liên tục nhưng chưa phủ rộng khắp TP.', 12),
-      (14, 'DISaster', 5, 'Hệ thống cảnh báo đa thiên tai thông minh, mạng lưới cảm biến dày đặc (>5 trạm/100 km²), tích hợp GIS–IoT–AI–Big Data toàn thành phố, cảnh báo thời gian thực, tự động hóa >80%, thông tin cá thể hóa tới người dân.', 15),
-      (15, 'ClimateAct', 1, 'Chưa xây dựng kế hoạch hành động về khí hậu hoặc chỉ dừng lại ở mức định hướng chung; không có mục tiêu, giải pháp, hay lộ trình cụ thể.', 3),
-      (15, 'ClimateAct', 2, 'Đã xây dựng kế hoạch sơ bộ hoặc lồng ghép khí hậu vào quy hoạch tổng thể, nhưng thiếu mục tiêu định lượng, thiếu lộ trình thực hiện; mới dừng ở giải pháp chung hoặc tầm nhìn.', 6),
-      (15, 'ClimateAct', 3, 'Có kế hoạch hành động về khí hậu được UBND ban hành, xác định mục tiêu rõ ràng (ví dụ: giảm phát thải 10–20% đến năm 2030), đã tích hợp vào quy hoạch phát triển đô thị; có phân công trách nhiệm, một số giải pháp đã được thực hiện.', 9),
-      (15, 'ClimateAct', 4, 'Kế hoạch đã xác lập mục tiêu giảm phát thải trung hạn (Net Zero 2045–2050), xác định rõ lĩnh vực ưu tiên (năng lượng, giao thông, xây dựng…), có lộ trình thực hiện, cơ chế kiểm soát/giám sát (MRV), cập nhật thường xuyên.', 12),
-      (15, 'ClimateAct', 5, 'Kế hoạch hành động khí hậu tích hợp toàn diện, mục tiêu Net Zero hoặc trung hòa carbon trước 2050, đã thực thi các dự án giảm phát thải lớn, có hệ thống giám sát MRV minh bạch, công khai kết quả hàng năm, kết nối với các mạng lưới quốc tế (C40, Race to Zero), thu hút sự tham gia cộng đồng và doanh nghiệp.', 15),
-      (16, 'NMT', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (16, 'NMT', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (16, 'NMT', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (16, 'NMT', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (16, 'NMT', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (17, 'CleanPT', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3),
-      (17, 'CleanPT', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6),
-      (17, 'CleanPT', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9),
-      (17, 'CleanPT', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12),
-      (17, 'CleanPT', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15),
-      (18, 'PTaccess', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2),
-      (18, 'PTaccess', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4),
-      (18, 'PTaccess', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6),
-      (18, 'PTaccess', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8),
-      (18, 'PTaccess', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10),
-      (19, 'STL', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2),
-      (19, 'STL', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4),
-      (19, 'STL', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6),
-      (19, 'STL', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8),
-      (19, 'STL', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10),
-      (20, 'RroadIT', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2),
-      (20, 'RroadIT', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4),
-      (20, 'RroadIT', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6),
-      (20, 'RroadIT', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8),
-      (20, 'RroadIT', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10),
-      (21, 'RoadCap', 1, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 0 - < 35%', 2),
-      (21, 'RoadCap', 2, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 35% - < 50%', 4),
-      (21, 'RoadCap', 3, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 50% - < 75%', 6),
-      (21, 'RoadCap', 4, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 75% - < 90%', 8),
-      (21, 'RoadCap', 5, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 90% - 100%', 10),
-      (22, 'AQstation', 1, 'Không có trạm quan trắc không khí tự động, liên tục', 2),
-      (22, 'AQstation', 2, 'Có trạm quan trắc không khí tự động, liên tục ≤ 12 trạm', 4),
-      (22, 'AQstation', 3, 'Có trạm quan trắc không khí tự động, liên tục từ > 12 – 15 trạm', 6),
-      (22, 'AQstation', 4, 'Có trạm quan trắc không khí tự động, liên tục từ > 15 – 20 trạm', 8),
-      (22, 'AQstation', 5, 'Có trạm quan trắc không khí tự động, liên tục > 20 trạm', 10),
-      (23, 'AQdata', 1, 'Chưa công bố', 2),
-      (23, 'AQdata', 2, 'Có công bố chỉ số bụi mịn (PM10/ PM2.5) công khai trên cổng thông tin của cơ quan quản lý.', 4),
-      (23, 'AQdata', 3, 'Có công bố công khai với đa thông số theo quy định tại Thông tư 10/2021/TT-BTNMT trên cổng thông tin của cơ quan quản lý.', 6),
-      (23, 'AQdata', 4, 'Có công bố công khai với đa thông số theo quy định tại Thông tư 10/2021/TT-BTNMT và tích hợp trên những nền tảng khác ngoài cổng thông tin của cơ quan quản lý.', 8),
-      (23, 'AQdata', 5, 'Có công bố công khai với đa thông số theo quy định tại Thông tư 10/2021/TT-BTNMT, có tích hợp trên những nền tảng khác ngoài cổng thông tin của cơ quan quản lý và tích hợp chức năng khuyến nghị, cảnh báo đối với cộng đồng, đặc biệt là các nhóm đối tượng nhạy cảm.', 10),
-      (24, 'CleanAirPlan', 1, 'Không cân nhắc', 3),
-      (24, 'CleanAirPlan', 2, 'Giám sát và công bố dữ liệu: Thực hiện quan trắc các thông số bắt buộc theo quy định. Công bố dữ liệu quan trắc với cộng đồng', 6),
-      (24, 'CleanAirPlan', 3, 'Tuân thủ mục tiêu kế hoạch hành động của quốc gia về không khí. Có kế hoạch thực hiện kiểm soát, cải thiện chất lượng môi trường không khí.', 9),
-      (24, 'CleanAirPlan', 4, 'Chất lượng môi trường không khí được cải thiện. Đạt được mục tiêu của kế hoạch kiểm soát, cải thiện chất lượng môi trường không khí đã đề ra (tính trong một năm gần nhất).', 12),
-      (24, 'CleanAirPlan', 5, 'Tất cả chỉ số giám sát theo quy định Đạt QCVN về chất lượng không khí (tính trong một năm gần nhất).', 15),
-      (25, 'AQI', 1, '0%', 2),
-      (25, 'AQI', 2, '0% - < 70%', 4),
-      (25, 'AQI', 3, '70 – < 75%', 6),
-      (25, 'AQI', 4, '75 – < 80%', 8),
-      (25, 'AQI', 5, '≥ 80%', 10),
-      (26, 'WImanage', 1, 'Đánh giá sơ bộ nguồn nước', 3),
-      (26, 'WImanage', 2, 'Báo cáo kiểm kê nguồn nước hiện có, dự báo nhu cầu nước trong tương lai và khả năng cung cấp nước giai đoạn 5 năm', 6),
-      (26, 'WImanage', 3, 'Kế hoạch Quản lý Tài nguyên nước được xây dựng với các Hành động Ngắn hạn, Trung hạn và Dài hạn', 9),
-      (26, 'WImanage', 4, 'Báo cáo cân bằng nước nhằm đáp ứng nhu cầu nước trong tương lai', 12),
-      (26, 'WImanage', 5, 'Lồng ghép kịch bản biến đổi khí hậu đến kế hoạch quản lý nguồn nước trong tương lai', 15),
-      (27, 'WIloss', 1, '25%', 2),
-      (27, 'WIloss', 2, '18%', 4),
-      (27, 'WIloss', 3, '>15%', 6),
-      (27, 'WIloss', 4, '15% - 12%', 8),
-      (27, 'WIloss', 5, '<12%', 10),
-      (28, 'WIreuse', 1, '0', 3),
-      (28, 'WIreuse', 2, '<5%', 6),
-      (28, 'WIreuse', 3, '5% - 15%', 9),
-      (28, 'WIreuse', 4, '15% - 30%', 12),
-      (28, 'WIreuse', 5, 'Trên 30%', 15),
-      (29, 'FloodRisk', 1, 'Chưa có hệ thống cảnh báo sớm. Giám sát thủ công bằng con người. Không có cảm biến mực nước hoặc dữ liệu thời gian thực.', 3),
-      (29, 'FloodRisk', 2, 'Triển khai cảm biến mực nước ở một số điểm đen. Có bản đồ điểm ngập nhưng chưa tích hợp GIS/IoT. Cảnh báo ngập lụt gửi qua hệ thống nội bộ hoặc báo thủ công. Có kế hoạch ứng phó ngập nhưng không cập nhật thường xuyên', 6),
-      (29, 'FloodRisk', 3, 'Hệ thống cảm biến mực nước hoạt động thời gian thực tại các điểm quan trọng. Ứng dụng phần mềm GIS mô phỏng thoát nước mưa (ví dụ: SWMM, MIKE URBAN). Hệ thống cảnh báo kết nối đến người dân (SMS, app). Có cơ chế điều tiết cống, hồ chứa bán tự động.', 9),
-      (29, 'FloodRisk', 4, 'Hệ thống cảm biến toàn diện (mưa, dòng chảy, ngập cục bộ, áp lực cống). Tích hợp AI phân tích và cảnh báo sớm dựa trên dự báo thời tiết. Hệ thống phản ứng tự động: đóng/mở van, điều khiển máy bơm. Kết nối hệ thống giao thông để cảnh báo và điều hướng dòng xe.', 12),
-      (29, 'FloodRisk', 5, 'Quản lý ngập tích hợp vào chiến lược đô thị chống chịu khí hậu (theo SDG 11, 13). Tích hợp dữ liệu ngập với năng lượng, nước, chất thải, y tế, dân cư. Sử dụng dữ liệu vệ tinh, mô hình học máy để dự đoán và lập kế hoạch đô thị. Dữ liệu mở, người dân và doanh nghiệp được truy cập và phản hồi thông tin thời gian thực.', 15),
-      (30, 'Ewater', 1, 'Báo cáo kiểm toán công suất bơm tại các trạm', 2),
-      (30, 'Ewater', 2, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 5% - 10%', 4),
-      (30, 'Ewater', 3, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 10% - 15%', 6),
-      (30, 'Ewater', 4, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 15% - 20%', 8),
-      (30, 'Ewater', 5, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 20% - 25%', 10),
-      (31, 'Ewwater', 1, 'Báo cáo kiểm toán công suất bơm tại các trạm', 2),
-      (31, 'Ewwater', 2, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 5% - 10%', 4),
-      (31, 'Ewwater', 3, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 10% - 15%', 6),
-      (31, 'Ewwater', 4, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 15% - 20%', 8),
-      (31, 'Ewwater', 5, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 20% - 25%', 10),
-      (32, 'DigWater', 1, 'Có dữ liệu vận hành giấy/tệp', 2),
-      (32, 'DigWater', 2, '>10% giám sát từ xa bằng SCADA. Có tích hợp GIS để theo dõi mạng lưới cấp nước', 4),
-      (32, 'DigWater', 3, '10% - 50% giám sát từ xa bằng SCADA. Có Dashboard nội bộ. Tích hợp GIS để theo dõi mạng lưới cấp nước', 6),
-      (32, 'DigWater', 4, '50% - 70% giám sát từ xa bằng SCADA. Có Dashboard nội bộ. Tích hợp GIS để theo dõi mạng lưới cấp nước', 8),
-      (32, 'DigWater', 5, 'Trên 70% giám sát từ xa bằng SCADA. Có Dashboard công khai. Tích hợp GIS để theo dõi mạng lưới cấp nước. Tích hợp GIS toàn diện trong quản lý và giám sát', 10),
-      (33, 'SafeWater', 1, '>50% dân số đô thị tiếp cận nước sạch', 3),
-      (33, 'SafeWater', 2, '50 – <75% dân số đô thị tiếp cận nước sạch', 6),
-      (33, 'SafeWater', 3, '75 – <90% dân số đô thị tiếp cận nước sạch', 9),
-      (33, 'SafeWater', 4, '90 – <100% dân số đô thị tiếp cận nước sạch', 12),
-      (33, 'SafeWater', 5, '100% dân số đô thị tiếp cận nước sạch', 15),
-      (34, 'WasteInit', 1, 'Không có sáng kiến', 2),
-      (34, 'WasteInit', 2, 'Có đăng ký các sáng kiến', 4),
-      (34, 'WasteInit', 3, 'Có áp dụng các sáng kiến', 6),
-      (34, 'WasteInit', 4, 'Có áp dụng các sáng kiến và đánh giá hiệu quả', 8),
-      (34, 'WasteInit', 5, 'Có áp dụng các sáng kiến và nhân rộng sáng kiến', 10),
-      (35, 'Landfill', 1, 'WI > 70%', 3),
-      (35, 'Landfill', 2, 'WI: ≤ 70% - ≤ 50%', 6),
-      (35, 'Landfill', 3, 'WI: > 50% - ≤ 30%', 9),
-      (35, 'Landfill', 4, 'WI: > 30% - 10%', 12),
-      (35, 'Landfill', 5, 'WI: ≤ 10%', 15),
-      (36, 'RRWI', 1, 'Thành phố có ưu tiên cho việc tái sử dụng CTR', 2),
-      (36, 'RRWI', 2, 'Có thu hồi vật liệu và có tồn tại cơ sở phân đoạn tái chế', 4),
-      (36, 'RRWI', 3, '10%', 6),
-      (36, 'RRWI', 4, '10% - 20%', 8),
-      (36, 'RRWI', 5, '> 20%', 10),
-      (37, 'ConsWaste', 1, 'Có tồn tại các hệ thống xử lý CTXD', 2),
-      (37, 'ConsWaste', 2, 'Có điểm thu gom chất thải XD hiện hữu', 4),
-      (37, 'ConsWaste', 3, 'Có vận chuyển và xử lý chuyên dụng cho chất thải XD hiện hữu. CS3.1 > 70%', 6),
-      (37, 'ConsWaste', 4, 'Có xử lý chuyên dụng cho chất thải XD. CS3.2 > 50%', 8),
-      (37, 'ConsWaste', 5, 'Tái sử dụng và tái chế chất thải XD. CS3.2 = 100%', 10),
-      (38, 'WetWaste', 1, '< 10%', 2),
-      (38, 'WetWaste', 2, '10% – < 30%', 4),
-      (38, 'WetWaste', 3, '30% – < 50%', 6),
-      (38, 'WetWaste', 4, '50% – < 75%', 8),
-      (38, 'WetWaste', 5, '≥ 75%', 10),
-      (39, 'DigWaste', 1, 'Không áp dụng công nghệ số trong quản lý chất thải', 2),
-      (39, 'DigWaste', 2, 'Có hệ thống quản lý dữ liệu nội bộ (Excel, email…)', 4),
-      (39, 'DigWaste', 3, 'Thùng rác công cộng có cảm biến, ứng dụng GPS để giám sát xe thu gom', 6),
-      (39, 'DigWaste', 4, 'Có hệ thống quản lý tập trung, liên thông các cơ quan, sử dụng cảm biến, thu thập dữ liệu thời gian thực', 8),
-      (39, 'DigWaste', 5, 'Hệ thống tích hợp: ICT + GIS + AI + cổng cung cấp thông tin công khai', 10),
-      (40, 'LandfillEff', 1, 'Còn tồn tại các bãi chôn lấp không hợp vệ sinh và chưa có phương án xử lý.', 3),
-      (40, 'LandfillEff', 2, 'Có phương án xử lý ô nhiễm, cải tạo đáp ứng yêu cầu về bảo vệ môi trường đối với các bãi chôn lấp không hợp vệ sinh. Xử lý triệt để các bãi chôn lấp chất thải sinh hoạt tự phát và ngăn chặn kịp thời việc hình thành các bãi chôn lấp tự phát.', 6),
-      (40, 'LandfillEff', 3, '90 - 95% các bãi chôn lấp chất thải rắn sinh hoạt tại các đô thị đã đóng cửa được cải tạo, xử lý, tái sử dụng đất.', 9),
-      (40, 'LandfillEff', 4, 'Tất cả các bãi chôn lấp được xây dựng và vận hành theo đúng quy định quản lý chất thải rắn.', 12),
-      (40, 'LandfillEff', 5, 'Không đầu tư mới bãi chôn lấp để xử lý chất thải rắn công nghiệp thông thường (trừ trường hợp phù hợp với nội dung quản lý chất thải rắn trong các quy hoạch có liên quan).', 15),
-      (41, 'GHGred', 1, '0', 3),
-      (41, 'GHGred', 2, '< 25%', 6),
-      (41, 'GHGred', 3, '25% - <50%', 9),
-      (41, 'GHGred', 4, '50% - >75%', 12),
-      (41, 'GHGred', 5, '≥75%', 15);
+      INSERT INTO ScoringLevels (indicator_id, indicator_code, level, description, score_value, criteria) VALUES
+      (1, 'ENI_RWE', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (1, 'ENI_RWE', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (1, 'ENI_RWE', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (1, 'ENI_RWE', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (1, 'ENI_RWE', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (2, 'SENIRE', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (2, 'SENIRE', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (2, 'SENIRE', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (2, 'SENIRE', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (2, 'SENIRE', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (3, 'EI_Save', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2, '0-10'),
+      (3, 'EI_Save', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4, '10-20'),
+      (3, 'EI_Save', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6, '20-30'),
+      (3, 'EI_Save', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8, '30-40'),
+      (3, 'EI_Save', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10, '≥40'),
+      (4, 'EI_LR', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2, '0-20'),
+      (4, 'EI_LR', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4, '20-40'),
+      (4, 'EI_LR', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6, '40-60'),
+      (4, 'EI_LR', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8, '60-80'),
+      (4, 'EI_LR', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10, '≥80'),
+      (5, 'SLI', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2, '0-20'),
+      (5, 'SLI', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4, '20-40'),
+      (5, 'SLI', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6, '40-60'),
+      (5, 'SLI', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8, '60-80'),
+      (5, 'SLI', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10, '≥80'),
+      (6, 'GBpromo', 1, 'Các quy trình về công trình xanh chỉ mới áp dụng ở các quận/huyện', 2, '0-2'),
+      (6, 'GBpromo', 2, 'Hệ thống văn bản pháp luật về công trình xanh được ban hành từ cơ quan quản lý ở thành phố. Hệ thống văn bản pháp luật về tiết kiệm năng lượng được ban hành từ cơ quan quản lý ở thành phố. Triển khai các hệ thống ISO liên quan về công trình xanh', 4, '2-4'),
+      (6, 'GBpromo', 3, 'Các chứng nhận về tòa nhà xanh đã được áp dụng. Cơ quan riêng biệt về quản lý công trình xanh', 6, '4-6'),
+      (6, 'GBpromo', 4, 'Chương trình/chiến lược/quy hoạch các công trình xanh đáp ứng tiêu chuẩn ISO và cấp chứng nhận', 8, '6-8'),
+      (6, 'GBpromo', 5, 'Cán bộ của cơ quan về quản lý công trình xanh và các bên liên quan được đào tạo thường xuyên. Các ấn phẩm về công trình xanh được xuất bản. Các hội thảo về công trình xanh được tổ chức thường xuyên', 10, '≥8'),
+      (7, 'VNGBI', 1, 'Không có tòa nhà xanh nào được chứng nhận', 3, '0-10'),
+      (7, 'VNGBI', 2, 'Lên đến 10% trong năm cơ sở được chứng nhận', 6, '10-40'),
+      (7, 'VNGBI', 3, 'Lên đến 40% trong năm cơ sở được chứng nhận', 9, '40-60'),
+      (7, 'VNGBI', 4, 'Lên đến 60% trong năm cơ sở được chứng nhận', 12, '60-80'),
+      (7, 'VNGBI', 5, 'Tất cả các tòa nhà trong năm cơ sở được chứng nhận', 15, '≥80'),
+      (8, 'R_CO2e', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (8, 'R_CO2e', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (8, 'R_CO2e', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (8, 'R_CO2e', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (8, 'R_CO2e', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (9, 'R_S_water', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (9, 'R_S_water', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (9, 'R_S_water', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (9, 'R_S_water', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (9, 'R_S_water', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (10, 'Rcover', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (10, 'Rcover', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (10, 'Rcover', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (10, 'Rcover', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (10, 'Rcover', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (11, 'Rland_p', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (11, 'Rland_p', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (11, 'Rland_p', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (11, 'Rland_p', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (11, 'Rland_p', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (12, 'UBI_PNRA', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (12, 'UBI_PNRA', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (12, 'UBI_PNRA', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (12, 'UBI_PNRA', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (12, 'UBI_PNRA', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (13, 'GISapp', 1, 'Chưa ứng dụng GIS (quy hoạch thủ công, rời rạc, không có số hóa)', 2, '0-2'),
+      (13, 'GISapp', 2, 'GIS cơ bản (bản đồ tĩnh, số hóa < 50%, chưa phân tích chuyên sâu)', 4, '2-4'),
+      (13, 'GISapp', 3, 'Tích hợp thông tin quy hoạch (dữ liệu số hóa 50–75%, cập nhật định kỳ, quản lý công khai)', 6, '4-6'),
+      (13, 'GISapp', 4, 'Phân tích không gian nâng cao (dữ liệu số hóa 75–90%, cập nhật hàng tháng)', 8, '6-8'),
+      (13, 'GISapp', 5, 'GIS thời gian thực (Digital Twin), dữ liệu số hóa >90%, mô phỏng/ra quyết định tức thời', 10, '≥8'),
+      (14, 'DISaster', 1, 'Hệ thống cảnh báo thủ công/truyền thống. Dự báo, ứng phó dựa vào kinh nghiệm, bản đồ giấy, thông tin rời rạc; không có trạm quan trắc tự động; cảnh báo sớm gần như không có.', 3, '0-3'),
+      (14, 'DISaster', 2, 'Có một vài trạm quan trắc tự động nhưng mật độ thấp (<1 trạm/100 km²), kết nối dữ liệu rời rạc, cảnh báo phần lớn thủ công; chỉ có SMS/loa truyền thống.', 6, '3-6'),
+      (14, 'DISaster', 3, 'Đã tích hợp GIS; dữ liệu trạm quan trắc quản lý trên bản đồ số, mật độ trạm 1–2 trạm/100 km²; chưa AI/IoT; cảnh báo tự động đạt 30–50%.', 9, '6-9'),
+      (14, 'DISaster', 4, 'Đã áp dụng AI, IoT (cảm biến, phân tích tự động), mật độ trạm >2 trạm/100 km²; cảnh báo tự động đạt 50–80%; dữ liệu cập nhật liên tục nhưng chưa phủ rộng khắp TP.', 12, '9-12'),
+      (14, 'DISaster', 5, 'Hệ thống cảnh báo đa thiên tai thông minh, mạng lưới cảm biến dày đặc (>5 trạm/100 km²), tích hợp GIS–IoT–AI–Big Data toàn thành phố, cảnh báo thời gian thực, tự động hóa >80%, thông tin cá thể hóa tới người dân.', 15, '≥12'),
+      (15, 'ClimateAct', 1, 'Chưa xây dựng kế hoạch hành động về khí hậu hoặc chỉ dừng lại ở mức định hướng chung; không có mục tiêu, giải pháp, hay lộ trình cụ thể.', 3, '0-3'),
+      (15, 'ClimateAct', 2, 'Đã xây dựng kế hoạch sơ bộ hoặc lồng ghép khí hậu vào quy hoạch tổng thể, nhưng thiếu mục tiêu định lượng, thiếu lộ trình thực hiện; mới dừng ở giải pháp chung hoặc tầm nhìn.', 6, '3-6'),
+      (15, 'ClimateAct', 3, 'Có kế hoạch hành động về khí hậu được UBND ban hành, xác định mục tiêu rõ ràng (ví dụ: giảm phát thải 10–20% đến năm 2030), đã tích hợp vào quy hoạch phát triển đô thị; có phân công trách nhiệm, một số giải pháp đã được thực hiện.', 9, '6-9'),
+      (15, 'ClimateAct', 4, 'Kế hoạch đã xác lập mục tiêu giảm phát thải trung hạn (Net Zero 2045–2050), xác định rõ lĩnh vực ưu tiên (năng lượng, giao thông, xây dựng…), có lộ trình thực hiện, cơ chế kiểm soát/giám sát (MRV), cập nhật thường xuyên.', 12, '9-12'),
+      (15, 'ClimateAct', 5, 'Kế hoạch hành động khí hậu tích hợp toàn diện, mục tiêu Net Zero hoặc trung hòa carbon trước 2050, đã thực thi các dự án giảm phát thải lớn, có hệ thống giám sát MRV minh bạch, công khai kết quả hàng năm, kết nối với các mạng lưới quốc tế (C40, Race to Zero), thu hút sự tham gia cộng đồng và doanh nghiệp.', 15, '≥12'),
+      (16, 'NMT', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (16, 'NMT', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (16, 'NMT', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (16, 'NMT', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (16, 'NMT', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (17, 'PT_c', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 3, '0-20'),
+      (17, 'PT_c', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 6, '20-40'),
+      (17, 'PT_c', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 9, '40-60'),
+      (17, 'PT_c', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 12, '60-80'),
+      (17, 'PT_c', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 15, '≥80'),
+      (18, 'PT1000', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2, '0-50'),
+      (18, 'PT1000', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4, '50-100'),
+      (18, 'PT1000', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6, '100-150'),
+      (18, 'PT1000', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8, '150-200'),
+      (18, 'PT1000', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10, '≥200'),
+      (19, 'STL', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2, '0-20'),
+      (19, 'STL', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4, '20-40'),
+      (19, 'STL', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6, '40-60'),
+      (19, 'STL', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8, '60-80'),
+      (19, 'STL', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10, '≥80'),
+      (20, 'SRRW', 1, 'Mô tả Mức 1 - có thể chỉnh sửa', 2, '0-20'),
+      (20, 'SRRW', 2, 'Mô tả Mức 2 - có thể chỉnh sửa', 4, '20-40'),
+      (20, 'SRRW', 3, 'Mô tả Mức 3 - có thể chỉnh sửa', 6, '40-60'),
+      (20, 'SRRW', 4, 'Mô tả Mức 4 - có thể chỉnh sửa', 8, '60-80'),
+      (20, 'SRRW', 5, 'Mô tả Mức 5 - có thể chỉnh sửa', 10, '≥80'),
+      (21, 'RoadCap', 1, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 0 - < 35%', 2, '0-35'),
+      (21, 'RoadCap', 2, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 35% - < 50%', 4, '35-50'),
+      (21, 'RoadCap', 3, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 50% - < 75%', 6, '50-75'),
+      (21, 'RoadCap', 4, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 75% - < 90%', 8, '75-90'),
+      (21, 'RoadCap', 5, 'Tỷ lệ mạng lưới giao thông thông thoáng (mức A – B): 90% - 100%', 10, '≥90'),
+      (22, 'AQstation', 1, 'Không có trạm quan trắc không khí tự động, liên tục', 2, '0'),
+      (22, 'AQstation', 2, 'Có trạm quan trắc không khí tự động, liên tục ≤ 12 trạm', 4, '1-12'),
+      (22, 'AQstation', 3, 'Có trạm quan trắc không khí tự động, liên tục từ > 12 – 15 trạm', 6, '12-15'),
+      (22, 'AQstation', 4, 'Có trạm quan trắc không khí tự động, liên tục từ > 15 – 20 trạm', 8, '15-20'),
+      (22, 'AQstation', 5, 'Có trạm quan trắc không khí tự động, liên tục > 20 trạm', 10, '≥20'),
+      (23, 'AQdata', 1, 'Chưa công bố', 2, '0-2'),
+      (23, 'AQdata', 2, 'Có công bố chỉ số bụi mịn (PM10/ PM2.5) công khai trên cổng thông tin của cơ quan quản lý.', 4, '2-4'),
+      (23, 'AQdata', 3, 'Có công bố công khai với đa thông số theo quy định tại Thông tư 10/2021/TT-BTNMT trên cổng thông tin của cơ quan quản lý.', 6, '4-6'),
+      (23, 'AQdata', 4, 'Có công bố công khai với đa thông số theo quy định tại Thông tư 10/2021/TT-BTNMT và tích hợp trên những nền tảng khác ngoài cổng thông tin của cơ quan quản lý.', 8, '6-8'),
+      (23, 'AQdata', 5, 'Có công bố công khai với đa thông số theo quy định tại Thông tư 10/2021/TT-BTNMT, có tích hợp trên những nền tảng khác ngoài cổng thông tin của cơ quan quản lý và tích hợp chức năng khuyến nghị, cảnh báo đối với cộng đồng, đặc biệt là các nhóm đối tượng nhạy cảm.', 10, '≥8'),
+      (24, 'CleanAirPlan', 1, 'Không cân nhắc', 3, '0-3'),
+      (24, 'CleanAirPlan', 2, 'Giám sát và công bố dữ liệu: Thực hiện quan trắc các thông số bắt buộc theo quy định. Công bố dữ liệu quan trắc với cộng đồng', 6, '3-6'),
+      (24, 'CleanAirPlan', 3, 'Tuân thủ mục tiêu kế hoạch hành động của quốc gia về không khí. Có kế hoạch thực hiện kiểm soát, cải thiện chất lượng môi trường không khí.', 9, '6-9'),
+      (24, 'CleanAirPlan', 4, 'Chất lượng môi trường không khí được cải thiện. Đạt được mục tiêu của kế hoạch kiểm soát, cải thiện chất lượng môi trường không khí đã đề ra (tính trong một năm gần nhất).', 12, '9-12'),
+      (24, 'CleanAirPlan', 5, 'Tất cả chỉ số giám sát theo quy định Đạt QCVN về chất lượng không khí (tính trong một năm gần nhất).', 15, '≥12'),
+      (25, 'AQI_TDE', 1, '0%', 2, '0'),
+      (25, 'AQI_TDE', 2, '0% - < 70%', 4, '0-70'),
+      (25, 'AQI_TDE', 3, '70 – < 75%', 6, '70-75'),
+      (25, 'AQI_TDE', 4, '75 – < 80%', 8, '75-80'),
+      (25, 'AQI_TDE', 5, '≥ 80%', 10, '≥80'),
+      (26, 'WImanage', 1, 'Đánh giá sơ bộ nguồn nước', 3, '0-3'),
+      (26, 'WImanage', 2, 'Báo cáo kiểm kê nguồn nước hiện có, dự báo nhu cầu nước trong tương lai và khả năng cung cấp nước giai đoạn 5 năm', 6, '3-6'),
+      (26, 'WImanage', 3, 'Kế hoạch Quản lý Tài nguyên nước được xây dựng với các Hành động Ngắn hạn, Trung hạn và Dài hạn', 9, '6-9'),
+      (26, 'WImanage', 4, 'Báo cáo cân bằng nước nhằm đáp ứng nhu cầu nước trong tương lai', 12, '9-12'),
+      (26, 'WImanage', 5, 'Lồng ghép kịch bản biến đổi khí hậu đến kế hoạch quản lý nguồn nước trong tương lai', 15, '≥12'),
+      (27, 'WI_loss', 1, '25%', 2, '≥25'),
+      (27, 'WI_loss', 2, '18%', 4, '18-25'),
+      (27, 'WI_loss', 3, '>15%', 6, '15-18'),
+      (27, 'WI_loss', 4, '15% - 12%', 8, '12-15'),
+      (27, 'WI_loss', 5, '<12%', 10, '<12'),
+      (28, 'WI_rr', 1, '0', 3, '0'),
+      (28, 'WI_rr', 2, '<5%', 6, '0-5'),
+      (28, 'WI_rr', 3, '5% - 15%', 9, '5-15'),
+      (28, 'WI_rr', 4, '15% - 30%', 12, '15-30'),
+      (28, 'WI_rr', 5, 'Trên 30%', 15, '≥30'),
+      (29, 'FloodRisk', 1, 'Chưa có hệ thống cảnh báo sớm. Giám sát thủ công bằng con người. Không có cảm biến mực nước hoặc dữ liệu thời gian thực.', 3, '0-3'),
+      (29, 'FloodRisk', 2, 'Triển khai cảm biến mực nước ở một số điểm đen. Có bản đồ điểm ngập nhưng chưa tích hợp GIS/IoT. Cảnh báo ngập lụt gửi qua hệ thống nội bộ hoặc báo thủ công. Có kế hoạch ứng phó ngập nhưng không cập nhật thường xuyên', 6, '3-6'),
+      (29, 'FloodRisk', 3, 'Hệ thống cảm biến mực nước hoạt động thời gian thực tại các điểm quan trọng. Ứng dụng phần mềm GIS mô phỏng thoát nước mưa (ví dụ: SWMM, MIKE URBAN). Hệ thống cảnh báo kết nối đến người dân (SMS, app). Có cơ chế điều tiết cống, hồ chứa bán tự động.', 9, '6-9'),
+      (29, 'FloodRisk', 4, 'Hệ thống cảm biến toàn diện (mưa, dòng chảy, ngập cục bộ, áp lực cống). Tích hợp AI phân tích và cảnh báo sớm dựa trên dự báo thời tiết. Hệ thống phản ứng tự động: đóng/mở van, điều khiển máy bơm. Kết nối hệ thống giao thông để cảnh báo và điều hướng dòng xe.', 12, '9-12'),
+      (29, 'FloodRisk', 5, 'Quản lý ngập tích hợp vào chiến lược đô thị chống chịu khí hậu (theo SDG 11, 13). Tích hợp dữ liệu ngập với năng lượng, nước, chất thải, y tế, dân cư. Sử dụng dữ liệu vệ tinh, mô hình học máy để dự đoán và lập kế hoạch đô thị. Dữ liệu mở, người dân và doanh nghiệp được truy cập và phản hồi thông tin thời gian thực.', 15, '≥12'),
+      (30, 'Ewater', 1, 'Báo cáo kiểm toán công suất bơm tại các trạm', 2, '0-2'),
+      (30, 'Ewater', 2, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 5% - 10%', 4, '2-4'),
+      (30, 'Ewater', 3, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 10% - 15%', 6, '4-6'),
+      (30, 'Ewater', 4, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 15% - 20%', 8, '6-8'),
+      (30, 'Ewater', 5, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 20% - 25%', 10, '≥8'),
+      (31, 'Ewwater', 1, 'Báo cáo kiểm toán công suất bơm tại các trạm', 2, '0-2'),
+      (31, 'Ewwater', 2, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 5% - 10%', 4, '2-4'),
+      (31, 'Ewwater', 3, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 10% - 15%', 6, '4-6'),
+      (31, 'Ewwater', 4, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 15% - 20%', 8, '6-8'),
+      (31, 'Ewwater', 5, 'Tính toán với kết quả giảm năng lượng so với giai đoạn 5 năm trước là 20% - 25%', 10, '≥8'),
+      (32, 'DigWater', 1, 'Có dữ liệu vận hành giấy/tệp', 2, '0-2'),
+      (32, 'DigWater', 2, '>10% giám sát từ xa bằng SCADA. Có tích hợp GIS để theo dõi mạng lưới cấp nước', 4, '2-4'),
+      (32, 'DigWater', 3, '10% - 50% giám sát từ xa bằng SCADA. Có Dashboard nội bộ. Tích hợp GIS để theo dõi mạng lưới cấp nước', 6, '4-6'),
+      (32, 'DigWater', 4, '50% - 70% giám sát từ xa bằng SCADA. Có Dashboard nội bộ. Tích hợp GIS để theo dõi mạng lưới cấp nước', 8, '6-8'),
+      (32, 'DigWater', 5, 'Trên 70% giám sát từ xa bằng SCADA. Có Dashboard công khai. Tích hợp GIS để theo dõi mạng lưới cấp nước. Tích hợp GIS toàn diện trong quản lý và giám sát', 10, '≥8'),
+      (33, 'R_USWA', 1, '>50% dân số đô thị tiếp cận nước sạch', 3, '0-50'),
+      (33, 'R_USWA', 2, '50 – <75% dân số đô thị tiếp cận nước sạch', 6, '50-75'),
+      (33, 'R_USWA', 3, '75 – <90% dân số đô thị tiếp cận nước sạch', 9, '75-90'),
+      (33, 'R_USWA', 4, '90 – <100% dân số đô thị tiếp cận nước sạch', 12, '90-100'),
+      (33, 'R_USWA', 5, '100% dân số đô thị tiếp cận nước sạch', 15, '≥100'),
+      (34, 'WasteInit', 1, 'Không có sáng kiến', 2, '0-2'),
+      (34, 'WasteInit', 2, 'Có đăng ký các sáng kiến', 4, '2-4'),
+      (34, 'WasteInit', 3, 'Có áp dụng các sáng kiến', 6, '4-6'),
+      (34, 'WasteInit', 4, 'Có áp dụng các sáng kiến và đánh giá hiệu quả', 8, '6-8'),
+      (34, 'WasteInit', 5, 'Có áp dụng các sáng kiến và nhân rộng sáng kiến', 10, '≥8'),
+      (35, 'R_USWA_waste', 1, 'WI > 70%', 3, '≥70'),
+      (35, 'R_USWA_waste', 2, 'WI: ≤ 70% - ≤ 50%', 6, '50-70'),
+      (35, 'R_USWA_waste', 3, 'WI: > 50% - ≤ 30%', 9, '30-50'),
+      (35, 'R_USWA_waste', 4, 'WI: > 30% - 10%', 12, '10-30'),
+      (35, 'R_USWA_waste', 5, 'WI: ≤ 10%', 15, '0-10'),
+      (36, 'RRWI', 1, 'Thành phố có ưu tiên cho việc tái sử dụng CTR', 2, '0-2'),
+      (36, 'RRWI', 2, 'Có thu hồi vật liệu và có tồn tại cơ sở phân đoạn tái chế', 4, '2-4'),
+      (36, 'RRWI', 3, '10%', 6, '4-10'),
+      (36, 'RRWI', 4, '10% - 20%', 8, '10-20'),
+      (36, 'RRWI', 5, '> 20%', 10, '≥20'),
+      (37, 'ConsWaste', 1, 'Có tồn tại các hệ thống xử lý CTXD', 2, '0-2'),
+      (37, 'ConsWaste', 2, 'Có điểm thu gom chất thải XD hiện hữu', 4, '2-4'),
+      (37, 'ConsWaste', 3, 'Có vận chuyển và xử lý chuyên dụng cho chất thải XD hiện hữu. CS3.1 > 70%', 6, '4-6'),
+      (37, 'ConsWaste', 4, 'Có xử lý chuyên dụng cho chất thải XD. CS3.2 > 50%', 8, '6-8'),
+      (37, 'ConsWaste', 5, 'Tái sử dụng và tái chế chất thải XD. CS3.2 = 100%', 10, '≥8'),
+      (38, 'WWT_I', 1, '< 10%', 2, '0-10'),
+      (38, 'WWT_I', 2, '10% – < 30%', 4, '10-30'),
+      (38, 'WWT_I', 3, '30% – < 50%', 6, '30-50'),
+      (38, 'WWT_I', 4, '50% – < 75%', 8, '50-75'),
+      (38, 'WWT_I', 5, '≥ 75%', 10, '≥75'),
+      (39, 'DigWaste', 1, 'Không áp dụng công nghệ số trong quản lý chất thải', 2, '0-2'),
+      (39, 'DigWaste', 2, 'Có hệ thống quản lý dữ liệu nội bộ (Excel, email…)', 4, '2-4'),
+      (39, 'DigWaste', 3, 'Thùng rác công cộng có cảm biến, ứng dụng GPS để giám sát xe thu gom', 6, '4-6'),
+      (39, 'DigWaste', 4, 'Có hệ thống quản lý tập trung, liên thông các cơ quan, sử dụng cảm biến, thu thập dữ liệu thời gian thực', 8, '6-8'),
+      (39, 'DigWaste', 5, 'Hệ thống tích hợp: ICT + GIS + AI + cổng cung cấp thông tin công khai', 10, '≥8'),
+      (40, 'LandfillEff', 1, 'Còn tồn tại các bãi chôn lấp không hợp vệ sinh và chưa có phương án xử lý.', 3, '0-3'),
+      (40, 'LandfillEff', 2, 'Có phương án xử lý ô nhiễm, cải tạo đáp ứng yêu cầu về bảo vệ môi trường đối với các bãi chôn lấp không hợp vệ sinh. Xử lý triệt để các bãi chôn lấp chất thải sinh hoạt tự phát và ngăn chặn kịp thời việc hình thành các bãi chôn lấp tự phát.', 6, '3-6'),
+      (40, 'LandfillEff', 3, '90 - 95% các bãi chôn lấp chất thải rắn sinh hoạt tại các đô thị đã đóng cửa được cải tạo, xử lý, tái sử dụng đất.', 9, '6-9'),
+      (40, 'LandfillEff', 4, 'Tất cả các bãi chôn lấp được xây dựng và vận hành theo đúng quy định quản lý chất thải rắn.', 12, '9-12'),
+      (40, 'LandfillEff', 5, 'Không đầu tư mới bãi chôn lấp để xử lý chất thải rắn công nghiệp thông thường (trừ trường hợp phù hợp với nội dung quản lý chất thải rắn trong các quy hoạch có liên quan).', 15, '≥12'),
+      (41, 'GHGIs', 1, '0', 3, '0'),
+      (41, 'GHGIs', 2, '< 25%', 6, '0-25'),
+      (41, 'GHGIs', 3, '25% - <50%', 9, '25-50'),
+      (41, 'GHGIs', 4, '50% - >75%', 12, '50-75'),
+      (41, 'GHGIs', 5, '≥75%', 15, '≥75');
     `);
 
     // Chèn dữ liệu vào bảng DomainWeights

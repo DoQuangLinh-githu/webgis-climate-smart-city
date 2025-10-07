@@ -282,9 +282,9 @@
                 <% if (success) { %>
                     <div class="alert alert-success"><%= success %></div>
                 <% } %>
-                <form action="/cndl" method="POST">
+                <form action="/cndl" method="POST" id="cndlForm">
                     <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
-                    <div class="accordion" id="domainAccordion">
+                    <input type="hidden" name="city" value="TP. Hồ Chí Minh">
                         <!-- Domain 1: Năng lượng & Công trình xanh -->
 <div class="accordion-item">
     <h2 class="accordion-header" id="heading1">
@@ -1132,12 +1132,32 @@
         </div>
     </div>
 </div>
-</div>
 <button type="submit" class="btn btn-primary">Lưu Dữ Liệu</button>
-</form>
-<% } %>
+    </form>
+
+    <!-- Thêm JavaScript để xử lý gửi form -->
+    <script>
+      document.getElementById('cndlForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Ngăn làm mới trang
+        if (confirm('Bạn chắc chắn muốn lưu dữ liệu?')) {
+          try {
+            const response = await fetch('/cndl', {
+              method: 'POST',
+              body: new FormData(this),
+            });
+            const result = await response.json();
+            alert(result.message || result.error);
+            if (response.ok) {
+              this.reset(); // Xóa form sau khi lưu thành công
+            }
+          } catch (error) {
+            alert('Lỗi khi lưu dữ liệu: ' + error.message);
+          }
+        }
+      });
+    </script>
+  <% } %>
 </main>
-</div>
 
     <!-- Preview Modal -->
     <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
