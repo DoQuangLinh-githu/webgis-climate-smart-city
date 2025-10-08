@@ -1370,5 +1370,55 @@
         }
     });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const previewButtons = document.querySelectorAll(".preview-btn");
+
+  previewButtons.forEach((btn) => {
+    btn.addEventListener("click", async function () {
+      const indicatorCode = this.dataset.indicator;
+      const fieldCard = this.closest(".field-card");
+      const inputs = fieldCard.querySelectorAll("input, select");
+
+      const params = {};
+      inputs.forEach((input) => {
+        const name = input.name.match(/\[params]\[(.*?)\]/)?.[1];
+        if (name) params[name] = parseFloat(input.value) || 0;
+      });
+
+      const year = document.querySelector('input[name="year"]').value;
+      const city = document.querySelector('input[name="city"]').value;
+
+      try {
+        const res = await fetch("/cndl/preview", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ indicatorCode, params, year, city })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert("❌ Lỗi: " + (err.message || res.statusText));
+          return;
+        }
+
+        const data = await res.json();
+        alert(
+          `✅ Kết quả cho ${indicatorCode}:\n` +
+          `Giá trị: ${data.value}\n` +
+          `Mức: ${data.level}\n` +
+          `Điểm: ${data.score}\n` +
+          `Mô tả: ${data.description}`
+        );
+      } catch (error) {
+        console.error("Lỗi khi xem trước:", error);
+        alert("⚠️ Không thể kết nối tới máy chủ.");
+      }
+    });
+  });
+});
+</script>
 </body>
 </html>
