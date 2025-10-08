@@ -1599,65 +1599,65 @@ app.post(
     }
   }
 );
-// Route POST /cndl/preview — Xem trước kết quả chỉ số
-app.post(
-  '/cndl/preview',
-  authenticateToken,
-  [
-    body('indicator_code').notEmpty().withMessage('Mã chỉ số không được để trống'),
-    body('params.*')
-      .optional()
-      .trim()
-      .customSanitizer(value => {
-        const cleaned = value.replace(',', '.').replace(/[^0-9.]/g, '');
-        return cleaned.replace(/\./g, (match, i, str) => i === str.indexOf('.') ? '.' : '');
-      })
-      .custom(value => {
-        if (value === '') return true;
-        const num = parseFloat(value);
-        if (isNaN(num) || num < 0) {
-          throw new Error('Tham số phải là số dương hoặc 0');
-        }
-        return true;
-      })
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ error: errors.array()[0].msg });
+//route /cndl/preview
+app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res) => {
+  try {
+    const { indicatorCode, params, year, city } = req.body;
+
+    // Validate input
+    if (!indicatorCode || !params || !year || !city) {
+      return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
     }
 
-    const { indicator_code, params } = req.body;
+    // Lấy indicator_id, domain_id, unit_code từ bảng Indicators
+    const indicatorRes = await pool.query(
+      'SELECT indicator_id, domain_id, unit_code FROM Indicators WHERE code = $1',
+      [indicatorCode]
+    );
+    if (indicatorRes.rows.length === 0) {
+      return res.status(404).json({ message: `Không tìm thấy chỉ số ${indicatorCode}` });
+    }
+    const { indicator_id, domain_id, unit_code } = indicatorRes.rows[0];
 
+    // Tính giá trị chỉ số
+    let value;
     try {
-      // Dùng công thức cứng để tính preview
-      const formula = formulas[indicator_code];
-      if (!formula) {
-        return res.status(400).json({ error: `Chưa có công thức cho chỉ số ${indicator_code}` });
-      }
-
-      const calculatedValue = formula(params);
-      if (isNaN(calculatedValue)) {
-        return res.status(400).json({ error: 'Giá trị tính toán không hợp lệ' });
-      }
-
-      const level = calculatedValue >= 80 ? 'Tốt' : calculatedValue >= 50 ? 'Trung bình' : 'Thấp';
-      const score = Math.min(5, (calculatedValue / 20).toFixed(1));
-      const description = `Giá trị chỉ số tạm tính: ${calculatedValue.toFixed(2)} (${level})`;
-
-      res.json({
-        calculatedValue: Math.round(calculatedValue * 100) / 100,
-        level,
-        score,
-        description
-      });
+      value = formulas[indicatorCode](params);
     } catch (err) {
-      console.error('Lỗi POST /cndl/preview:', err.message);
-      res.status(500).json({ error: 'Lỗi khi xử lý xem trước: ' + err.message });
+      console.error(`Lỗi khi tính chỉ số ${indicatorCode}:`, err.message);
+      value = 0;
     }
-  }
-);
 
+    // Kiểm tra giá trị phần trăm
+    if (unit_code === 'percent' && (value < 0 || value > 100)) {
+      value = Math.max(0, Math.min(100, value));
+    }
+
+    // Xác định level, score, description
+    const levelsRes = await pool.query(
+      'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
+      [indicatorCode]
+    );
+    let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
+    for (const level of levelsRes.rows) {
+      const { min_value, max_value } = parseRange(level.criteria);
+      if ((min_value === null || value >= min_value) && (max_value === null || value <= max_value)) {
+        selectedLevel = { level: level.level, score_value: level.score_value, description: level.description };
+        break;
+      }
+    }
+
+    res.json({
+      value: value.toFixed(2),
+      level: selectedLevel.level,
+      score: selectedLevel.score_value,
+      description: selectedLevel.description
+    });
+  } catch (err) {
+    console.error('Lỗi POST /cndl/preview:', err.message);
+    res.status(500).json({ message: 'Lỗi server khi tính toán preview' });
+  }
+});
 // Endpoint GET /edit_cndl/:id
 app.get('/edit_cndl/:id', authenticateToken, async (req, res) => {
   console.log(`✅ Truy cập /edit_cndl/${req.params.id}`);
