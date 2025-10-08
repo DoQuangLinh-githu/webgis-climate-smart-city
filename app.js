@@ -1599,17 +1599,17 @@ app.post(
     }
   }
 );
-//route /cndl/preview
+// Route POST /cndl/preview
 app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res) => {
   try {
     const { indicatorCode, params, year, city } = req.body;
 
-    // Validate input
+    // Kiểm tra dữ liệu đầu vào
     if (!indicatorCode || !params || !year || !city) {
       return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
     }
 
-    // Lấy indicator_id, domain_id, unit_code từ bảng Indicators
+    // Lấy thông tin chỉ số
     const indicatorRes = await pool.query(
       'SELECT indicator_id, domain_id, unit_code FROM Indicators WHERE code = $1',
       [indicatorCode]
@@ -1619,7 +1619,7 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
     }
     const { indicator_id, domain_id, unit_code } = indicatorRes.rows[0];
 
-    // Tính giá trị chỉ số
+    // Tính giá trị chỉ số theo công thức
     let value;
     try {
       value = formulas[indicatorCode](params);
@@ -1628,25 +1628,31 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
       value = 0;
     }
 
-    // Kiểm tra giá trị phần trăm
+    // Giới hạn nếu là phần trăm
     if (unit_code === 'percent' && (value < 0 || value > 100)) {
       value = Math.max(0, Math.min(100, value));
     }
 
-    // Xác định level, score, description
+    // Tìm level, score, description tương ứng
     const levelsRes = await pool.query(
       'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
       [indicatorCode]
     );
+
     let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
     for (const level of levelsRes.rows) {
       const { min_value, max_value } = parseRange(level.criteria);
       if ((min_value === null || value >= min_value) && (max_value === null || value <= max_value)) {
-        selectedLevel = { level: level.level, score_value: level.score_value, description: level.description };
+        selectedLevel = {
+          level: level.level,
+          score_value: level.score_value,
+          description: level.description
+        };
         break;
       }
     }
 
+    // Trả kết quả về client
     res.json({
       value: value.toFixed(2),
       level: selectedLevel.level,
