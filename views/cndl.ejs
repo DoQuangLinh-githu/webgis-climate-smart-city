@@ -1163,262 +1163,199 @@
                                 </div>
                             </div>
                             <!-- Indicator 41 -->
-                            <div class="field-card">
-                                <div class="field-header">
-                                    <h5>Cải thiện phát thải khí nhà kính trong quản lý chất thải</h5>
-                                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng giảm phát thải khí nhà kính từ các phương pháp xử lý chất thải."></i>
-                                </div>
-                                <div class="card-body p-3">
-                                    <div class="form-floating">
-                                        <input type="number" id="GHGs_Landfill" name="GHGIs[params][GHGs_Landfill]" class="form-control" step="any" required>
-                                        <label for="GHGs_Landfill">Giảm phát thải từ chôn lấp (GHGs_Landfill, tCO₂e/ngày)</label>
-                                    </div>
-                                    <div class="form-floating">
-                                        <input type="number" id="GHGs_WTE" name="GHGIs[params][GHGs_WTE]" class="form-control" step="any" required>
-                                        <label for="GHGs_WTE">Giảm phát thải từ đốt phát điện (GHGs_WTE, tCO₂e/ngày)</label>
-                                    </div>
-                                    <div class="form-floating">
-                                        <input type="number" id="GHGs_Recycling" name="GHGIs[params][GHGs_Recycling]" class="form-control" step="any" required>
-                                        <label for="GHGs_Recycling">Giảm phát thải từ tái chế (GHGs_Recycling, tCO₂e/ngày)</label>
-                                    </div>
-                                    <div class="form-floating">
-                                        <input type="number" id="GHGs_Composting" name="GHGIs[params][GHGs_Composting]" class="form-control" step="any" required>
-                                        <label for="GHGs_Composting">Giảm phát thải từ xử lý sinh học (GHGs_Composting, tCO₂e/ngày)</label>
-                                    </div>
-                                    <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="GHGIs">Xem trước kết quả</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Lưu Dữ Liệu</button>
-        </form>
-    <% } else { %>
-        <div class="alert alert-warning">Bạn không có quyền truy cập chức năng này.</div>
-    <% } %>
+<div class="field-card">
+  <div class="field-header">
+    <h5>Cải thiện phát thải khí nhà kính trong quản lý chất thải</h5>
+    <i class="fas fa-info-circle tooltip-icon"
+       data-bs-toggle="tooltip"
+       title="Tính toán dựa trên lượng giảm phát thải khí nhà kính từ các phương pháp xử lý chất thải."></i>
+  </div>
+  <div class="card-body p-3">
+    <div class="form-floating">
+      <input type="number" id="GHGs_Landfill" name="GHGIs[params][GHGs_Landfill]" class="form-control" step="any" required>
+      <label for="GHGs_Landfill">Giảm phát thải từ chôn lấp (GHGs_Landfill, tCO₂e/ngày)</label>
+    </div>
+    <div class="form-floating">
+      <input type="number" id="GHGs_WTE" name="GHGIs[params][GHGs_WTE]" class="form-control" step="any" required>
+      <label for="GHGs_WTE">Giảm phát thải từ đốt phát điện (GHGs_WTE, tCO₂e/ngày)</label>
+    </div>
+    <div class="form-floating">
+      <input type="number" id="GHGs_Recycling" name="GHGIs[params][GHGs_Recycling]" class="form-control" step="any" required>
+      <label for="GHGs_Recycling">Giảm phát thải từ tái chế (GHGs_Recycling, tCO₂e/ngày)</label>
+    </div>
+    <div class="form-floating">
+      <input type="number" id="GHGs_Composting" name="GHGIs[params][GHGs_Composting]" class="form-control" step="any" required>
+      <label for="GHGs_Composting">Giảm phát thải từ xử lý sinh học (GHGs_Composting, tCO₂e/ngày)</label>
+    </div>
+    <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="GHGIs">
+      Xem trước kết quả
+    </button>
+  </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<button type="submit" class="btn btn-primary mt-3">Lưu Dữ Liệu</button>
+</form>
+
+<% } else { %>
+  <div class="alert alert-warning">Bạn không có quyền truy cập chức năng này.</div>
+<% } %>
+
 </main>
 </div>
 
-    <!-- Preview Modal -->
-    <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="previewModalLabel">Kết quả xem trước</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Giá trị:</strong> <span id="previewValue"></span></p>
-                    <p><strong>Cấp độ:</strong> <span id="previewLevel"></span></p>
-                    <p><strong>Điểm:</strong> <span id="previewScore"></span></p>
-                    <p><strong>Mô tả:</strong> <span id="previewDescription"></span></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
-            </div>
-        </div>
+<!-- Preview Modal -->
+<div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="previewModalLabel">Kết quả xem trước</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Giá trị:</strong> <span id="previewValue"></span></p>
+        <p><strong>Cấp độ:</strong> <span id="previewLevel"></span></p>
+        <p><strong>Điểm:</strong> <span id="previewScore"></span></p>
+        <p><strong>Mô tả:</strong> <span id="previewDescription"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Bootstrap JS -->
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Preview Calculation Script -->
 <script>
-    // Enable tooltips
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+  // Enable tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
-    // Real-time clock
-    function updateClock() {
-        const now = new Date();
-        const options = {
-            timeZone: 'Asia/Ho_Chi_Minh',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true,
-        };
-        const dateOptions = {
-            timeZone: 'Asia/Ho_Chi_Minh',
-            weekday: 'long',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        };
-        const timeString = now.toLocaleTimeString('vi-VN', options);
-        const dateString = now.toLocaleDateString('vi-VN', dateOptions);
-        document.getElementById('clockTime').textContent = timeString;
-        document.getElementById('clockDate').textContent = dateString;
-    }
-    updateClock();
-    const clockInterval = setInterval(updateClock, 1000);
-    window.addEventListener('unload', () => clearInterval(clockInterval));
+  // Real-time clock
+  function updateClock() {
+    const now = new Date();
+    const options = {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    };
+    const dateOptions = {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    };
+    document.getElementById('clockTime').textContent = now.toLocaleTimeString('vi-VN', options);
+    document.getElementById('clockDate').textContent = now.toLocaleDateString('vi-VN', dateOptions);
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
 
-    // Calculate preview with client-side validation
-    async function calculatePreview(indicatorCode) {
-        const form = document.getElementById('cndlForm');
-        const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
-        const fieldCard = button.closest('.field-card');
-        const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
-        const params = {};
+  // Preview calculation
+  async function calculatePreview(indicatorCode) {
+    const form = document.getElementById('cndlForm');
+    const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
+    const fieldCard = button.closest('.field-card');
+    const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
+    const params = {};
 
-        // Validate inputs
-        let isValid = true;
-        inputs.forEach(input => {
-            const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
-            const value = input.value.trim();
-
-            if (!paramName) {
-                console.error(`Invalid input name for indicator ${indicatorCode}: ${input.name}`);
-                isValid = false;
-                input.classList.add('is-invalid');
-                return;
-            }
-
-            if (!value) {
-                isValid = false;
-                input.classList.add('is-invalid');
-                return;
-            } else if (input.type === 'number' && isNaN(parseFloat(value))) {
-                isValid = false;
-                input.classList.add('is-invalid');
-                return;
-            } else {
-                input.classList.remove('is-invalid');
-                params[paramName] = input.type === 'number' ? parseFloat(value) : value;
-            }
-        });
-
-        if (!isValid) {
-            alert('Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
-            return;
-        }
-
-        try {
-            const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-            if (!token) {
-                alert('Không tìm thấy token. Vui lòng đăng nhập lại.');
-                return;
-            }
-
-            const response = await fetch('/cndl/preview', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    indicatorCode,
-                    params,
-                    year: form.querySelector('[name="year"]').value || new Date().getFullYear(),
-                    city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
-                }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                document.getElementById('previewValue').textContent = result.value || 'N/A';
-                document.getElementById('previewLevel').textContent = result.level || 'N/A';
-                document.getElementById('previewScore').textContent = result.score || 'N/A';
-                document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả';
-
-                const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-                previewModal.show();
-            } else {
-                console.error('Preview error:', result.message, 'Status:', response.status);
-                alert(`Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán'} (Mã lỗi: ${response.status})`);
-            }
-        } catch (error) {
-            console.error('Error during preview:', error);
-            alert('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại.');
-        }
-    }
-
-    // Attach click event to preview buttons
-    document.querySelectorAll('.preview-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const indicatorCode = btn.getAttribute('data-indicator');
-            if (!indicatorCode) {
-                console.error('No data-indicator attribute found on button');
-                alert('Lỗi: Không tìm thấy mã chỉ số');
-                return;
-            }
-            calculatePreview(indicatorCode);
-        });
-    });
-
-    // Form submission validation
-    document.getElementById('cndlForm').addEventListener('submit', function (event) {
-        const inputs = this.querySelectorAll('input[required], select[required]');
-        let isValid = true;
-
-        inputs.forEach(input => {
-            if (!input.value.trim()) {
-                isValid = false;
-                input.classList.add('is-invalid');
-            } else {
-                input.classList.remove('is-invalid');
-            }
-        });
-
-        if (!isValid) {
-            event.preventDefault();
-            alert('Vui lòng điền đầy đủ tất cả các trường bắt buộc.');
-        }
-    });
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const previewButtons = document.querySelectorAll(".preview-btn");
-
-  previewButtons.forEach((btn) => {
-    btn.addEventListener("click", async function () {
-      const indicatorCode = this.dataset.indicator;
-      const fieldCard = this.closest(".field-card");
-      const inputs = fieldCard.querySelectorAll("input, select");
-
-      const params = {};
-      inputs.forEach((input) => {
-        const name = input.name.match(/\[params]\[(.*?)\]/)?.[1];
-        if (name) params[name] = parseFloat(input.value) || 0;
-      });
-
-      const year = document.querySelector('input[name="year"]').value;
-      const city = document.querySelector('input[name="city"]').value;
-
-      try {
-        const res = await fetch("/cndl/preview", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ indicatorCode, params, year, city })
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          alert("❌ Lỗi: " + (err.message || res.statusText));
-          return;
-        }
-
-        const data = await res.json();
-        alert(
-          `✅ Kết quả cho ${indicatorCode}:\n` +
-          `Giá trị: ${data.value}\n` +
-          `Mức: ${data.level}\n` +
-          `Điểm: ${data.score}\n` +
-          `Mô tả: ${data.description}`
-        );
-      } catch (error) {
-        console.error("Lỗi khi xem trước:", error);
-        alert("⚠️ Không thể kết nối tới máy chủ.");
+    let isValid = true;
+    inputs.forEach(input => {
+      const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
+      const value = input.value.trim();
+      if (!paramName || !value || (input.type === 'number' && isNaN(parseFloat(value)))) {
+        isValid = false;
+        input.classList.add('is-invalid');
+      } else {
+        input.classList.remove('is-invalid');
+        params[paramName] = parseFloat(value);
       }
     });
+
+    if (!isValid) {
+      alert('⚠️ Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
+      return;
+    }
+
+    try {
+      const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+      if (!token) {
+        alert('Không tìm thấy token. Vui lòng đăng nhập lại.');
+        return;
+      }
+
+      const response = await fetch('/cndl/preview', {
+        method: 'POST',
+        credentials: 'same-origin', // ✅ gửi kèm cookie token
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          indicatorCode,
+          params,
+          year: form.querySelector('[name="year"]').value || new Date().getFullYear(),
+          city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        document.getElementById('previewValue').textContent = result.value || 'N/A';
+        document.getElementById('previewLevel').textContent = result.level || 'N/A';
+        document.getElementById('previewScore').textContent = result.score || 'N/A';
+        document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả';
+
+        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        previewModal.show();
+      } else {
+        alert(`❌ Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán.'}`);
+      }
+    } catch (error) {
+      console.error('❌ Lỗi khi xem trước:', error);
+      alert('⚠️ Không thể kết nối đến máy chủ.');
+    }
+  }
+
+  // Attach click events to all preview buttons
+  document.querySelectorAll('.preview-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const indicatorCode = btn.dataset.indicator;
+      if (!indicatorCode) {
+        alert('Không tìm thấy mã chỉ số.');
+        return;
+      }
+      calculatePreview(indicatorCode);
+    });
   });
-});
+
+  // Validate form submit
+  document.getElementById('cndlForm').addEventListener('submit', e => {
+    const inputs = e.target.querySelectorAll('input[required], select[required]');
+    let valid = true;
+    inputs.forEach(input => {
+      if (!input.value.trim()) {
+        valid = false;
+        input.classList.add('is-invalid');
+      } else {
+        input.classList.remove('is-invalid');
+      }
+    });
+    if (!valid) {
+      e.preventDefault();
+      alert('⚠️ Vui lòng điền đầy đủ tất cả các trường bắt buộc.');
+    }
+  });
 </script>
 </body>
 </html>
