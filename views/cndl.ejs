@@ -1202,7 +1202,7 @@
 
     <!-- Preview Modal -->
     <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="previewModalLabel">Kết quả xem trước</h5>
@@ -1256,7 +1256,6 @@
     // Calculate preview with client-side validation
     async function calculatePreview(indicatorCode) {
         const form = document.getElementById('cndlForm');
-        // Lấy field-card chứa nút preview
         const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
         const fieldCard = button.closest('.field-card');
         const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
@@ -1265,7 +1264,7 @@
         // Validate inputs
         let isValid = true;
         inputs.forEach(input => {
-            const paramName = input.name.match(/$$ params $$$$ (.+) $$/)?.[1];
+            const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
             const value = input.value.trim();
 
             if (!paramName) {
@@ -1326,8 +1325,8 @@
                 const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
                 previewModal.show();
             } else {
-                console.error('Preview error:', result.message);
-                alert(result.message || 'Có lỗi xảy ra khi tính toán. Vui lòng thử lại.');
+                console.error('Preview error:', result.message, 'Status:', response.status);
+                alert(`Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán'} (Mã lỗi: ${response.status})`);
             }
         } catch (error) {
             console.error('Error during preview:', error);
