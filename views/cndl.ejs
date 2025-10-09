@@ -1262,70 +1262,63 @@
 
   // Preview calculation
   async function calculatePreview(indicatorCode) {
-    const form = document.getElementById('cndlForm');
-    const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
-    const fieldCard = button.closest('.field-card');
-    const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
-    const params = {};
+  const form = document.getElementById('cndlForm');
+  const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
+  const fieldCard = button.closest('.field-card');
+  const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
+  const params = {};
 
-    let isValid = true;
-    inputs.forEach(input => {
-      const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
-      const value = input.value.trim();
-      if (!paramName || !value || (input.type === 'number' && isNaN(parseFloat(value)))) {
-        isValid = false;
-        input.classList.add('is-invalid');
-      } else {
-        input.classList.remove('is-invalid');
-        params[paramName] = parseFloat(value);
-      }
-    });
-
-    if (!isValid) {
-      alert('⚠️ Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
-      return;
+  let isValid = true;
+  inputs.forEach(input => {
+    const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
+    const value = input.value.trim();
+    if (!paramName || !value || (input.type === 'number' && isNaN(parseFloat(value)))) {
+      isValid = false;
+      input.classList.add('is-invalid');
+    } else {
+      input.classList.remove('is-invalid');
+      params[paramName] = parseFloat(value);
     }
+  });
 
-    try {
-      const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-      if (!token) {
-        alert('Không tìm thấy token. Vui lòng đăng nhập lại.');
-        return;
-      }
+  if (!isValid) {
+    alert('⚠️ Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
+    return;
+  }
 
-      const response = await fetch('/cndl/preview', {
-    method: 'POST',
-    headers: {
+  try {
+    const response = await fetch('/cndl/preview', {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json'
-    },
-    credentials: 'include', // ✅ Bắt buộc để gửi cookie kèm request
-    body: JSON.stringify({
+      },
+      credentials: 'include',
+      body: JSON.stringify({
         indicatorCode,
         params,
         year: form.querySelector('[name="year"]').value || new Date().getFullYear(),
         city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
-    }),
-});
+      }),
+    });
 
+    const result = await response.json();
 
-      const result = await response.json();
+    if (response.ok) {
+      document.getElementById('previewValue').textContent = result.value || 'N/A';
+      document.getElementById('previewLevel').textContent = result.level || 'N/A';
+      document.getElementById('previewScore').textContent = result.score || 'N/A';
+      document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả';
 
-      if (response.ok) {
-        document.getElementById('previewValue').textContent = result.value || 'N/A';
-        document.getElementById('previewLevel').textContent = result.level || 'N/A';
-        document.getElementById('previewScore').textContent = result.score || 'N/A';
-        document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả';
-
-        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-        previewModal.show();
-      } else {
-        alert(`❌ Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán.'}`);
-      }
-    } catch (error) {
-      console.error('❌ Lỗi khi xem trước:', error);
-      alert('⚠️ Không thể kết nối đến máy chủ.');
+      const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+      previewModal.show();
+    } else {
+      alert(`❌ Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán.'}`);
     }
+  } catch (error) {
+    console.error('❌ Lỗi khi xem trước:', error);
+    alert('⚠️ Không thể kết nối đến máy chủ.');
   }
+}
 
   // Attach click events to all preview buttons
   document.querySelectorAll('.preview-btn').forEach(btn => {
