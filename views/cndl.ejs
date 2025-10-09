@@ -1298,7 +1298,7 @@
     headers: {
         'Content-Type': 'application/json'
     },
-    credentials: 'include',
+    credentials: 'include', // ✅ Bắt buộc để gửi cookie kèm request
     body: JSON.stringify({
         indicatorCode,
         params,
@@ -1306,6 +1306,7 @@
         city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
     }),
 });
+
 
       const result = await response.json();
 
