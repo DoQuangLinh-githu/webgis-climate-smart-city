@@ -1605,37 +1605,55 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
   try {
     const { indicatorCode, params, year, city } = req.body;
 
-    // Kiểm tra chỉ số hợp lệ
-    if (!formulas[indicatorCode]) {
+    // Xác thực đầu vào
+    if (!indicatorCode || typeof formulas[indicatorCode] !== 'function') {
+      console.warn(`Mã chỉ số không hợp lệ: ${indicatorCode}`);
       return res.status(400).json({ message: 'Chỉ số không hợp lệ' });
     }
+    if (!params || typeof params !== 'object' || Object.keys(params).length === 0) {
+      console.warn(`Tham số không hợp lệ hoặc trống cho ${indicatorCode}:`, params);
+      return res.status(400).json({ message: 'Tham số không hợp lệ' });
+    }
 
-    // Tính giá trị chỉ số
+    // Tính toán giá trị
     let value;
     try {
       value = formulas[indicatorCode](params);
+      if (isNaN(value) || value === Infinity || value === -Infinity) {
+        throw new Error('Kết quả tính toán không hợp lệ');
+      }
     } catch (err) {
-      console.error(`Lỗi tính toán ${indicatorCode}:`, err.message);
-      value = 0;
+      console.error(`Lỗi tính toán ${indicatorCode}:`, err.message, { params });
+      return res.status(400).json({ message: `Lỗi tính toán: ${err.message}` });
     }
 
-    // Lấy unit_code từ bảng Indicators
+    // Lấy unit_code
     const indicatorRes = await pool.query(
       'SELECT unit_code FROM Indicators WHERE code = $1',
       [indicatorCode]
     );
-    const unit_code = indicatorRes.rows[0]?.unit_code || 'unknown';
+    if (indicatorRes.rows.length === 0) {
+      console.warn(`Không tìm thấy chỉ số: ${indicatorCode}`);
+      return res.status(404).json({ message: 'Chỉ số không tồn tại trong cơ sở dữ liệu' });
+    }
+    const unit_code = indicatorRes.rows[0].unit_code || 'unknown';
 
-    // Giới hạn giá trị phần trăm nếu cần
+    // Giới hạn giá trị phần trăm nếu áp dụng
     if (unit_code === 'percent') {
       value = Math.max(0, Math.min(100, value));
     }
 
-    // Xác định level, score, description từ ScoringLevels
+    // Lấy cấp độ chấm điểm
     const levelsRes = await pool.query(
       'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
       [indicatorCode]
     );
+    if (levelsRes.rows.length === 0) {
+      console.warn(`Không tìm thấy cấp độ chấm điểm cho ${indicatorCode}`);
+      return res.status(404).json({ message: 'Không tìm thấy cấp độ cho chỉ số này' });
+    }
+
+    // Xác định cấp độ, điểm số và mô tả
     let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
     for (const level of levelsRes.rows) {
       const { min_value, max_value } = parseRange(level.criteria);
@@ -1646,14 +1664,14 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
     }
 
     res.json({
-      value: value.toFixed(2), // Làm tròn 2 chữ số thập phân
+      value: value.toFixed(2),
       level: selectedLevel.level,
       score: selectedLevel.score_value,
       description: selectedLevel.description
     });
   } catch (err) {
-    console.error('Lỗi POST /cndl/preview:', err.message);
-    res.status(500).json({ message: 'Lỗi máy chủ khi tính toán preview' });
+    console.error('Lỗi POST /cndl/preview:', err.message, err.stack);
+    res.status(500).json({ message: `Lỗi máy chủ: ${err.message}` });
   }
 });
 // Endpoint GET /edit_cndl/:id
