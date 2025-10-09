@@ -1645,7 +1645,7 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
 
     // Lấy cấp độ chấm điểm
     const levelsRes = await pool.query(
-      'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
+      'SELECT evaluation_criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
       [indicatorCode]
     );
     if (levelsRes.rows.length === 0) {
@@ -1656,7 +1656,7 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
     // Xác định cấp độ, điểm số và mô tả
     let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
     for (const level of levelsRes.rows) {
-      const { min_value, max_value } = parseRange(level.criteria);
+      const { min_value, max_value } = parseRange(level.evaluation_criteria); // Sử dụng evaluation_criteria
       if ((min_value === null || value >= min_value) && (max_value === null || value <= max_value)) {
         selectedLevel = { level: level.level, score_value: level.score_value, description: level.description };
         break;
