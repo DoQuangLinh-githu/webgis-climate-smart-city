@@ -1605,64 +1605,55 @@ app.post('/cndl/preview', authenticateToken, checkRole('admin'), async (req, res
   try {
     const { indicatorCode, params, year, city } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
-    if (!indicatorCode || !params || !year || !city) {
-      return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
+    // Kiểm tra chỉ số hợp lệ
+    if (!formulas[indicatorCode]) {
+      return res.status(400).json({ message: 'Chỉ số không hợp lệ' });
     }
 
-    // Lấy thông tin chỉ số
-    const indicatorRes = await pool.query(
-      'SELECT indicator_id, domain_id, unit_code FROM Indicators WHERE code = $1',
-      [indicatorCode]
-    );
-    if (indicatorRes.rows.length === 0) {
-      return res.status(404).json({ message: `Không tìm thấy chỉ số ${indicatorCode}` });
-    }
-    const { indicator_id, domain_id, unit_code } = indicatorRes.rows[0];
-
-    // Tính giá trị chỉ số theo công thức
+    // Tính giá trị chỉ số
     let value;
     try {
       value = formulas[indicatorCode](params);
     } catch (err) {
-      console.error(`Lỗi khi tính chỉ số ${indicatorCode}:`, err.message);
+      console.error(`Lỗi tính toán ${indicatorCode}:`, err.message);
       value = 0;
     }
 
-    // Giới hạn nếu là phần trăm
-    if (unit_code === 'percent' && (value < 0 || value > 100)) {
+    // Lấy unit_code từ bảng Indicators
+    const indicatorRes = await pool.query(
+      'SELECT unit_code FROM Indicators WHERE code = $1',
+      [indicatorCode]
+    );
+    const unit_code = indicatorRes.rows[0]?.unit_code || 'unknown';
+
+    // Giới hạn giá trị phần trăm nếu cần
+    if (unit_code === 'percent') {
       value = Math.max(0, Math.min(100, value));
     }
 
-    // Tìm level, score, description tương ứng
+    // Xác định level, score, description từ ScoringLevels
     const levelsRes = await pool.query(
       'SELECT criteria, level, score_value, description FROM ScoringLevels WHERE indicator_code = $1',
       [indicatorCode]
     );
-
     let selectedLevel = { level: 'Không xác định', score_value: 0, description: 'Không có mô tả' };
     for (const level of levelsRes.rows) {
       const { min_value, max_value } = parseRange(level.criteria);
       if ((min_value === null || value >= min_value) && (max_value === null || value <= max_value)) {
-        selectedLevel = {
-          level: level.level,
-          score_value: level.score_value,
-          description: level.description
-        };
+        selectedLevel = { level: level.level, score_value: level.score_value, description: level.description };
         break;
       }
     }
 
-    // Trả kết quả về client
     res.json({
-      value: value.toFixed(2),
+      value: value.toFixed(2), // Làm tròn 2 chữ số thập phân
       level: selectedLevel.level,
       score: selectedLevel.score_value,
       description: selectedLevel.description
     });
   } catch (err) {
     console.error('Lỗi POST /cndl/preview:', err.message);
-    res.status(500).json({ message: 'Lỗi server khi tính toán preview' });
+    res.status(500).json({ message: 'Lỗi máy chủ khi tính toán preview' });
   }
 });
 // Endpoint GET /edit_cndl/:id
