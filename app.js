@@ -36,10 +36,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
-        imgSrc: ["'self'", 'data:', 'https://*'],
-        fontSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
+        connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+        imgSrc: ["'self'", "data:", "https://*"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
       },
     },
   })
