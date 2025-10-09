@@ -1294,19 +1294,18 @@
       }
 
       const response = await fetch('/cndl/preview', {
-        method: 'POST',
-        credentials: 'same-origin', // ✅ gửi kèm cookie token
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          indicatorCode,
-          params,
-          year: form.querySelector('[name="year"]').value || new Date().getFullYear(),
-          city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
-        }),
-      });
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+        indicatorCode,
+        params,
+        year: form.querySelector('[name="year"]').value || new Date().getFullYear(),
+        city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
+    }),
+});
 
       const result = await response.json();
 
