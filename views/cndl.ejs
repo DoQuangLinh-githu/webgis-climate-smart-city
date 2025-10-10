@@ -288,7 +288,8 @@
             </div>
         </nav>
 
-        <!-- Main Content -->
+        ```html
+<!-- Main Content -->
 <main class="main-content">
     <% if (user && user.role === 'admin') { %>
         <h2 class="mb-4">Tính toán các chỉ số môi trường</h2>
@@ -299,7 +300,7 @@
         <% if (success) { %>
             <div class="alert alert-success"><%= success %></div>
         <% } %>
-        <form action="/cndl" method="POST" id="cndlForm">
+        <form action="/cndl" method="POST" id="cndlForm" novalidate>
             <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
             <input type="hidden" name="city" value="TP. Hồ Chí Minh">
             <div class="accordion" id="domainAccordion">
@@ -320,23 +321,23 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="E_RE" name="ENI_RWE[params][E_RE]" class="form-control" step="any" required>
+                                        <input type="number" id="E_RE" name="ENI_RWE[params][E_RE]" class="form-control" step="any">
                                         <label for="E_RE">Năng lượng tái tạo sử dụng (E_RE, kWh)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="EC" name="ENI_RWE[params][EC]" class="form-control" step="any" required>
+                                        <input type="number" id="EC" name="ENI_RWE[params][EC]" class="form-control" step="any">
                                         <label for="EC">Tổng năng lượng tiêu thụ (EC, kWh)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="L_ATC" name="ENI_RWE[params][L_AT&C]" class="form-control" step="any" required>
+                                        <input type="number" id="L_ATC" name="ENI_RWE[params][L_AT&C]" class="form-control" step="any">
                                         <label for="L_ATC">Tổn thất năng lượng (L_AT&C, kWh)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="P_RE" name="ENI_RWE[params][P_RE]" class="form-control" step="any" required>
+                                        <input type="number" id="P_RE" name="ENI_RWE[params][P_RE]" class="form-control" step="any">
                                         <label for="P_RE">Công suất năng lượng tái tạo (P_RE, kW)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="P_total" name="ENI_RWE[params][P_total]" class="form-control" step="any" required>
+                                        <input type="number" id="P_total" name="ENI_RWE[params][P_total]" class="form-control" step="any">
                                         <label for="P_total">Tổng công suất (P_total, kW)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="ENI_RWE">Xem trước kết quả</button>
@@ -350,11 +351,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="SE_RE" name="SENIRE[params][SE_RE]" class="form-control" step="any" required>
+                                        <input type="number" id="SE_RE" name="SENIRE[params][SE_RE]" class="form-control" step="any">
                                         <label for="SE_RE">Tổng lượng điện từ nguồn năng lượng tái tạo trong thành phố (SE_RE, kWh)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="ES" name="SENIRE[params][ES]" class="form-control" step="any" required>
+                                        <input type="number" id="ES" name="SENIRE[params][ES]" class="form-control" step="any">
                                         <label for="ES">Tổng lượng điện cung cấp trong thành phố (ES, kWh)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="SENIRE">Xem trước kết quả</button>
@@ -368,11 +369,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="E_Save" name="EI_Save[params][E_Save]" class="form-control" step="any" required>
+                                        <input type="number" id="E_Save" name="EI_Save[params][E_Save]" class="form-control" step="any">
                                         <label for="E_Save">Lượng điện tiết kiệm (E_Save, kWh)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="E_C" name="EI_Save[params][E_C]" class="form-control" step="any" required>
+                                        <input type="number" id="E_C" name="EI_Save[params][E_C]" class="form-control" step="any">
                                         <label for="E_C">Tổng tiêu thụ điện (E_C, kWh)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="EI_Save">Xem trước kết quả</button>
@@ -386,11 +387,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="E_input" name="EI_LR[params][E_input]" class="form-control" step="any" required>
+                                        <input type="number" id="E_input" name="EI_LR[params][E_input]" class="form-control" step="any">
                                         <label for="E_input">Tổng sản lượng điện đưa vào (E_input, kWh)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="E_delivered" name="EI_LR[params][E_delivered]" class="form-control" step="any" required>
+                                        <input type="number" id="E_delivered" name="EI_LR[params][E_delivered]" class="form-control" step="any">
                                         <label for="E_delivered">Tổng điện năng giao đến (E_delivered, kWh)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="EI_LR">Xem trước kết quả</button>
@@ -404,15 +405,15 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="SL_e" name="SLI[params][SL_e]" class="form-control" step="any" required>
+                                        <input type="number" id="SL_e" name="SLI[params][SL_e]" class="form-control" step="any">
                                         <label for="SL_e">Số đèn đường tiết kiệm năng lượng (SL_e, cái)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="SL_s" name="SLI[params][SL_s]" class="form-control" step="any" required>
+                                        <input type="number" id="SL_s" name="SLI[params][SL_s]" class="form-control" step="any">
                                         <label for="SL_s">Số đèn đường thông minh (SL_s, cái)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="SL" name="SLI[params][SL]" class="form-control" step="any" required>
+                                        <input type="number" id="SL" name="SLI[params][SL]" class="form-control" step="any">
                                         <label for="SL">Tổng số đèn đường (SL, cái)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="SLI">Xem trước kết quả</button>
@@ -426,8 +427,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="GBpromo" name="GBpromo[params][GBpromo]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="GBpromo" name="GBpromo[params][GBpromo]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -447,19 +448,19 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="B_P" name="VNGBI[params][B_P]" class="form-control" step="any" required>
+                                        <input type="number" id="B_P" name="VNGBI[params][B_P]" class="form-control" step="any">
                                         <label for="B_P">Số tòa nhà được chứng nhận trước (B_P, cái)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="B_AC" name="VNGBI[params][B_AC]" class="form-control" step="any" required>
+                                        <input type="number" id="B_AC" name="VNGBI[params][B_AC]" class="form-control" step="any">
                                         <label for="B_AC">Số tòa nhà được phê duyệt xây dựng (B_AC, cái)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="S_GB" name="VNGBI[params][S_GB]" class="form-control" step="any" required>
+                                        <input type="number" id="S_GB" name="VNGBI[params][S_GB]" class="form-control" step="any">
                                         <label for="S_GB">Diện tích xây dựng công trình xanh (S_GB, km²)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="S_BC" name="VNGBI[params][S_BC]" class="form-control" step="any" required>
+                                        <input type="number" id="S_BC" name="VNGBI[params][S_BC]" class="form-control" step="any">
                                         <label for="S_BC">Tổng diện tích xây dựng hoàn thành (S_BC, km²)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="VNGBI">Xem trước kết quả</button>
@@ -473,11 +474,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="CO2eb" name="R_CO2e[params][CO2eb]" class="form-control" step="any" required>
+                                        <input type="number" id="CO2eb" name="R_CO2e[params][CO2eb]" class="form-control" step="any">
                                         <label for="CO2eb">Phát thải CO2 kịch bản BAU (CO2eb, tCO2e)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="CO2et" name="R_CO2e[params][CO2et]" class="form-control" step="any" required>
+                                        <input type="number" id="CO2et" name="R_CO2e[params][CO2et]" class="form-control" step="any">
                                         <label for="CO2et">Phát thải CO2 kịch bản chuyển đổi (CO2et, tCO2e)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="R_CO2e">Xem trước kết quả</button>
@@ -503,19 +504,19 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="S_water_present" name="R_S_water[params][S_water_present]" class="form-control" step="any" required>
+                                        <input type="number" id="S_water_present" name="R_S_water[params][S_water_present]" class="form-control" step="any">
                                         <label for="S_water_present">Diện tích mặt nước hiện tại (S_water_present, ha)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="S_water_plan" name="R_S_water[params][S_water_plan]" class="form-control" step="any" required>
+                                        <input type="number" id="S_water_plan" name="R_S_water[params][S_water_plan]" class="form-control" step="any">
                                         <label for="S_water_plan">Diện tích mặt nước quy hoạch (S_water_plan, ha)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="S_op_present" name="R_S_water[params][S_op_present]" class="form-control" step="any" required>
+                                        <input type="number" id="S_op_present" name="R_S_water[params][S_op_present]" class="form-control" step="any">
                                         <label for="S_op_present">Diện tích không gian mở hiện tại (S_op_present, ha)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="S_op_plan" name="R_S_water[params][S_op_plan]" class="form-control" step="any" required>
+                                        <input type="number" id="S_op_plan" name="R_S_water[params][S_op_plan]" class="form-control" step="any">
                                         <label for="S_op_plan">Diện tích không gian mở quy hoạch (S_op_plan, ha)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="R_S_water">Xem trước kết quả</button>
@@ -529,11 +530,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="S_pp" name="Rcover[params][S_pp]" class="form-control" step="any" required>
+                                        <input type="number" id="S_pp" name="Rcover[params][S_pp]" class="form-control" step="any">
                                         <label for="S_pp">Diện tích cây xanh công cộng (S_pp, m²)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="P" name="Rcover[params][P]" class="form-control" step="any" required>
+                                        <input type="number" id="P" name="Rcover[params][P]" class="form-control" step="any">
                                         <label for="P">Tổng dân số (P, người)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="Rcover">Xem trước kết quả</button>
@@ -547,11 +548,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="S_land_p" name="Rland_p[params][S_land_p]" class="form-control" step="any" required>
+                                        <input type="number" id="S_land_p" name="Rland_p[params][S_land_p]" class="form-control" step="any">
                                         <label for="S_land_p">Diện tích đất cây xanh đô thị (S_land_p, ha)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="S_total_land" name="Rland_p[params][S_total_land]" class="form-control" step="any" required>
+                                        <input type="number" id="S_total_land" name="Rland_p[params][S_total_land]" class="form-control" step="any">
                                         <label for="S_total_land">Tổng diện tích đất xây dựng đô thị (S_total_land, ha)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="Rland_p">Xem trước kết quả</button>
@@ -565,15 +566,15 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="A_natural" name="UBI_PNRA[params][A_natural]" class="form-control" step="any" required>
+                                        <input type="number" id="A_natural" name="UBI_PNRA[params][A_natural]" class="form-control" step="any">
                                         <label for="A_natural">Diện tích khu vực tự nhiên (A_natural, ha)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="A_restored" name="UBI_PNRA[params][A_restored]" class="form-control" step="any" required>
+                                        <input type="number" id="A_restored" name="UBI_PNRA[params][A_restored]" class="form-control" step="any">
                                         <label for="A_restored">Diện tích khu vực phục hồi sinh thái (A_restored, ha)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="A_city" name="UBI_PNRA[params][A_city]" class="form-control" step="any" required>
+                                        <input type="number" id="A_city" name="UBI_PNRA[params][A_city]" class="form-control" step="any">
                                         <label for="A_city">Tổng diện tích thành phố (A_city, ha)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="UBI_PNRA">Xem trước kết quả</button>
@@ -587,8 +588,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="GISapp" name="GISapp[params][GISapp]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="GISapp" name="GISapp[params][GISapp]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -608,8 +609,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="DISaster" name="DISaster[params][DISaster]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="DISaster" name="DISaster[params][DISaster]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -629,8 +630,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="ClimateAct" name="ClimateAct[params][ClimateAct]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="ClimateAct" name="ClimateAct[params][ClimateAct]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -662,11 +663,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="NMT_L" name="NMT[params][NMT_L]" class="form-control" step="any" required>
+                                        <input type="number" id="NMT_L" name="NMT[params][NMT_L]" class="form-control" step="any">
                                         <label for="NMT_L">Chiều dài mạng lưới giao thông phi cơ giới (NMT_L, km)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="L_R" name="NMT[params][L_R]" class="form-control" step="any" required>
+                                        <input type="number" id="L_R" name="NMT[params][L_R]" class="form-control" step="any">
                                         <label for="L_R">Tổng chiều dài mạng lưới giao thông (L_R, km)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="NMT">Xem trước kết quả</button>
@@ -680,11 +681,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="PT_c" name="PT_c[params][PT_c]" class="form-control" step="any" required>
+                                        <input type="number" id="PT_c" name="PT_c[params][PT_c]" class="form-control" step="any">
                                         <label for="PT_c">Số phương tiện công cộng sạch (PT_c, phương tiện)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="PT" name="PT_c[params][PT]" class="form-control" step="any" required>
+                                        <input type="number" id="PT" name="PT_c[params][PT]" class="form-control" step="any">
                                         <label for="PT">Tổng số phương tiện công cộng (PT, phương tiện)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="PT_c">Xem trước kết quả</button>
@@ -698,11 +699,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="PT_F" name="PT1000[params][PT_F]" class="form-control" step="any" required>
+                                        <input type="number" id="PT_F" name="PT1000[params][PT_F]" class="form-control" step="any">
                                         <label for="PT_F">Số lượng phương tiện công cộng (PT_F, phương tiện)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="P" name="PT1000[params][P]" class="form-control" step="any" required>
+                                        <input type="number" id="P" name="PT1000[params][P]" class="form-control" step="any">
                                         <label for="P">Dân số ước tính (P, người)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="PT1000">Xem trước kết quả</button>
@@ -716,11 +717,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="STL_S" name="STL[params][STL_S]" class="form-control" step="any" required>
+                                        <input type="number" id="STL_S" name="STL[params][STL_S]" class="form-control" step="any">
                                         <label for="STL_S">Số đèn giao thông thông minh (STL_S, chốt đèn)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="TL" name="STL[params][TL]" class="form-control" step="any" required>
+                                        <input type="number" id="TL" name="STL[params][TL]" class="form-control" step="any">
                                         <label for="TL">Tổng số đèn giao thông (TL, chốt đèn)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="STL">Xem trước kết quả</button>
@@ -734,11 +735,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="SRRW_L" name="SRRW[params][SRRW_L]" class="form-control" step="any" required>
+                                        <input type="number" id="SRRW_L" name="SRRW[params][SRRW_L]" class="form-control" step="any">
                                         <label for="SRRW_L">Chiều dài đường có thông tin giao thông trực tuyến (SRRW_L, km)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="TSR" name="SRRW[params][TSR]" class="form-control" step="any" required>
+                                        <input type="number" id="TSR" name="SRRW[params][TSR]" class="form-control" step="any">
                                         <label for="TSR">Tổng chiều dài đường phố (TSR, km)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="SRRW">Xem trước kết quả</button>
@@ -752,8 +753,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="RoadCap" name="RoadCap[params][RoadCap]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="RoadCap" name="RoadCap[params][RoadCap]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -773,11 +774,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="AQstation" name="AQstation[params][AQstation]" class="form-control" step="any" required>
+                                        <input type="number" id="AQstation" name="AQstation[params][AQstation]" class="form-control" step="any">
                                         <label for="AQstation">Số trạm quan trắc không khí (AQstation, trạm)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="A_city" name="AQstation[params][A_city]" class="form-control" step="any" required>
+                                        <input type="number" id="A_city" name="AQstation[params][A_city]" class="form-control" step="any">
                                         <label for="A_city">Tổng diện tích thành phố (A_city, ha)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="AQstation">Xem trước kết quả</button>
@@ -791,8 +792,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="AQdata" name="AQdata[params][AQdata]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="AQdata" name="AQdata[params][AQdata]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -812,8 +813,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="CleanAirPlan" name="CleanAirPlan[params][CleanAirPlan]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="CleanAirPlan" name="CleanAirPlan[params][CleanAirPlan]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -833,7 +834,7 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="AQI_exceed_days" name="AQI_TDE[params][AQI_exceed_days]" class="form-control" step="any" required>
+                                        <input type="number" id="AQI_exceed_days" name="AQI_TDE[params][AQI_exceed_days]" class="form-control" step="any">
                                         <label for="AQI_exceed_days">Số ngày AQI vượt ngưỡng (AQI_exceed_days, ngày)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="AQI_TDE">Xem trước kết quả</button>
@@ -859,8 +860,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="WImanage" name="WImanage[params][WImanage]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="WImanage" name="WImanage[params][WImanage]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -880,11 +881,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="W_P" name="WI_loss[params][W_P]" class="form-control" step="any" required>
+                                        <input type="number" id="W_P" name="WI_loss[params][W_P]" class="form-control" step="any">
                                         <label for="W_P">Lượng nước sản xuất (W_P, m³/tháng)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_S" name="WI_loss[params][W_S]" class="form-control" step="any" required>
+                                        <input type="number" id="W_S" name="WI_loss[params][W_S]" class="form-control" step="any">
                                         <label for="W_S">Lượng nước bán (W_S, m³/tháng)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="WI_loss">Xem trước kết quả</button>
@@ -898,11 +899,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="W_rr" name="WI_rr[params][W_rr]" class="form-control" step="any" required>
+                                        <input type="number" id="W_rr" name="WI_rr[params][W_rr]" class="form-control" step="any">
                                         <label for="W_rr">Lượng nước thải tái sử dụng (W_rr, m³)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_s" name="WI_rr[params][W_s]" class="form-control" step="any" required>
+                                        <input type="number" id="W_s" name="WI_rr[params][W_s]" class="form-control" step="any">
                                         <label for="W_s">Lượng nước cấp (W_s, m³)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="WI_rr">Xem trước kết quả</button>
@@ -916,8 +917,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="FloodRisk" name="FloodRisk[params][FloodRisk]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="FloodRisk" name="FloodRisk[params][FloodRisk]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -937,8 +938,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="Ewater" name="Ewater[params][Ewater]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="Ewater" name="Ewater[params][Ewater]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -958,8 +959,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="Ewwater" name="Ewwater[params][Ewwater]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="Ewwater" name="Ewwater[params][Ewwater]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -979,8 +980,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="DigWater" name="DigWater[params][DigWater]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="DigWater" name="DigWater[params][DigWater]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -1000,11 +1001,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="P_W" name="R_USWA[params][P_W]" class="form-control" step="any" required>
+                                        <input type="number" id="P_W" name="R_USWA[params][P_W]" class="form-control" step="any">
                                         <label for="P_W">Số dân được cấp nước an toàn (P_W, người)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="P_S" name="R_USWA[params][P_S]" class="form-control" step="any" required>
+                                        <input type="number" id="P_S" name="R_USWA[params][P_S]" class="form-control" step="any">
                                         <label for="P_S">Tổng dân số phục vụ (P_S, người)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="R_USWA">Xem trước kết quả</button>
@@ -1030,7 +1031,7 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="Waste_Init" name="WasteInit[params][Waste_Init]" class="form-control" step="any" required>
+                                        <input type="number" id="Waste_Init" name="WasteInit[params][Waste_Init]" class="form-control" step="any">
                                         <label for="Waste_Init">Số sáng kiến giảm thiểu (Waste_Init, sáng kiến)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="WasteInit">Xem trước kết quả</button>
@@ -1044,11 +1045,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="W_landfill" name="R_USWA_waste[params][W_landfill]" class="form-control" step="any" required>
+                                        <input type="number" id="W_landfill" name="R_USWA_waste[params][W_landfill]" class="form-control" step="any">
                                         <label for="W_landfill">Lượng rác thải chôn lấp (W_landfill, tấn)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_waste_generate" name="R_USWA_waste[params][W_waste_generate]" class="form-control" step="any" required>
+                                        <input type="number" id="W_waste_generate" name="R_USWA_waste[params][W_waste_generate]" class="form-control" step="any">
                                         <label for="W_waste_generate">Tổng lượng rác thải sinh hoạt (W_waste_generate, tấn)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="R_USWA_waste">Xem trước kết quả</button>
@@ -1062,15 +1063,15 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="W_RU" name="RRWI[params][W_RU]" class="form-control" step="any" required>
+                                        <input type="number" id="W_RU" name="RRWI[params][W_RU]" class="form-control" step="any">
                                         <label for="W_RU">Lượng rác thải tái sử dụng (W_RU, tấn/năm)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_RRC" name="RRWI[params][W_RRC]" class="form-control" step="any" required>
+                                        <input type="number" id="W_RRC" name="RRWI[params][W_RRC]" class="form-control" step="any">
                                         <label for="W_RRC">Lượng rác thải tái chế (W_RRC, tấn/năm)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_G" name="RRWI[params][W_G]" class="form-control" step="any" required>
+                                        <input type="number" id="W_G" name="RRWI[params][W_G]" class="form-control" step="any">
                                         <label for="W_G">Tổng lượng rác thải sinh ra (W_G, tấn/năm)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="RRWI">Xem trước kết quả</button>
@@ -1084,19 +1085,19 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="W_Cons_deli_cp" name="ConsWaste[params][W_Cons_deli_cp]" class="form-control" step="any" required>
+                                        <input type="number" id="W_Cons_deli_cp" name="ConsWaste[params][W_Cons_deli_cp]" class="form-control" step="any">
                                         <label for="W_Cons_deli_cp">Chất thải xây dựng chuyển đến điểm tập kết (W_Cons_deli_cp, tấn)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_Cons" name="ConsWaste[params][W_Cons]" class="form-control" step="any" required>
+                                        <input type="number" id="W_Cons" name="ConsWaste[params][W_Cons]" class="form-control" step="any">
                                         <label for="W_Cons">Tổng chất thải xây dựng phát sinh (W_Cons, tấn)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_Cons_rr" name="ConsWaste[params][W_Cons_rr]" class="form-control" step="any" required>
+                                        <input type="number" id="W_Cons_rr" name="ConsWaste[params][W_Cons_rr]" class="form-control" step="any">
                                         <label for="W_Cons_rr">Chất thải xây dựng tái chế/tái sử dụng (W_Cons_rr, tấn)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_Cons_deli_reduce" name="ConsWaste[params][W_Cons_deli_reduce]" class="form-control" step="any" required>
+                                        <input type="number" id="W_Cons_deli_reduce" name="ConsWaste[params][W_Cons_deli_reduce]" class="form-control" step="any">
                                         <label for="W_Cons_deli_reduce">Chất thải xây dựng chuyển đến cơ sở xử lý (W_Cons_deli_reduce, tấn)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="ConsWaste">Xem trước kết quả</button>
@@ -1110,11 +1111,11 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <input type="number" id="W_T" name="WWT_I[params][W_T]" class="form-control" step="any" required>
+                                        <input type="number" id="W_T" name="WWT_I[params][W_T]" class="form-control" step="any">
                                         <label for="W_T">Lượng chất thải ướt xử lý (W_T, tấn)</label>
                                     </div>
                                     <div class="form-floating">
-                                        <input type="number" id="W_G" name="WWT_I[params][W_G]" class="form-control" step="any" required>
+                                        <input type="number" id="W_G" name="WWT_I[params][W_G]" class="form-control" step="any">
                                         <label for="W_G">Tổng lượng chất thải ướt sinh ra (W_G, tấn)</label>
                                     </div>
                                     <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="WWT_I">Xem trước kết quả</button>
@@ -1128,8 +1129,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="DigWaste" name="DigWaste[params][DigWaste]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="DigWaste" name="DigWaste[params][DigWaste]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -1149,8 +1150,8 @@
                                 </div>
                                 <div class="card-body p-3">
                                     <div class="form-floating">
-                                        <select id="LandfillEff" name="LandfillEff[params][LandfillEff]" class="form-control" required>
-                                            <option value="" disabled selected>Chọn điểm</option>
+                                        <select id="LandfillEff" name="LandfillEff[params][LandfillEff]" class="form-control">
+                                            <option value="" disabled>Chọn điểm</option>
                                             <option value="1">1</option>
                                             <option value="2">2</option>
                                             <option value="3">3</option>
@@ -1163,192 +1164,216 @@
                                 </div>
                             </div>
                             <!-- Indicator 41 -->
-<div class="field-card">
-  <div class="field-header">
-    <h5>Cải thiện phát thải khí nhà kính trong quản lý chất thải</h5>
-    <i class="fas fa-info-circle tooltip-icon"
-       data-bs-toggle="tooltip"
-       title="Tính toán dựa trên lượng giảm phát thải khí nhà kính từ các phương pháp xử lý chất thải."></i>
-  </div>
-  <div class="card-body p-3">
-    <div class="form-floating">
-      <input type="number" id="GHGs_Landfill" name="GHGIs[params][GHGs_Landfill]" class="form-control" step="any" required>
-      <label for="GHGs_Landfill">Giảm phát thải từ chôn lấp (GHGs_Landfill, tCO₂e/ngày)</label>
-    </div>
-    <div class="form-floating">
-      <input type="number" id="GHGs_WTE" name="GHGIs[params][GHGs_WTE]" class="form-control" step="any" required>
-      <label for="GHGs_WTE">Giảm phát thải từ đốt phát điện (GHGs_WTE, tCO₂e/ngày)</label>
-    </div>
-    <div class="form-floating">
-      <input type="number" id="GHGs_Recycling" name="GHGIs[params][GHGs_Recycling]" class="form-control" step="any" required>
-      <label for="GHGs_Recycling">Giảm phát thải từ tái chế (GHGs_Recycling, tCO₂e/ngày)</label>
-    </div>
-    <div class="form-floating">
-      <input type="number" id="GHGs_Composting" name="GHGIs[params][GHGs_Composting]" class="form-control" step="any" required>
-      <label for="GHGs_Composting">Giảm phát thải từ xử lý sinh học (GHGs_Composting, tCO₂e/ngày)</label>
-    </div>
-    <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="GHGIs">
-      Xem trước kết quả
-    </button>
-  </div>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-<button type="submit" class="btn btn-primary mt-3">Lưu Dữ Liệu</button>
-</form>
-
-<% } else { %>
-  <div class="alert alert-warning">Bạn không có quyền truy cập chức năng này.</div>
-<% } %>
-
+                            <div class="field-card">
+                                <div class="field-header">
+                                    <h5>Cải thiện phát thải khí nhà kính trong quản lý chất thải</h5>
+                                    <i class="fas fa-info-circle tooltip-icon" data-bs-toggle="tooltip" title="Tính toán dựa trên lượng giảm phát thải khí nhà kính từ các phương pháp xử lý chất thải."></i>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="form-floating">
+                                        <input type="number" id="GHGs_Landfill" name="GHGIs[params][GHGs_Landfill]" class="form-control" step="any">
+                                        <label for="GHGs_Landfill">Giảm phát thải từ chôn lấp (GHGs_Landfill, tCO₂e/ngày)</label>
+                                    </div>
+                                    <div class="form-floating">
+                                        <input type="number" id="GHGs_WTE" name="GHGIs[params][GHGs_WTE]" class="form-control" step="any">
+                                        <label for="GHGs_WTE">Giảm phát thải từ đốt phát điện (GHGs_WTE, tCO₂e/ngày)</label>
+                                    </div>
+                                    <div class="form-floating">
+                                        <input type="number" id="GHGs_Recycling" name="GHGIs[params][GHGs_Recycling]" class="form-control" step="any">
+                                        <label for="GHGs_Recycling">Giảm phát thải từ tái chế (GHGs_Recycling, tCO₂e/ngày)</label>
+                                    </div>
+                                    <div class="form-floating">
+                                        <input type="number" id="GHGs_Composting" name="GHGIs[params][GHGs_Composting]" class="form-control" step="any">
+                                        <label for="GHGs_Composting">Giảm phát thải từ xử lý sinh học (GHGs_Composting, tCO₂e/ngày)</label>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary mt-2 preview-btn" data-indicator="GHGIs">Xem trước kết quả</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">Gửi biểu mẫu</button>
+        </form>
+    <% } else { %>
+        <div class="alert alert-warning">Bạn cần quyền admin để truy cập biểu mẫu này.</div>
+    <% } %>
 </main>
-</div>
-
 <!-- Preview Modal -->
 <div class="modal fade preview-modal" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="previewModalLabel">Kết quả xem trước</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p><strong>Giá trị:</strong> <span id="previewValue"></span></p>
-        <p><strong>Cấp độ:</strong> <span id="previewLevel"></span></p>
-        <p><strong>Điểm:</strong> <span id="previewScore"></span></p>
-        <p><strong>Mô tả:</strong> <span id="previewDescription"></span></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Kết quả xem trước</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Giá trị:</strong> <span id="previewValue">N/A</span></p>
+                <p><strong>Cấp độ:</strong> <span id="previewLevel">N/A</span></p>
+                <p><strong>Điểm:</strong> <span id="previewScore">N/A</span></p>
+                <p><strong>Mô tả:</strong> <span id="previewDescription">Không có mô tả</span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
+<!-- CSS for error highlighting -->
+<style>
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+    .invalid-feedback {
+        display: none;
+        color: #dc3545;
+        font-size: 0.875rem;
+    }
+    .is-invalid ~ .invalid-feedback {
+        display: block;
+    }
+</style>
 
-<!-- Bootstrap JS -->
+<!-- JavaScript for validation and preview -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Preview Calculation Script -->
 <script>
-  // Enable tooltips
-  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-  tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 
-  // Real-time clock
-  function updateClock() {
-    const now = new Date();
-    const options = {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-    };
-    const dateOptions = {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    };
-    document.getElementById('clockTime').textContent = now.toLocaleTimeString('vi-VN', options);
-    document.getElementById('clockDate').textContent = now.toLocaleDateString('vi-VN', dateOptions);
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // Preview calculation
-  async function calculatePreview(indicatorCode) {
-  const form = document.getElementById('cndlForm');
-  const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
-  const fieldCard = button.closest('.field-card');
-  const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
-  const params = {};
-
-  let isValid = true;
-  inputs.forEach(input => {
-    const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
-    const value = input.value.trim();
-    if (!paramName || !value || (input.type === 'number' && isNaN(parseFloat(value)))) {
-      isValid = false;
-      input.classList.add('is-invalid');
-    } else {
-      input.classList.remove('is-invalid');
-      params[paramName] = parseFloat(value);
+    // Real-time clock
+    function updateClock() {
+        const now = new Date();
+        const options = {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        };
+        const dateOptions = {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            weekday: 'long',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        };
+        const clockTime = document.getElementById('clockTime');
+        const clockDate = document.getElementById('clockDate');
+        if (clockTime && clockDate) {
+            clockTime.textContent = now.toLocaleTimeString('vi-VN', options);
+            clockDate.textContent = now.toLocaleDateString('vi-VN', dateOptions);
+        }
     }
-  });
+    updateClock();
+    setInterval(updateClock, 1000);
 
-  if (!isValid) {
-    alert('⚠️ Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
-    return;
-  }
-
-  try {
-    const response = await fetch('/cndl/preview', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        indicatorCode,
-        params,
-        year: form.querySelector('[name="year"]').value || new Date().getFullYear(),
-        city: form.querySelector('[name="city"]').value || 'TP. Hồ Chí Minh',
-      }),
+    // Toggle required fields on accordion show/hide
+    document.querySelectorAll('.accordion-collapse').forEach(collapse => {
+        collapse.addEventListener('show.bs.collapse', function() {
+            this.querySelectorAll('input, select').forEach(input => input.setAttribute('required', ''));
+        });
+        collapse.addEventListener('hide.bs.collapse', function() {
+            this.querySelectorAll('input, select').forEach(input => {
+                input.removeAttribute('required');
+                input.classList.remove('is-invalid');
+                const feedback = input.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.remove();
+                }
+            });
+        });
     });
 
-    const result = await response.json();
-
-    if (response.ok) {
-      document.getElementById('previewValue').textContent = result.value || 'N/A';
-      document.getElementById('previewLevel').textContent = result.level || 'N/A';
-      document.getElementById('previewScore').textContent = result.score || 'N/A';
-      document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả';
-
-      const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-      previewModal.show();
-    } else {
-      alert(`❌ Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán.'}`);
-    }
-  } catch (error) {
-    console.error('❌ Lỗi khi xem trước:', error);
-    alert('⚠️ Không thể kết nối đến máy chủ.');
-  }
-}
-
-  // Attach click events to all preview buttons
-  document.querySelectorAll('.preview-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const indicatorCode = btn.dataset.indicator;
-      if (!indicatorCode) {
-        alert('Không tìm thấy mã chỉ số.');
-        return;
-      }
-      calculatePreview(indicatorCode);
+    // Form submission validation
+    document.getElementById('cndlForm').addEventListener('submit', function(e) {
+        const inputs = this.querySelectorAll('.accordion-collapse.show input[required], .accordion-collapse.show select[required]');
+        let valid = true;
+        inputs.forEach(input => {
+            if (!input.value.trim() || (input.type === 'number' && isNaN(parseFloat(input.value)))) {
+                valid = false;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('⚠️ Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
+        }
     });
-  });
 
-  // Validate form submit
-  document.getElementById('cndlForm').addEventListener('submit', e => {
-    const inputs = e.target.querySelectorAll('input[required], select[required]');
-    let valid = true;
-    inputs.forEach(input => {
-      if (!input.value.trim()) {
-        valid = false;
-        input.classList.add('is-invalid');
-      } else {
-        input.classList.remove('is-invalid');
-      }
-    });
-    if (!valid) {
-      e.preventDefault();
-      alert('⚠️ Vui lòng điền đầy đủ tất cả các trường bắt buộc.');
+    // Preview calculation
+    async function calculatePreview(indicatorCode) {
+        const form = document.getElementById('cndlForm');
+        const button = document.querySelector(`button[data-indicator="${indicatorCode}"]`);
+        const fieldCard = button.closest('.field-card');
+        const inputs = fieldCard.querySelectorAll(`[name^="${indicatorCode}[params]"]`);
+        const params = {};
+        let isValid = true;
+
+        inputs.forEach(input => {
+            const paramName = input.name.match(/\[params\]\[(.+)\]/)?.[1];
+            const value = input.value.trim();
+            if (!paramName || !value || (input.type === 'number' && isNaN(parseFloat(value)))) {
+                isValid = false;
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-invalid');
+                params[paramName] = parseFloat(value);
+            }
+        });
+
+        if (!isValid) {
+            alert('⚠️ Vui lòng điền đầy đủ và đúng định dạng các trường bắt buộc.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/cndl/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    indicatorCode,
+                    params,
+                    year: form.querySelector('[name="year"]')?.value || new Date().getFullYear(),
+                    city: form.querySelector('[name="city"]')?.value || 'TP. Hồ Chí Minh',
+                }),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                document.getElementById('previewValue').textContent = result.value || 'N/A';
+                document.getElementById('previewLevel').textContent = result.level || 'N/A';
+                document.getElementById('previewScore').textContent = result.score || 'N/A';
+                document.getElementById('previewDescription').textContent = result.description || 'Không có mô tả';
+                const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+                previewModal.show();
+            } else {
+                alert(`❌ Lỗi: ${result.message || 'Có lỗi xảy ra khi tính toán.'}`);
+            }
+        } catch (error) {
+            console.error('❌ Lỗi khi xem trước:', error);
+            alert('⚠️ Không thể kết nối đến máy chủ.');
+        }
     }
-  });
+
+    // Attach preview button events
+    document.querySelectorAll('.preview-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const indicatorCode = btn.dataset.indicator;
+            if (!indicatorCode) {
+                alert('Không tìm thấy mã chỉ số.');
+                return;
+            }
+            calculatePreview(indicatorCode);
+        });
+    });
+});
 </script>
 </body>
 </html>
