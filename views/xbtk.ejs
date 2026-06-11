@@ -176,19 +176,52 @@
             outline: none;
         }
 
+        /* Multi-select styling */
         select[multiple] {
             background: rgba(30, 41, 59, 0.9);
+            min-height: 120px;
         }
 
         select[multiple] option {
             padding: 10px;
             border-radius: 8px;
             margin: 2px 0;
+            cursor: pointer;
         }
 
         select[multiple] option:checked {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
+        }
+
+        /* Selected tags */
+        .selected-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .selected-tag {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .selected-tag i {
+            cursor: pointer;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .selected-tag i:hover {
+            opacity: 1;
+            color: var(--danger);
         }
 
         /* Buttons */
@@ -370,13 +403,6 @@
             background: var(--primary);
         }
 
-        /* Alert */
-        .alert-custom {
-            border-radius: 16px;
-            margin-bottom: 25px;
-            animation: fadeInUp 0.4s ease;
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .card-body {
@@ -462,10 +488,11 @@
             </div>
             <div class="card-body">
                 <div class="row g-4">
-                    <div class="col-md-7">
+                    <!-- Năm đánh giá - chọn nhiều -->
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">
-                                <i class="fas fa-calendar-alt"></i> Năm đánh giá
+                                <i class="fas fa-calendar-alt"></i> Năm đánh giá (chọn nhiều)
                             </label>
                             <select id="yearFilter3" class="form-select" multiple size="4">
                                 <% if (years && years.length > 0) { %>
@@ -479,26 +506,35 @@
                                 <% } %>
                             </select>
                             <small class="text-muted mt-2 d-block">
-                                <i class="fas fa-info-circle me-1"></i>Giữ phím Ctrl để chọn nhiều năm
+                                <i class="fas fa-info-circle me-1"></i>Giữ phím Ctrl (Windows) / Cmd (Mac) để chọn nhiều năm
                             </small>
                         </div>
                     </div>
-                    <div class="col-md-5">
+                    
+                    <!-- Lĩnh vực - chọn nhiều -->
+                    <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">
-                                <i class="fas fa-building"></i> Lĩnh vực
+                                <i class="fas fa-building"></i> Lĩnh vực (chọn nhiều)
                             </label>
-                            <select id="linhvucFilter3" class="form-select">
-                                <option value="">-- Tất cả lĩnh vực --</option>
+                            <select id="linhvucFilter3" class="form-select" multiple size="4">
+                                <option value="all" selected>-- Tất cả lĩnh vực --</option>
                                 <option value="Năng lượng">⚡ Năng lượng</option>
                                 <option value="Quy hoạch">🏙️ Quy hoạch đô thị & Môi trường</option>
                                 <option value="Giao thông">🚌 Giao thông vận tải</option>
                                 <option value="Quản lý nước">💧 Quản lý nước</option>
                                 <option value="Quản lý chất thải">♻️ Quản lý chất thải</option>
                             </select>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>Giữ phím Ctrl (Windows) / Cmd (Mac) để chọn nhiều lĩnh vực
+                            </small>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Hiển thị các lĩnh vực đã chọn -->
+                <div id="selectedLinhvucTags" class="selected-tags"></div>
+                
                 <div class="text-end mt-4 pt-2">
                     <button id="exportExcelBtn" class="btn-export btn-excel">
                         <i class="fas fa-file-excel me-2"></i>Xuất báo cáo Excel
@@ -584,8 +620,7 @@
                                 <td colspan="9" class="text-center py-5">
                                     <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 15px;"></div>
                                     <p class="text-muted">Đang tải dữ liệu...</p>
-                                </td>
-                            </tr>
+                                \n                                </tr>
                         </tbody>
                     </table>
                 </div>
@@ -616,6 +651,34 @@
         }
         function hideLoading() { 
             document.getElementById('loadingOverlay').classList.remove('show'); 
+        }
+
+        // Update selected linhvuc tags
+        function updateSelectedLinhvucTags() {
+            const select = document.getElementById('linhvucFilter3');
+            const selectedOptions = Array.from(select.selectedOptions);
+            const container = document.getElementById('selectedLinhvucTags');
+            
+            // Bỏ qua nếu chọn "Tất cả"
+            const hasAll = selectedOptions.some(opt => opt.value === 'all');
+            if (hasAll || selectedOptions.length === 0) {
+                container.innerHTML = '<span class="text-muted small">Đã chọn: Tất cả lĩnh vực</span>';
+                return;
+            }
+            
+            container.innerHTML = selectedOptions.map(opt => `
+                <span class="selected-tag">
+                    ${opt.text}
+                    <i class="fas fa-times-circle" onclick="removeLinhvuc('${opt.value}')"></i>
+                </span>
+            `).join('');
+        }
+        
+        function removeLinhvuc(value) {
+            const select = document.getElementById('linhvucFilter3');
+            const option = Array.from(select.options).find(opt => opt.value === value);
+            if (option) option.selected = false;
+            updateSelectedLinhvucTags();
         }
 
         // Load filter options
@@ -652,7 +715,7 @@
             tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5">
                 <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 15px;"></div>
                 <p class="text-muted">Đang tải dữ liệu...</p>
-            </td></tr>`;
+            \n                            </td>`;
             
             try {
                 const donvi = document.getElementById('donviFilter1')?.value || '';
@@ -666,7 +729,7 @@
                     tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-muted">
                         <i class="fas fa-inbox fa-3x mb-3 d-block" style="opacity: 0.5;"></i>
                         Không có dữ liệu phù hợp
-                    </td></td>`;
+                    \n                            </td>`;
                     return;
                 }
 
@@ -689,7 +752,7 @@
                 tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-danger">
                     <i class="fas fa-exclamation-triangle fa-2x mb-2 d-block"></i>
                     Lỗi tải dữ liệu
-                </td></td>`;
+                \n                            </tr>`;
             }
         }
 
@@ -714,17 +777,29 @@
 
         // ====================== XỬ LÝ NÚT XUẤT ======================
         
-        // Xuất Excel cho Báo cáo Tổng Hợp
+        // Xuất Excel cho Báo cáo Tổng Hợp (hỗ trợ nhiều năm và nhiều lĩnh vực)
         const exportExcelBtn = document.getElementById('exportExcelBtn');
         if (exportExcelBtn) {
             exportExcelBtn.addEventListener('click', () => {
+                // Lấy danh sách năm được chọn
                 const yearsSelect = document.getElementById('yearFilter3');
                 const years = Array.from(yearsSelect.selectedOptions).map(opt => opt.value).join(',');
-                const linhvuc = document.getElementById('linhvucFilter3')?.value || '';
+                
+                // Lấy danh sách lĩnh vực được chọn (bỏ qua 'all')
+                const linhvucSelect = document.getElementById('linhvucFilter3');
+                let linhvuc = Array.from(linhvucSelect.selectedOptions)
+                    .map(opt => opt.value)
+                    .filter(v => v !== 'all')
+                    .join(',');
+                
+                if (!years) {
+                    alert('Vui lòng chọn ít nhất một năm đánh giá!');
+                    return;
+                }
                 
                 showLoading();
                 window.location.href = `/export/comprehensive/excel?year=${encodeURIComponent(years)}&linhvuc=${encodeURIComponent(linhvuc)}`;
-                setTimeout(hideLoading, 4000);
+                setTimeout(hideLoading, 5000);
             });
         }
 
@@ -732,12 +807,10 @@
         const exportMetaCsv1 = document.getElementById('exportMetaCsv1');
         if (exportMetaCsv1) {
             exportMetaCsv1.addEventListener('click', () => {
-                // Lấy danh sách ID của các dòng được check
                 const checkedIds = Array.from(document.querySelectorAll('.row-check1:checked'))
                     .map(cb => cb.value)
                     .join(',');
                 
-                // Lấy giá trị bộ lọc
                 const donvi = document.getElementById('donviFilter1')?.value || '';
                 const linhvuc = document.getElementById('linhvucFilter1')?.value || '';
                 
@@ -752,16 +825,14 @@
             });
         }
 
-        // Xuất Excel cho Mô Tả Chỉ Số - GỬI DANH SÁCH ID ĐƯỢC CHỌN
+        // Xuất Excel cho Mô Tả Chỉ Số
         const exportMetaExcel1 = document.getElementById('exportMetaExcel1');
         if (exportMetaExcel1) {
             exportMetaExcel1.addEventListener('click', () => {
-                // Lấy danh sách ID của các dòng được check
                 const checkedIds = Array.from(document.querySelectorAll('.row-check1:checked'))
                     .map(cb => cb.value)
                     .join(',');
                 
-                // Lấy giá trị bộ lọc
                 const donvi = document.getElementById('donviFilter1')?.value || '';
                 const linhvuc = document.getElementById('linhvucFilter1')?.value || '';
                 
@@ -780,6 +851,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadFilterOptions();
             loadMetadataList1();
+            
+            // Cập nhật tags khi chọn lĩnh vực
+            const linhvucSelect = document.getElementById('linhvucFilter3');
+            if (linhvucSelect) {
+                linhvucSelect.addEventListener('change', updateSelectedLinhvucTags);
+                updateSelectedLinhvucTags();
+            }
 
             // Reset filter
             const resetFilter1 = document.getElementById('resetFilter1');
@@ -799,7 +877,7 @@
                 if (el) el.addEventListener('change', loadMetadataList1);
             });
 
-            // Checkbox master (chọn tất cả)
+            // Checkbox master
             const masterCheckbox1 = document.getElementById('masterCheckbox1');
             if (masterCheckbox1) {
                 masterCheckbox1.addEventListener('change', function() {
@@ -825,7 +903,6 @@
                 };
             }
 
-            // Cập nhật số lượng khi click vào checkbox
             document.addEventListener('change', e => {
                 if (e.target.classList && e.target.classList.contains('row-check1')) updateSelectedCount1();
             });

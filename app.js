@@ -1894,102 +1894,6 @@ app.post(
   }
 );
 
-// Tuyến đường GET /total-score (ĐÃ SỬA ĐỦ)
-app.get('/total-score', authenticateToken, async (req, res) => {
-  try {
-    const viewPath = path.join(__dirname, 'views', 'total-score.ejs');
-
-    // Kiểm tra file tồn tại với xử lý lỗi tốt hơn
-    try {
-      await fs.access(viewPath, fs.constants.R_OK);
-    } catch (fileErr) {
-      throw new Error('File view không tồn tại hoặc không có quyền truy cập');
-    }
-
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const city = 'TP. Hồ Chí Minh';
-    const cacheKey = `total-score:${city}:${year}`;
-
-    // Sử dụng parameterized query để tránh SQL Injection
-    const dataQuery = `
-    SELECT 
-      city AS district,
-
-      ROUND(AVG(score_awarded), 0) AS total_score,
-
-      ROUND(AVG(score_awarded) / 1000 * 100, 1) AS percent_score,
-
-      CASE 
-        WHEN (AVG(score_awarded) / 1000 * 100) >= 80 THEN 5
-        WHEN (AVG(score_awarded) / 1000 * 100) >= 60 THEN 4
-        WHEN (AVG(score_awarded) / 1000 * 100) >= 40 THEN 3
-        WHEN (AVG(score_awarded) / 1000 * 100) >= 20 THEN 2
-        ELSE 1
-      END AS overall_level
-
-    FROM Assessments_Template
-    WHERE city = $1 AND year = $2
-    GROUP BY city
-  `;
-
-
-    let data = await getCachedOrQuery(cacheKey, dataQuery, [city, year]) || [];
-
-    // Lấy số ngày cập nhật
-    const updateDaysQuery = `
-      SELECT COUNT(DISTINCT date) AS update_days
-      FROM Assessments_Template
-      WHERE city = $1 AND year = $2
-    `;
-    const updateDaysResult = await pool.query(updateDaysQuery, [city, year]);
-    const updateDays = updateDaysResult.rows[0]?.update_days || 0;
-
-    // Dữ liệu mẫu nếu không có dữ liệu từ DB
-    const sampleData = data.length > 0 ? data : [
-      { district: 'TP. Hồ Chí Minh', khi_hau: '87.5%', diem: '875/1000', level: 'Level 5' }
-    ];
-
-    // Thêm thời gian cập nhật (đồng bộ với múi giờ +07)
-    const updatedAt = new Date().toLocaleString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      hour12: false
-    });
-    sampleData.forEach(item => item.updated_at = updatedAt);
-
-    // Dữ liệu geojson giả lập (thay bằng API thực tế sau)
-    const geojson = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          properties: { name: 'TP. Hồ Chí Minh' },
-          geometry: { type: 'Point', coordinates: [106.7009, 10.7769] }
-        }
-      ]
-    };
-
-    res.render('total-score', {
-      data: sampleData,
-      geojson: geojson,
-      user: req.user,
-      currentPage: 'total-score',  // Thêm dòng này
-      error: req.query.error || null,
-      success: req.query.success || null,
-      selectedYear: year,
-      years: [2023, 2024, 2025],
-      updateDays
-    });
-  } catch (err) {
-    console.error('❌ Lỗi trong route /total-score:', err.stack); // Ghi stack trace để debug
-    res.status(500).render('error', {
-      error: 'Không tìm thấy trang tổng điểm hoặc lỗi khi tải dữ liệu',
-      success: null,
-    });
-  }
-});
-
 // DÙNG RAM THAY REDIS – NHANH, NHẸ, KHÔNG LỖI
 const cache = new Map();
 
@@ -3361,6 +3265,158 @@ app.get('/logout', (req, res) => {
   res.clearCookie('token');
   res.redirect('/?success=Đăng xuất thành công');
 });
+
+// Tuyến đường GET /charts - Trang đồ thị đánh giá
+app.get('/charts', authenticateToken, async (req, res) => {
+  let client;
+  try {
+    const user = req.user;
+    const year = parseInt(req.query.year) || new Date().getFullYear();
+    const city = 'TP. Hồ Chí Minh';
+
+    client = await pool.connect();
+
+    // 1. Lấy Domains
+    const domainsRes = await client.query('SELECT * FROM Domains ORDER BY domain_id');
+    const domains = domainsRes.rows || [];
+
+    // 2. Lấy Indicators
+    const indicatorsRes = await client.query('SELECT * FROM Indicators ORDER BY domain_id, indicator_id');
+    const indicators = indicatorsRes.rows || [];
+
+    // 3. Lấy Assessments + trọng số chỉ số
+    const assessmentsRes = await client.query(`
+      SELECT 
+        a.assessment_id,
+        a.domain_id,
+        a.indicator_id,
+        a.value,
+        a.score_awarded,
+        a.level,
+        a.year,
+        COALESCE(a.date::text, '') AS date,
+        d.name AS domain_name,
+        i.name AS indicator_name,
+        COALESCE(iw.weight_within_domain, 0) AS weight_within_domain
+      FROM Assessments_Template a
+      JOIN Domains d ON a.domain_id = d.domain_id
+      JOIN Indicators i ON a.indicator_id = i.indicator_id
+      LEFT JOIN indicatorweights iw ON a.indicator_id = iw.indicator_id AND a.domain_id = iw.domain_id
+      WHERE a.city = $1 AND a.year = $2
+      ORDER BY a.domain_id, a.indicator_id
+    `, [city, year]);
+
+    const assessments = assessmentsRes.rows || [];
+
+    // 4. Trọng số lĩnh vực
+    const domainWeightsRes = await client.query('SELECT domain_id, weight FROM domainweights');
+    const domainWeights = {};
+    domainWeightsRes.rows.forEach(row => {
+      domainWeights[row.domain_id] = Number(row.weight) || 0;
+    });
+
+    // 5. TÍNH ĐIỂM TỪNG LĨNH VỰC
+    const domainScores = {};
+
+    domains.forEach(domain => {
+      const domainAssessments = assessments.filter(a => a.domain_id === domain.domain_id);
+      const validAssessments = domainAssessments.filter(a =>
+        a.score_awarded !== null &&
+        a.score_awarded !== undefined &&
+        a.score_awarded !== '-' &&
+        !isNaN(a.score_awarded)
+      );
+
+      if (validAssessments.length === 0) {
+        domainScores[domain.domain_id] = 0;
+        return;
+      }
+
+      const totalValidWeight = validAssessments.reduce(
+        (sum, a) => sum + (Number(a.weight_within_domain) || 0), 0
+      );
+
+      if (totalValidWeight === 0) {
+        domainScores[domain.domain_id] = 0;
+        return;
+      }
+
+      const score = validAssessments.reduce((sum, a) => {
+        const Zi = Number(a.score_awarded);
+        const wi = Number(a.weight_within_domain) || 0;
+        const normalizedWeight = wi / totalValidWeight;
+        return sum + normalizedWeight * Zi;
+      }, 0);
+
+      domainScores[domain.domain_id] = Number(score.toFixed(3));
+    });
+
+    // 6. Tính tổng điểm
+    const totalScoreRaw = Object.values(domainScores).reduce((sum, score) => {
+      const domainId = Object.keys(domainScores).find(key => domainScores[key] === score);
+      const weight = domainWeights[domainId] || 0;
+      return sum + (score * weight);
+    }, 0);
+    const totalScore = Number(totalScoreRaw.toFixed(3));
+
+    // 7. Xếp hạng tổng thể
+    let overallLevel = 1;
+    let overallDescription = 'Thành phố chưa tích hợp yếu tố khí hậu vào quản lý và quy hoạch; dữ liệu rời rạc, thiếu số hóa; chủ yếu phản ứng thụ động trước rủi ro khí hậu.';
+
+    if (totalScore >= 81) { overallLevel = 5; overallDescription = 'Thành phố phát thải thấp hoặc trung hòa carbon, hạ tầng thông minh, thích ứng với biến đổi khí hậu, có khả năng nhân rộng mô hình.'; }
+    else if (totalScore >= 61) { overallLevel = 4; overallDescription = 'Thành phố vận hành dựa trên dữ liệu số, quản trị thông minh, giảm phát thải rõ rệt, thích ứng khí hậu chủ động; liên kết tốt giữa quy hoạch, công nghệ và chính sách.'; }
+    else if (totalScore >= 41) { overallLevel = 3; overallDescription = 'Các trụ cột của Thành phố thông minh với khí hậu đã được hình thành, với sự hiện diện của hệ thống dữ liệu, bộ chỉ số và các kế hoạch thích ứng, giảm phát thải.'; }
+    else if (totalScore >= 21) { overallLevel = 2; overallDescription = 'Đã có một số chính sách đơn lẻ, nhưng thiếu liên kết liên ngành; công nghệ thông minh và giải pháp khí hậu mới ở mức thí điểm.'; }
+
+    // 8. Danh sách năm có dữ liệu
+    const yearsRes = await client.query('SELECT DISTINCT year FROM Assessments_Template WHERE city = $1 ORDER BY year DESC', [city]);
+    const years = yearsRes.rows.map(r => r.year);
+
+    // 9. Debug log
+    console.log('===== CHARTS DEBUG =====');
+    console.log('Year:', year);
+    console.log('Domain Scores:', domainScores);
+    console.log('Assessments Count:', assessments.length);
+    console.log('========================');
+
+    // 10. Render trang charts
+    res.render('charts', {
+      user: req.user,
+      currentPage: 'charts',
+      domains: domains,
+      indicators: indicators,
+      assessments: assessments,
+      domainScores: domainScores,
+      totalScore: Math.round(totalScore),
+      overallLevel: overallLevel,
+      overallDescription: overallDescription,
+      years: years.length > 0 ? years : [2024, 2025, 2026],
+      selectedYear: year,
+      error: null,
+      success: null
+    });
+
+  } catch (err) {
+    console.error('LỖI CHARTS:', err.message);
+    res.render('charts', {
+      user: req.user || null,
+      domains: [],
+      indicators: [],
+      assessments: [],
+      domainScores: {1:0, 2:0, 3:0, 4:0, 5:0},
+      totalScore: 0,
+      overallLevel: 1,
+      overallDescription: 'Không có dữ liệu để hiển thị.',
+      years: [2024, 2025, 2026],
+      selectedYear: new Date().getFullYear(),
+      error: 'Không thể tải dữ liệu. Vui lòng thử lại sau.',
+      success: null
+    });
+  } finally {
+    if (client) client.release();
+  }
+});
+
 // Khởi động server
 (async () => {
   try {
