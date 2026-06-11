@@ -1,0 +1,170 @@
+<!-- views/cndl/domain5.ejs -->
+<div class="accordion-item">
+    <h2 class="accordion-header" id="heading5">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
+            🗑️ Quản lý chất thải
+        </button>
+    </h2>
+    <div id="collapse5" class="accordion-collapse collapse" aria-labelledby="heading5" data-bs-parent="#domainAccordion">
+        <div class="accordion-body">
+            <form action="/cndl" method="POST" novalidate>
+                <input type="hidden" name="domain_id" value="5">
+                <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
+                <input type="hidden" name="city" value="TP. Hồ Chí Minh">
+
+                <!-- Checklist indicators -->
+                <div class="indicator-list mb-5 p-4 bg-dark bg-opacity-10 rounded">
+                    <h5 class="text-primary mb-4"><i class="fas fa-check-circle me-2"></i>Chọn các chỉ số cần nhập dữ liệu:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_WasteInit">
+                                <label class="form-check-label fw-bold" for="check_WasteInit">34. Các sáng kiến giảm thiểu chất thải (WasteInit)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_R_USWA_waste">
+                                <label class="form-check-label fw-bold" for="check_R_USWA_waste">35. Tỷ lệ chôn lấp rác thải sinh hoạt (R_USWA_waste)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_RRWI">
+                                <label class="form-check-label fw-bold" for="check_RRWI">36. Mức độ rác thải khô được thu hồi và tái chế (RRWI)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_ConsWaste">
+                                <label class="form-check-label fw-bold" for="check_ConsWaste">37. Quản lý chất thải xây dựng (ConsWaste)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_WWT_I">
+                                <label class="form-check-label fw-bold" for="check_WWT_I">38. Mức độ xử lý chất thải ướt (WWT_I)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_DigWaste">
+                                <label class="form-check-label fw-bold" for="check_DigWaste">39. Chỉ số chuyển đổi số trong quản lý chất thải (DigWaste)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_LandfillEff">
+                                <label class="form-check-label fw-bold" for="check_LandfillEff">40. Hiệu quả vận hành bãi chôn lấp (LandfillEff)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_GHGIs">
+                                <label class="form-check-label fw-bold" for="check_GHGIs">41. Cải thiện phát thải khí nhà kính trong quản lý chất thải (GHGIs)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicator 34: WasteInit (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'WasteInit',
+                    indicatorName: 'Các sáng kiến giảm thiểu chất thải',
+                    description: 'Đánh giá mức độ phát triển và áp dụng các sáng kiến giảm thiểu chất thải.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Không có sáng kiến' },
+                        { value: 2, label: 'Cấp 2 - Có đăng ký các sáng kiến' },
+                        { value: 3, label: 'Cấp 3 - Có áp dụng các sáng kiến' },
+                        { value: 4, label: 'Cấp 4 - Có áp dụng và đánh giá hiệu quả' },
+                        { value: 5, label: 'Cấp 5 - Có áp dụng và nhân rộng sáng kiến' }
+                    ]
+                }) %>
+
+                <!-- Indicator 35: R_USWA_waste -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'R_USWA_waste',
+                    indicatorName: 'Tỷ lệ chôn lấp rác thải sinh hoạt',
+                    description: 'Tính toán dựa trên lượng rác thải chôn lấp và tổng rác thải.',
+                    required: true,
+                    inputs: [
+                        { id: 'W_landfill_R_USWA_waste', param: 'W_landfill', label: 'Tổng lượng chất thải rắn sinh hoạt được chôn lấp (W_landfill, tấn)', tooltip: 'Lượng rác thải sinh hoạt được chôn lấp', sourceText: 'CTR.STNMT.TP.pdf - Trang 36 - Bảng 1', driveLink: 'https://drive.google.com/drive/u/0/folders/1Un4CEI1ou55ojzTR_KXCMbXBYe1d8adq' },
+                        { id: 'W_waste_generate_R_USWA_waste', param: 'W_waste_generate', label: 'Tổng lượng chất thải rắn sinh hoạt phát sinh (W_waste_generate, tấn)', tooltip: 'Tổng lượng rác thải sinh hoạt phát sinh', sourceText: 'CTR.STNMT.TP.pdf - Trang 36 - Bảng 1', driveLink: 'https://drive.google.com/drive/u/0/folders/1WFEI9Nl1f6Zu06tw5eqINP4V64-QiMPg' }
+                    ]
+                }) %>
+
+                <!-- Indicator 36: RRWI -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'RRWI',
+                    indicatorName: 'Mức độ rác thải khô được thu hồi và tái chế',
+                    description: 'Tính toán dựa trên lượng rác thải tái chế và tái sử dụng.',
+                    required: false,
+                    inputs: [
+                        { id: 'W_RRC_RRWI', param: 'W_RRC', label: 'Chất thải rắn tái chế (W_RRC, tấn/năm)', tooltip: 'Lượng rác thải khô được tái chế', sourceText: 'Hien trang QL CTRSH, BCL dang con hoat dong.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1dPaBsKQFIcticeD9tk5WHq8wgi2F_g7r' },
+                        { id: 'W_RU_RRWI', param: 'W_RU', label: 'Chất thải rắn tái sử dụng (W_RU, tấn/năm)', tooltip: 'Lượng rác thải khô được tái sử dụng', sourceText: 'Hien trang QL CTRSH, BCL dang con hoat dong.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1gskkdMEyki7Sr3ArNK4tZrF1KRVT_C0O' },
+                        { id: 'W_G_RRWI', param: 'W_G', label: 'Tổng lượng chất thải rắn phát sinh (W_G, tấn/năm)', tooltip: 'Tổng lượng rác thải khô phát sinh', sourceText: 'Hien trang QL CTRSH, BCL dang con hoat dong.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1861Hc3ODSyu9F4Z-pmtuO_pct6Q-S1e7' }
+                    ]
+                }) %>
+
+                <!-- Indicator 37: ConsWaste -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'ConsWaste',
+                    indicatorName: 'Quản lý chất thải xây dựng',
+                    description: 'Tính toán dựa trên lượng chất thải xây dựng được xử lý và tái chế.',
+                    required: true,
+                    inputs: [
+                        { id: 'W_Cons_rr_ConsWaste', param: 'W_Cons_rr', label: 'Tổng lượng chất thải xây dựng được tái chế và tái sử dụng (W_Cons_rr, tấn)', tooltip: 'Lượng chất thải xây dựng được tái chế', sourceText: 'Hien trang QL CTRSH, BCL dang con hoat dong.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1mqBPRZ5dE0STD6_UL2K9Oa37MEzlrauY' },
+                        { id: 'W_Cons_deli_reduce_ConsWaste', param: 'W_Cons_deli_reduce', label: 'Tổng lượng chất thải xây dựng được chuyển đến cơ sở xử lý (tấn)', tooltip: 'Lượng chất thải xây dựng được chuyển đến xử lý', sourceText: 'Hien trang QL CTRSH, BCL dang con hoat dong.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1QscMhcmilSsDzbE_kuecxUXOHKgoQUN2' }
+                    ]
+                }) %>
+
+                <!-- Indicator 38: WWT_I -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'WWT_I',
+                    indicatorName: 'Mức độ xử lý chất thải ướt',
+                    description: 'Tính toán dựa trên lượng chất thải ướt được xử lý.',
+                    required: true,
+                    inputs: [
+                        { id: 'W_T_WWT_I', param: 'W_T', label: 'Khối lượng chất thải ướt đã được xử lý (W_T, tấn)', tooltip: 'Lượng chất thải ướt được xử lý', sourceText: 'Năm nay chưa có số liệu', driveLink: 'https://drive.google.com/drive/u/0/folders/1TiddbY1yL2AQjciDK1ZXszOoYoPe6ghV' },
+                        { id: 'W_G_WWT_I', param: 'W_G', label: 'Tổng lượng chất thải ướt phát sinh (W_G, tấn)', tooltip: 'Tổng lượng chất thải ướt phát sinh', sourceText: 'Năm nay chưa có số liệu', driveLink: 'https://drive.google.com/drive/u/0/folders/1yN6bBk-TVk35T2KRys_cBApSZVSKFH-Q' }
+                    ]
+                }) %>
+
+                <!-- Indicator 39: DigWaste (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'DigWaste',
+                    indicatorName: 'Chỉ số chuyển đổi số trong quản lý chất thải',
+                    description: 'Đánh giá mức độ ứng dụng công nghệ số trong quản lý chất thải.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Không áp dụng công nghệ số' },
+                        { value: 2, label: 'Cấp 2 - Quản lý dữ liệu nội bộ (Excel, email)' },
+                        { value: 3, label: 'Cấp 3 - Thùng rác có cảm biến, GPS giám sát xe' },
+                        { value: 4, label: 'Cấp 4 - Hệ thống quản lý tập trung, dữ liệu thời gian thực' },
+                        { value: 5, label: 'Cấp 5 - Hệ thống tích hợp: ICT + GIS + AI + cổng công khai' }
+                    ]
+                }) %>
+
+                <!-- Indicator 40: LandfillEff (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'LandfillEff',
+                    indicatorName: 'Hiệu quả vận hành bãi chôn lấp',
+                    description: 'Đánh giá mức độ xử lý, cải tạo và vận hành bền vững các bãi chôn lấp.',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Còn tồn tại bãi chôn lấp không hợp vệ sinh' },
+                        { value: 2, label: 'Cấp 2 - Có phương án xử lý ô nhiễm, cải tạo' },
+                        { value: 3, label: 'Cấp 3 - 90-95% bãi chôn lấp đã đóng cửa được cải tạo' },
+                        { value: 4, label: 'Cấp 4 - Tất cả bãi chôn lấp vận hành đúng quy định' },
+                        { value: 5, label: 'Cấp 5 - Không đầu tư mới bãi chôn lấp' }
+                    ]
+                }) %>
+
+                <!-- Indicator 41: GHGIs -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'GHGIs',
+                    indicatorName: 'Cải thiện phát thải khí nhà kính trong quản lý chất thải',
+                    description: 'Tính toán dựa trên lượng giảm phát thải từ các phương pháp xử lý chất thải.',
+                    required: true,
+                    inputs: [
+                        { id: 'GHGs_Landfill_GHGIs', param: 'GHGs_Landfill', label: 'Lượng giảm phát thải từ chôn lấp (tCO₂e/ngày)', tooltip: 'Lượng giảm phát thải từ chôn lấp', sourceText: 'BÁO CÁO KKKNK2018.pdf - Mục 2.4.1', driveLink: 'https://drive.google.com/drive/u/0/folders/1eXNYs4a8PcIM36bzpfbpj6FjK0XeB9j5' },
+                        { id: 'GHGs_WTE_GHGIs', param: 'GHGs_WTE', label: 'Lượng giảm phát thải từ đốt phát điện (tCO₂e/ngày)', tooltip: 'Lượng giảm phát thải từ đốt phát điện', sourceText: 'BÁO CÁO KKKNK2018.pdf - Mục 2.4.3', driveLink: 'https://drive.google.com/drive/u/0/folders/1MNNSinutV1x5XrmUTA0phRinTw1FhtNU' },
+                        { id: 'GHGs_Recycling_GHGIs', param: 'GHGs_Recycling', label: 'Mức giảm phát thải từ tái chế (tCO₂e/ngày)', tooltip: 'Lượng giảm phát thải từ tái chế', sourceText: 'BÁO CÁO KKKNK2018.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/17XdhkYI-ebS0e3bUT5eikG2jrY49IUQ6' },
+                        { id: 'GHGs_Composting_GHGIs', param: 'GHGs_Composting', label: 'Mức giảm phát thải từ xử lý sinh học (tCO₂e/ngày)', tooltip: 'Lượng giảm phát thải từ xử lý sinh học', sourceText: 'BÁO CÁO KKKNK2018.pdf - Mục 2.4.2', driveLink: 'https://drive.google.com/drive/u/0/folders/1eWcTj4HQWTYE---jXrjyqKklQM-FMMDA' }
+                    ]
+                }) %>
+
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Lưu tất cả chỉ số Domain 5</button>
+            </form>
+        </div>
+    </div>
+</div>

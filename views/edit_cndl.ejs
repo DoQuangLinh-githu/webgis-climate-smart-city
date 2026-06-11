@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sửa Dữ Liệu - Climate Smart City</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --dark: #0f172a;
+            --light: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(59, 130, 246, 0.25);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h5 {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.45rem;
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            color: #cbd5e1;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 6px 0;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+            z-index: -1;
+        }
+
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            width: 100%;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            transform: translateX(6px);
+        }
+
+        .user-info {
+            margin-top: 30px;
+            padding: 18px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        /* Overlay */
+        #sidebarOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #sidebarOverlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 30px;
+            min-height: 100vh;
+            transition: margin-left 0.4s ease;
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 24px;
+            padding: 35px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Form Cards - Glassmorphism */
+        .form-card {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 22px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        .form-label {
+            color: #cbd5e1;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            color: #f8fafc;
+            border-radius: 12px;
+            padding: 13px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .form-control[readonly] {
+            background: rgba(15, 23, 42, 0.85);
+            color: #94a3b8;
+        }
+
+        /* File Upload */
+        .file-upload-area {
+            background: rgba(30, 41, 59, 0.6);
+            border: 2px dashed rgba(59, 130, 246, 0.5);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.18);
+            transform: translateY(-3px);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.12);
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 14px 36px;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.45);
+        }
+
+        .btn-outline-light {
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Mobile Toggle Button -->
+    <button id="mobileToggleBtn" class="mobile-toggle d-lg-none position-fixed top-0 start-0 m-3 btn btn-primary rounded-circle p-3 shadow-lg z-3">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-cloud-sun-rain"></i> Climate Smart City</h5>
+            <p>TP. Hồ Chí Minh</p>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item"><a class="nav-link active" href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/motadulieu"><i class="fas fa-info-circle"></i> Mô Tả Dữ Liệu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/cndl"><i class="fas fa-edit"></i> Cập Nhật Dữ Liệu</a></li>
+            <% if (user && user.role === 'admin') { %>
+            <li class="nav-item"><a class="nav-link" href="/qldl"><i class="fas fa-database"></i> Quản Lý Dữ Liệu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/hsnd"><i class="fas fa-user-circle"></i> Hồ Sơ</a></li>
+            <li class="nav-item"><a class="nav-link" href="/lichsu"><i class="fas fa-history"></i> Lịch Sử</a></li>
+            <% } %>
+            <li class="nav-item"><a class="nav-link" href="/total-score"><i class="fas fa-star"></i> Đồ Thị Suy Đoán</a></li>
+            <li class="nav-item"><a class="nav-link" href="/doimatkhau"><i class="fas fa-key"></i> Đổi Mật Khẩu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/xbtk"><i class="fas fa-file-export"></i> Xuất Báo Cáo</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt"></i> Đăng Xuất</a></li>
+        </ul>
+        <div class="user-info">
+            <p class="mb-2"><strong><%= user ? user.username : 'Guest' %></strong></p>
+            <p style="font-size: 0.85rem; color: #94a3b8;"><%= user ? user.email || '' : '' %></p>
+            <span class="badge bg-<%= user && user.role === 'admin' ? 'primary' : 'secondary' %>">
+                <%= user && user.role === 'admin' ? 'Quản trị viên' : 'Người dùng' %>
+            </span>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-edit"></i> Sửa Dữ Liệu</h1>
+            <p style="color: #cbd5e1;">Chỉnh sửa thông tin chỉ số: <strong><%= item.indicator_name || 'Không xác định' %></strong></p>
+        </div>
+
+        <% if (error) { %>
+            <div class="alert alert-danger mb-4"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+            <div class="alert alert-success mb-4"><%= success %></div>
+        <% } %>
+
+        <form action="/edit_cndl/<%= item.assessment_id %>" method="POST" enctype="multipart/form-data" id="editForm">
+            <!-- Thông Tin Cơ Bản -->
+            <div class="form-card">
+                <h3 class="section-title"><i class="fas fa-info-circle"></i> Thông Tin Cơ Bản</h3>
+                <div class="row g-4">
+                    <% fields.forEach(field => { %>
+                        <% if (field !== 'params') { %>
+                            <div class="col-md-6">
+                                <label class="form-label"><%= field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %></label>
+                                <input type="text" class="form-control"
+                                    name="<%= field %>"
+                                    value="<%= item[field] != null ? item[field] : '' %>"
+                                    <%= ['city','year','indicator_code'].includes(field) ? 'readonly' : '' %>>
+                            </div>
+                        <% } %>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Tham Số Thô -->
+            <% if (paramFields && paramFields.length > 0) { %>
+            <div class="form-card">
+                <h3 class="section-title"><i class="fas fa-sliders-h"></i> Tham Số Thô</h3>
+                <div class="row g-4">
+                    <% paramFields.forEach(param => { %>
+                        <div class="col-md-6">
+                            <label class="form-label"><%= param.label %></label>
+                            <input type="number" step="any" class="form-control"
+                                name="params.<%= param.key %>"
+                                value="<%= item.params && item.params[param.key] ? item.params[param.key] : '' %>">
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- File Đính Kèm -->
+            <% if (paramFields && paramFields.length > 0) { %>
+            <div class="form-card">
+                <h3 class="section-title"><i class="fas fa-paperclip"></i> File Đính Kèm</h3>
+                <div class="row g-5">
+                    <% paramFields.forEach(param => { %>
+                        <div class="col-md-6">
+                            <label class="form-label mb-3">File cho <strong><%= param.label %></strong></label>
+
+                            <% if (item.files && item.files.some(f => f.param === param.key)) { 
+                                const oldFile = item.files.find(f => f.param === param.key); %>
+                                <div class="file-info mb-4">
+                                    <p class="mb-2 text-info"><i class="fas fa-file-alt"></i> File hiện tại:</p>
+                                    <a href="/api/file?id=<%= item.assessment_id %>&param=<%= oldFile.param %>" target="_blank" class="text-primary fw-bold">
+                                        <%= oldFile.file_name %>
+                                    </a>
+                                    <div class="mt-3">
+                                        <label class="form-check">
+                                            <input type="checkbox" name="delete_old_<%= param.key %>" class="form-check-input">
+                                            <span class="form-check-label text-warning">Xóa file cũ khi lưu</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <div class="file-upload-area">
+                                <input type="file" id="file_<%= param.key %>" name="new_files[<%= param.key %>]"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" class="d-none"
+                                    onchange="updateFileDisplay(this, '<%= param.key %>')">
+                                <label for="file_<%= param.key %>" class="d-block cursor-pointer">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                    <p class="fw-bold">Kéo thả file hoặc click để chọn</p>
+                                    <p class="text-muted small">PDF, Word, Excel, Ảnh</p>
+                                </label>
+                                <p class="mt-3 text-info" id="fileDisplay_<%= param.key %>">Chưa chọn file mới</p>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Nút Hành Động -->
+            <div class="text-center mt-5">
+                <button type="submit" class="btn btn-primary btn-lg px-5 me-4" id="submitBtn">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                    <i class="fas fa-save"></i> Lưu Thay Đổi
+                </button>
+                <a href="/qldl" class="btn btn-outline-light btn-lg px-5">
+                    <i class="fas fa-arrow-left"></i> Quay Lại
+                </a>
+            </div>
+        </form>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const icon = document.querySelector('#mobileToggleBtn i');
+
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+
+            if (sidebar.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const icon = document.querySelector('#mobileToggleBtn i');
+
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+
+        // Khởi tạo sự kiện
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            if (mobileToggleBtn) mobileToggleBtn.addEventListener('click', toggleSidebar);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+            // Đóng sidebar khi click vào link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', closeSidebar);
+            });
+
+            // Tự động đóng sidebar khi resize lên desktop
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 992) closeSidebar();
+            });
+
+            // Gán hàm cho onclick cũ (nếu có)
+            window.toggleSidebar = toggleSidebar;
+        });
+
+        function updateFileDisplay(input, key) {
+            const display = document.getElementById(`fileDisplay_${key}`);
+            if (input.files.length > 0) {
+                display.textContent = `Đã chọn: ${input.files[0].name}`;
+                display.className = 'mt-3 text-success fw-bold';
+            } else {
+                display.textContent = 'Chưa chọn file mới';
+                display.className = 'mt-3 text-info';
+            }
+        }
+
+        document.getElementById('editForm').addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.querySelector('.spinner-border').classList.remove('d-none');
+        });
+    </script>
+</body>
+</html>

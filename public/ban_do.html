@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Bản đồ Thích nghi BĐKH - TP.HCM</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            padding: 48px 32px;
+            text-align: center;
+            border-bottom: 2px solid rgba(96, 165, 250, 0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 40px rgba(96, 165, 250, 0.3);
+        }
+        
+        .header p {
+            color: #cbd5e1;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .maps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(650px, 1fr));
+            gap: 32px;
+            padding: 40px;
+            max-width: 2000px;
+            margin: 0 auto;
+        }
+
+        .map-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(96,165,250,0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 700px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .map-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(96,165,250,0.3), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        
+        .map-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 32px 80px rgba(59, 130, 246, 0.3);
+            border-color: rgba(96,165,250,0.5);
+        }
+        
+        .map-card:hover::before {
+            opacity: 1;
+        }
+
+        .overview-card {
+            grid-column: 1 / -1;
+            height: 750px;
+            border: 2px solid rgba(96,165,250,0.4);
+            box-shadow: 0 24px 80px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+        }
+        
+        .overview-card::before {
+            background: linear-gradient(135deg, rgba(96,165,250,0.5), transparent);
+        }
+
+        .card-header {
+            padding: 28px 32px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 41, 59, 0.3));
+            border-bottom: 1px solid rgba(96,165,250,0.2);
+            text-align: center;
+            position: relative;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+        }
+        
+        .card-header h3 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #93c5fd;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+        
+        .card-header .subtitle {
+            font-size: 16px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        .map-view {
+            width: 100%;
+            height: 100%;
+        }
+
+        .level-badge {
+            position: absolute;
+            top: 28px;
+            left: 28px;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 32px;
+            border-radius: 20px;
+            border: 2px solid rgba(96,165,250,0.4);
+            font-size: 52px;
+            letter-spacing: 8px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            text-shadow: 0 4px 16px rgba(0,0,0,0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .level-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+        }
+        
+        .overview-card .level-badge {
+            font-size: 64px;
+            padding: 28px 40px;
+            letter-spacing: 12px;
+        }
+
+        .stars-legend {
+            position: absolute;
+            top: 28px;
+            right: 28px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px 28px;
+            border: 2px solid rgba(96,165,250,0.3);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            z-index: 100;
+            min-width: 260px;
+            transition: all 0.3s ease;
+        }
+        
+        .stars-legend:hover {
+            border-color: rgba(96,165,250,0.5);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+        }
+        
+        .stars-legend-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #60a5fa;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(96,165,250,0.2);
+        }
+        
+        .stars-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 14px 0;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            padding: 6px 8px;
+            border-radius: 10px;
+        }
+        
+        .stars-legend-item:hover {
+            background: rgba(96,165,250,0.1);
+            transform: translateX(4px);
+        }
+        
+        .legend-stars {
+            font-size: 28px;
+            letter-spacing: 4px;
+            text-shadow: 0 3px 12px rgba(0,0,0,0.7);
+        }
+
+        .criteria-legend {
+            position: absolute;
+            bottom: 28px;
+            left: 28px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px 28px;
+            border: 2px solid rgba(96,165,250,0.3);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            max-width: 420px;
+            max-height: 340px;
+            overflow-y: auto;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .criteria-legend::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .criteria-legend::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 10px;
+        }
+        
+        .criteria-legend::-webkit-scrollbar-thumb {
+            background: rgba(96, 165, 250, 0.5);
+            border-radius: 10px;
+        }
+        
+        .criteria-legend::-webkit-scrollbar-thumb:hover {
+            background: rgba(96, 165, 250, 0.7);
+        }
+
+        .map-container:hover .criteria-legend {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .criteria-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #60a5fa;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(96,165,250,0.2);
+        }
+        
+        .criteria-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 14px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 6px 8px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .criteria-item:hover {
+            background: rgba(96,165,250,0.1);
+            transform: translateX(4px);
+        }
+        
+        .criteria-color {
+            width: 22px;
+            height: 22px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+        }
+        
+        .criteria-item:hover .criteria-color {
+            transform: scale(1.1);
+            border-color: rgba(255,255,255,0.6);
+        }
+
+        .map-controls {
+            position: absolute;
+            bottom: 28px;
+            right: 28px;
+            z-index: 100;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .control-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(96,165,250,0.4);
+            border-radius: 14px;
+            color: #60a5fa;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .control-btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+            transform: scale(1.15);
+            box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+            border-color: rgba(96,165,250,0.6);
+        }
+        
+        .control-btn:active {
+            transform: scale(1.05);
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #60a5fa;
+            font-size: 18px;
+            font-weight: 700;
+            background: rgba(15,23,42,0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 36px;
+            border-radius: 16px;
+            border: 1px solid rgba(96,165,250,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 1600px) {
+            .maps-container { 
+                grid-template-columns: repeat(auto-fit, minmax(600px, 1fr)); 
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .maps-container { grid-template-columns: 1fr; }
+            .map-card, .overview-card { height: 650px; }
+            .overview-card { height: 700px; }
+        }
+        
+        @media (max-width: 768px) {
+            .header { padding: 32px 20px; }
+            .header h1 { font-size: 32px; }
+            .header p { font-size: 16px; }
+            .maps-container { padding: 20px; gap: 24px; }
+            .map-card, .overview-card { height: 580px; }
+            .overview-card { height: 620px; }
+            .level-badge { font-size: 44px; padding: 16px 28px; letter-spacing: 6px; }
+            .overview-card .level-badge { font-size: 52px; }
+            .stars-legend { min-width: 220px; padding: 20px; }
+            .criteria-legend {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+                max-height: 260px;
+                padding: 20px;
+            }
+            .criteria-item, .stars-legend-item { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Dashboard Bản đồ Thích nghi Biến đổi Khí hậu</h1>
+        <p>Thành phố Hồ Chí Minh</p>
+    </div>
+
+    <div class="maps-container" id="maps-container"></div>
+
+    <script>
+        const levelStyles = {
+            1: { fill: '#f65e5e', stroke: '#E53935', stars: '★' },
+            2: { fill: '#FB8C00', stroke: '#f77e1a', stars: '★★' },
+            3: { fill: '#FDD835', stroke: '#FDD835', stars: '★★★' },
+            4: { fill: '#4cf073', stroke: '#43A047', stars: '★★★★' },
+            5: { fill: '#4594e9', stroke: '#1E88E5', stars: '★★★★★' }
+        };
+
+        function calculateLevel(score) {
+            if (score >= 81) return 5;
+            if (score >= 61) return 4;
+            if (score >= 41) return 3;
+            if (score >= 21) return 2;
+            return 1;
+        }
+
+        let parentData = {
+            totalScore: 0,
+            energyScore: 0,
+            planningScore: 0,
+            transportScore: 0,
+            waterScore: 0,
+            wastewaterScore: 0,
+            energyCriteriaLevels: Array(8).fill(1),
+            planningCriteriaLevels: Array(7).fill(1),
+            transportCriteriaLevels: Array(10).fill(1),
+            waterCriteriaLevels: Array(8).fill(1),
+            wastewaterCriteriaLevels: Array(8).fill(1)
+        };
+
+        const sectors = [
+            { id: 'energy', title: 'Năng lượng', subtitle: 'Năng lượng & Công trình xanh', criteria: ['Tiêu thụ điện từ các nguồn năng lượng tái tạo','Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp','Giảm phát thải CO2 từ tiêu thụ nhiên liệu hóa thạch','Chỉ số tiết kiệm điện','Hiệu quả vận hành hệ thống điện thông minh','Hệ thống chiếu sáng đường phố tiết kiệm năng lượng','Mức độ thúc đẩy các công trình xanh','Xây dựng các công trình xanh'], criteriaKey: 'energyCriteriaLevels' },
+            { id: 'planning', title: 'Quy hoạch', subtitle: 'Quy hoạch đô thị, phủ xanh & đa dạng sinh học', criteria: ['Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở','Tỷ lệ phủ xanh trong thành phố (m²/người)','Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị','Đa dạng sinh học đô thị','Ứng dụng GIS và dữ liệu số trong quy hoạch đô thị','Hệ thống cảnh báo & quản lý thiên tai thông minh','Kế hoạch hành động về khí hậu'], criteriaKey: 'planningCriteriaLevels' },
+            { id: 'transport', title: 'Giao thông', subtitle: 'Giao thông đô thị & chất lượng không khí', criteria: ['Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới','Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch','Mức độ dễ tiếp cận phương tiện công cộng','Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh','Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến','Khả năng thông hành và mức phục vụ của đường phố','Mật độ trạm quan trắc không khí tự động, liên tục','Khả năng cung cấp dữ liệu & cảnh báo AQ thời gian thực','Kế hoạch hành động vì không khí sạch','Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng)'], criteriaKey: 'transportCriteriaLevels' },
+            { id: 'water', title: 'Quản lý nước', subtitle: 'Cấp & thoát nước', criteria: ['Đánh giá mức độ quản lý tài nguyên nước','Chỉ số giảm thất thoát nguồn nước','Chỉ số tái sử dụng nước thải','Quản lý rủi ro ngập lụt đô thị','Hệ thống cấp nước sạch tiết kiệm năng lượng','Hệ thống quản lý nước thải tiết kiệm năng lượng','Ứng dụng công nghệ số trong quản lý nước','Tỷ lệ tiếp cận nước sạch đô thị'], criteriaKey: 'waterCriteriaLevels' },
+            { id: 'wastewater', title: 'Nước thải', subtitle: 'Xử lý & môi trường', criteria: ['Các sáng kiến giảm thiểu chất thải','Tỷ lệ chôn lấp rác thải sinh hoạt','Mức độ rác thải khô được thu hồi và tái chế','Quản lý chất thải xây dựng','Mức độ xử lý chất thải ướt','Chỉ số chuyển đổi số trong quản lý chất thải','Hiệu quả vận hành bãi chôn lấp','Cải thiện phát thải khí nhà kính trong quản lý chất thải'], criteriaKey: 'wastewaterCriteriaLevels' }
+        ];
+
+        function createMapCard(config, isOverview = false) {
+            const level = isOverview ? calculateLevel(parentData.totalScore) : calculateLevel(parentData[`${config.id}Score`]);
+            const style = levelStyles[level];
+
+            const criteriaHTML = !isOverview ? `
+                <div class="criteria-legend">
+                    <div class="criteria-title">Tiêu chí đánh giá</div>
+                    ${config.criteria.map((c, i) => {
+                        const critLevel = parentData[config.criteriaKey][i] ?? 1;
+                        const critColor = levelStyles[critLevel].fill;
+                        return `<div class="criteria-item"><div class="criteria-color" style="background:${critColor}"></div><span>${c}</span></div>`;
+                    }).join('')}
+                </div>
+            ` : '';
+
+            const card = document.createElement('div');
+            card.className = `map-card ${isOverview ? 'overview-card' : ''}`;
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3>${isOverview ? 'TỔNG HỢP' : config.title}</h3>
+                    <div class="subtitle">${isOverview ? 'Mức độ thích nghi tổng quát với BĐKH' : config.subtitle}</div>
+                </div>
+                <div class="map-container">
+                    <div id="map-${isOverview ? 'overview' : config.id}" class="map-view"></div>
+                    <div class="loading">Đang tải bản đồ...</div>
+                    <div class="level-badge" style="color:${style.fill}">${style.stars}</div>
+                    <div class="stars-legend">
+                        <div class="stars-legend-title">Mức độ thích nghi</div>
+                        <div class="stars-legend-item"><span class="legend-stars" style="color:#f65e5e;">★</span><span>Rất thấp</span></div>
+                        <div class="stars-legend-item"><span class="legend-stars" style="color:#FB8C00;">★★</span><span>Thấp</span></div>
+                        <div class="stars-legend-item"><span class="legend-stars" style="color:#FDD835;">★★★</span><span>Trung bình</span></div>
+                        <div class="stars-legend-item"><span class="legend-stars" style="color:#4cf073;">★★★★</span><span>Cao</span></div>
+                        <div class="stars-legend-item"><span class="legend-stars" style="color:#4594e9;">★★★★★</span><span>Rất cao</span></div>
+                    </div>
+                    ${criteriaHTML}
+                    <div class="map-controls">
+                        <button class="control-btn satellite-btn" title="Chuyển nền vệ tinh"><i class="fas fa-satellite"></i></button>
+                        <button class="control-btn zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
+                        <button class="control-btn zoom-out" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function initMap(id, isOverview = false) {
+            const level = id === 'overview' ? calculateLevel(parentData.totalScore) : calculateLevel(parentData[`${id}Score`]);
+            const style = levelStyles[level];
+
+            const osm = new ol.layer.Tile({ source: new ol.source.OSM(), visible: true });
+            const satellite = new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                }),
+                visible: false
+            });
+
+            const map = new ol.Map({
+                target: `map-${id}`,
+                layers: [osm, satellite],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([106.700, 10.775]),
+                    zoom: isOverview ? 11.8 : 11.5
+                }),
+                controls: []
+            });
+
+            fetch('data/tp_hcm_WGS84.geojson')
+                .then(r => r.json())
+                .then(geojson => {
+                    const vectorLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: new ol.format.GeoJSON().readFeatures(geojson, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            })
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: style.stroke, width: isOverview ? 6 : 5 }),
+                            fill: new ol.style.Fill({ color: style.fill + 'aa' })
+                        })
+                    });
+                    map.addLayer(vectorLayer);
+                    const loadingEl = document.querySelector(`#map-${id}`).parentElement.querySelector('.loading');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                })
+                .catch(err => {
+                    console.error('Lỗi tải GeoJSON:', err);
+                    const loadingEl = document.querySelector(`#map-${id}`).parentElement.querySelector('.loading');
+                    if (loadingEl) loadingEl.textContent = 'Lỗi tải dữ liệu';
+                });
+
+            const container = document.querySelector(`#map-${id}`).parentElement;
+            container.querySelector('.satellite-btn').onclick = () => {
+                osm.setVisible(!osm.getVisible());
+                satellite.setVisible(!satellite.getVisible());
+            };
+            container.querySelector('.zoom-in').onclick = () => map.getView().animate({ zoom: map.getView().getZoom() + 1, duration: 300 });
+            container.querySelector('.zoom-out').onclick = () => map.getView().animate({ zoom: map.getView().getZoom() - 1, duration: 300 });
+        }
+
+        function renderAllMaps() {
+            const container = document.getElementById('maps-container');
+            container.innerHTML = '';
+
+            container.appendChild(createMapCard(null, true));
+            initMap('overview', true);
+
+            sectors.forEach(sector => {
+                container.appendChild(createMapCard(sector));
+                initMap(sector.id);
+            });
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'UPDATE_MAP_DATA' && event.data.data) {
+                parentData = event.data.data;
+                renderAllMaps();
+            }
+        });
+
+        renderAllMaps();
+    </script>
+</body>
+</html>

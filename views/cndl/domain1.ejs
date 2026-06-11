@@ -1,0 +1,168 @@
+<!-- views/cndl/domain1.ejs -->
+<div class="accordion-item">
+    <h2 class="accordion-header" id="heading1">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+            ⚡ Năng lượng & Công trình xanh
+        </button>
+    </h2>
+    <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#domainAccordion">
+        <div class="accordion-body">
+            <form action="/cndl" method="POST" novalidate>
+                <input type="hidden" name="domain_id" value="1">
+                <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
+                <input type="hidden" name="city" value="TP. Hồ Chí Minh">
+
+                <!-- Checklist indicators -->
+                <div class="indicator-list mb-5 p-4 bg-dark bg-opacity-10 rounded">
+                    <h5 class="text-primary mb-4"><i class="fas fa-check-circle me-2"></i>Chọn các chỉ số cần nhập dữ liệu:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_ENI_RWE">
+                                <label class="form-check-label fw-bold" for="check_ENI_RWE">1. Tiêu thụ điện từ các nguồn năng lượng tái tạo (ENI_RWE)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_SENIRE">
+                                <label class="form-check-label fw-bold" for="check_SENIRE">2. Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp (SENIRE)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_R_CO2e">
+                                <label class="form-check-label fw-bold" for="check_R_CO2e">3. Giảm phát thải CO₂ từ tiêu thụ nhiên liệu hóa thạch (R_CO2e)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_EI_Save">
+                                <label class="form-check-label fw-bold" for="check_EI_Save">4. Chỉ số tiết kiệm điện (EI_Save)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_EI_LR">
+                                <label class="form-check-label fw-bold" for="check_EI_LR">5. Hiệu quả vận hành hệ thống điện thông minh (EI_LR)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_SLI">
+                                <label class="form-check-label fw-bold" for="check_SLI">6. Hệ thống chiếu sáng đường phố tiết kiệm năng lượng (SLI)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_GBpromo">
+                                <label class="form-check-label fw-bold" for="check_GBpromo">7. Mức độ thúc đẩy các công trình xanh (GBpromo)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_VNGBI">
+                                <label class="form-check-label fw-bold" for="check_VNGBI">8. Xây dựng các công trình xanh (VNGBI)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicator 1: ENI_RWE -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'ENI_RWE',
+                    indicatorName: 'Tiêu thụ điện từ các nguồn năng lượng tái tạo',
+                    description: 'Tính toán dựa trên năng lượng tái tạo và tổng tiêu thụ điện.',
+                    required: true,
+                    inputs: [
+                        { id: 'E_RE_ENI_RWE', param: 'E_RE', label: 'Sản lượng điện tiêu thụ từ nguồn năng lượng tái tạo trong thành phố (E_RE, kWh)', tooltip: 'Năng lượng từ nguồn tái tạo như điện mặt trời, điện gió', sourceText: 'Số liệu: T2.01. 231226. Tap 2-BC Cuoi ky - HTKT-MTr-HCMĐCQHC.pdf ở trang 113.', driveLink: 'https://drive.google.com/drive/u/0/folders/1ss6fUrYAZPEEVy7OwoB0KjQYuAL6SuGV' },
+                        { id: 'EC_ENI_RWE', param: 'EC', label: 'Sản lượng điện tiêu thụ trong thành phố (EC, kWh)', tooltip: 'Tổng năng lượng tiêu thụ từ tất cả các nguồn', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx.', driveLink: 'https://drive.google.com/drive/u/0/folders/1ZBtG1TaqazVgzoroo6aMNeXPhC2MVm6s' },
+                        { id: 'L_ATC_ENI_RWE', param: 'L_ATC', label: 'Tổng tổn thất kỹ thuật và thương mại trong thành phố (L_ATC, kWh)', tooltip: 'Tổn thất trong truyền tải và phân phối năng lượng', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx.', driveLink: 'https://drive.google.com/drive/u/0/folders/1uQxX-H4LLH5m9Wqy26zVqqnZ88Vh1Cyu' },
+                        { id: 'P_RE_ENI_RWE', param: 'P_RE', label: 'Tổng công suất hệ thống từ nguồn năng lượng tái tạo (P_RE, kW)', tooltip: 'Công suất định mức của nguồn tái tạo', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx.', driveLink: 'https://drive.google.com/drive/u/0/folders/12MvkBjUbP-_pACZR5AsuMSO91v4kF9o5' },
+                        { id: 'P_total_ENI_RWE', param: 'P_total', label: 'Tổng công suất điện kết nối trong thành phố (P_total, kW)', tooltip: 'Tổng công suất từ tất cả các nguồn', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx.', driveLink: 'https://drive.google.com/drive/u/0/folders/1i3GyoqmDwD2W_4-Z60h-t_EMYbz6lQdf' }
+                    ]
+                }) %>
+
+                <!-- Indicator 2: SENIRE -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'SENIRE',
+                    indicatorName: 'Năng lượng tái tạo trong tổng nguồn cung năng lượng sơ cấp',
+                    description: 'Chỉ số phần trăm năng lượng điện từ các nguồn năng lượng tái tạo trong tổng cung năng lượng.',
+                    required: true,
+                    inputs: [
+                        { id: 'SE_RE_SENIRE', param: 'SE_RE', label: 'Tổng lượng điện từ nguồn năng lượng tái tạo cung cấp cho thành phố (SE_RE, kWh)', tooltip: 'Năng lượng tái tạo cung cấp cho thành phố', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1iKyQsP_jJZK6iNPj0G6ZtftSGG7CZgcV' },
+                        { id: 'ES_SENIRE', param: 'ES', label: 'Tổng lượng điện cung cấp trong thành phố (ES, kWh)', tooltip: 'Tổng năng lượng điện cung cấp cho thành phố', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1wMjk7Nv4Akddq43NEDJCO4k7HLWy1qhj' }
+                    ]
+                }) %>
+
+                <!-- Indicator 3: R_CO2e -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'R_CO2e',
+                    indicatorName: 'Giảm phát thải CO₂ từ tiêu thụ nhiên liệu hóa thạch',
+                    description: 'Tính tỷ lệ giảm phát thải CO₂e so với kịch bản BAU (Business As Usual).',
+                    required: true,
+                    inputs: [
+                        { id: 'co2eb_nam_DUL', param: 'co2eb_nam_DUL', label: 'Lượng Xăng và dầu Diesel tiêu thụ thực tế trong năm tính toán (kg/năm)', tooltip: 'Dầu diesel dùng trong giao thông, công nghiệp', sourceText: 'Số liệu: DS TNMB KHÍ BC HỆ THỐN PHÂN PHỐI 05-2025.xlsx', driveLink: 'https://drive.google.com/drive/u/0/folders/19aEuh5JVizBAwS9sA6YxJadn1IIIXBBv' },
+                        { id: 'co2eb_nam_LPG', param: 'co2eb_nam_LPG', label: 'Lượng khí LPG tiêu thụ thực tế trong năm tính toán (kg/năm)', tooltip: 'Khí dầu mỏ hóa lỏng dùng cho nấu ăn, công nghiệp', sourceText: 'Số liệu: DS TNMB KHÍ BC HỆ THỐN PHÂN PHỐI 05-2025.xlsx', driveLink: 'https://drive.google.com/drive/u/0/folders/15Wdl-DibHGIb95Y7h_vrw-CuQfj58u9g' },
+                        { id: 'nam_BAU', param: 'nam_BAU', label: 'Năm dự báo cho kịch bản BAU', tooltip: 'Chọn năm dự báo để tính toán kịch bản phát thải', sourceText: 'Số liệu: BÁO CÁO KKKNK2018.pdf - Mục lục 1.1.2', driveLink: 'https://drive.google.com/drive/u/0/folders/1W6OnYm4Gu6FPVUv1akJEgN8hSR8_H5LB' }
+                    ]
+                }) %>
+
+                <!-- Indicator 4: EI_Save -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'EI_Save',
+                    indicatorName: 'Chỉ số tiết kiệm điện',
+                    description: 'Tính toán dựa trên lượng điện tiết kiệm và tổng tiêu thụ điện.',
+                    required: true,
+                    inputs: [
+                        { id: 'E_Save_EI_Save', param: 'E_Save', label: 'Lượng điện tiết kiệm được (E_Save, kWh)', tooltip: 'Lượng điện tiết kiệm được so với tiêu thụ thông thường', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1ICGrieFGH_MB0ZxT2bE6ibk1QvHAnbnq' },
+                        { id: 'E_C_EI_Save', param: 'E_C', label: 'Sản lượng điện tiêu thụ trong thành phố (E_C, kWh)', tooltip: 'Tổng lượng điện tiêu thụ trong khu vực', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1MrbcJL7caqV3L2qFe956aouTJTD0RTFq' }
+                    ]
+                }) %>
+
+                <!-- Indicator 5: EI_LR -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'EI_LR',
+                    indicatorName: 'Hiệu quả vận hành hệ thống điện thông minh',
+                    description: 'Tính toán dựa trên điện năng đưa vào và giao đến người tiêu dùng.',
+                    required: false,
+                    inputs: [
+                        { id: 'E_input_EI_LR', param: 'E_input', label: 'Tổng sản lượng điện đưa vào hệ thống (E_input, kWh)', tooltip: 'Tổng điện năng đưa vào hệ thống', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1WAoBQj4ZYNeznr78drXlpp4lXJVq-vl2' },
+                        { id: 'E_delivered_EI_LR', param: 'E_delivered', label: 'Tổng điện năng thực tế giao đến người tiêu dùng cuối (E_delivered, kWh)', tooltip: 'Tổng điện năng được giao đến người tiêu dùng', sourceText: 'Số liệu: THÔNG CÁO BÁO CHÍ VỀ KẾT QUẢ SẢN XUẤT KINH DOANH NĂM 2024 VÀ MỤC TIÊU.docx', driveLink: 'https://drive.google.com/drive/u/0/folders/1iQUofZtzTb3KO22axj1_XQzkvMGhgPNM' }
+                    ]
+                }) %>
+
+                <!-- Indicator 6: SLI -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'SLI',
+                    indicatorName: 'Hệ thống chiếu sáng đường phố tiết kiệm năng lượng',
+                    description: 'Tính toán dựa trên số đèn tiết kiệm năng lượng và tự động hóa.',
+                    required: true,
+                    inputs: [
+                        { id: 'SL_e_SLI', param: 'SL_e', label: 'Số đèn đường tiết kiệm năng lượng trong thành phố (SL_e, cái)', tooltip: 'Số đèn sử dụng công nghệ tiết kiệm năng lượng', sourceText: 'Số liệu: 1735 (1).pdf - Trang 1 - 1.Hệ Thống Đèn Đường', driveLink: 'https://drive.google.com/drive/u/0/folders/1VxQRakke0F0hCYj-2FyWD8Q57iogYZEC' },
+                        { id: 'SL_s_SLI', param: 'SL_s', label: 'Số đèn đường vận hành theo hệ thống tự động hóa đèn đường thông minh (SL_s, cái)', tooltip: 'Số đèn có tính năng tự động hóa', sourceText: 'Số liệu: 1735 (1).pdf - Trang 1 - 1.Hệ Thống Đèn Đường', driveLink: 'https://drive.google.com/drive/u/0/folders/1dAsuak09Mak6NxdrF7gYQ1h9-0N35m65' },
+                        { id: 'SL_SLI', param: 'SL', label: 'Số đèn đường trong thành phố (SL, cái)', tooltip: 'Tổng số đèn đường trong khu vực', sourceText: 'Số liệu: 1735 (1).pdf - Trang 1 - 1.Hệ Thống Đèn Đường', driveLink: 'https://drive.google.com/drive/u/0/folders/1r7vp_YO5UeXykRzqQxrUZzzY-e_KJoPs' }
+                    ]
+                }) %>
+
+                <!-- Indicator 7: GBpromo -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'GBpromo',
+                    indicatorName: 'Mức độ thúc đẩy các công trình xanh',
+                    description: 'Đánh giá dựa trên chính sách, quy định và hoạt động thúc đẩy công trình xanh.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Các quy trình về công trình xanh chỉ mới áp dụng ở các quận/huyện' },
+                        { value: 2, label: 'Cấp 2 - Hệ thống văn bản pháp luật về công trình xanh được ban hành' },
+                        { value: 3, label: 'Cấp 3 - Các chứng nhận về toà nhà xanh đã được áp dụng' },
+                        { value: 4, label: 'Cấp 4 - Chương trình/chiến lược/quy hoạch các công trình xanh' },
+                        { value: 5, label: 'Cấp 5 - Cán bộ được đào tạo thường xuyên, hội thảo được tổ chức' }
+                    ]
+                }) %>
+
+                <!-- Indicator 8: VNGBI -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'VNGBI',
+                    indicatorName: 'Xây dựng các công trình xanh',
+                    description: 'Tính toán dựa trên số tòa nhà xanh và diện tích xây dựng.',
+                    required: false,
+                    inputs: [
+                        { id: 'B_P_VNGBI', param: 'B_P', label: 'Số toà nhà được chứng nhận CTX trước kỳ đánh giá (B_P, cái)', tooltip: 'Số tòa nhà đã được chứng nhận xanh trước đó', sourceText: 'Năm nay không có số liệu để đánh giá', driveLink: 'https://drive.google.com/drive/u/0/folders/1ndRHNq4GJXS-i1R-1LlPgxUMFPzcNUFn' },
+                        { id: 'B_AC_VNGBI', param: 'B_AC', label: 'Số toà nhà được phê duyệt xây dựng trong kỳ đánh giá (B_AC, cái)', tooltip: 'Số tòa nhà được phê duyệt xây dựng xanh', sourceText: 'Năm nay không có số liệu để đánh giá', driveLink: 'https://drive.google.com/drive/u/0/folders/1bo0sGThJT4SYz7ZF4-gjZUOuRy7Drg34' },
+                        { id: 'S_GB_VNGBI', param: 'S_GB', label: 'Diện tích xây dựng của các CTX được chứng nhận trong kỳ đánh giá (S_GB, km²)', tooltip: 'Diện tích các công trình xanh được xây dựng', sourceText: 'Năm nay không có số liệu để đánh giá', driveLink: 'https://drive.google.com/drive/u/0/folders/1z1f1CG173kp6f4XSbAamyJ8UkaIl1Yfx' },
+                        { id: 'S_BC_VNGBI', param: 'S_BC', label: 'Diện tích xây dựng của tất cả các tòa nhà đã hoàn thành trong kỳ đánh giá (S_BC, km²)', tooltip: 'Tổng diện tích xây dựng hoàn thành', sourceText: 'Năm nay không có số liệu để đánh giá', driveLink: 'https://drive.google.com/drive/u/0/folders/1fSuYiMtOdlLUymtb_ogCc7DLR_lbVaw4' }
+                    ]
+                }) %>
+
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Lưu tất cả chỉ số Domain 1</button>
+            </form>
+        </div>
+    </div>
+</div>

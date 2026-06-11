@@ -1,0 +1,172 @@
+<!-- views/cndl/domain4.ejs -->
+<div class="accordion-item">
+    <h2 class="accordion-header" id="heading4">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+            💧 Quản lý nước
+        </button>
+    </h2>
+    <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="heading4" data-bs-parent="#domainAccordion">
+        <div class="accordion-body">
+            <form action="/cndl" method="POST" novalidate>
+                <input type="hidden" name="domain_id" value="4">
+                <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
+                <input type="hidden" name="city" value="TP. Hồ Chí Minh">
+
+                <!-- Checklist indicators -->
+                <div class="indicator-list mb-5 p-4 bg-dark bg-opacity-10 rounded">
+                    <h5 class="text-primary mb-4"><i class="fas fa-check-circle me-2"></i>Chọn các chỉ số cần nhập dữ liệu:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_WImanage">
+                                <label class="form-check-label fw-bold" for="check_WImanage">26. Đánh giá mức độ quản lý tài nguyên nước (WImanage)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_WI_loss">
+                                <label class="form-check-label fw-bold" for="check_WI_loss">27. Chỉ số giảm thất thoát nguồn nước (WI_loss)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_WI_rr">
+                                <label class="form-check-label fw-bold" for="check_WI_rr">28. Chỉ số tái sử dụng nước thải (WI_rr)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_FloodRisk">
+                                <label class="form-check-label fw-bold" for="check_FloodRisk">29. Quản lý rủi ro ngập lụt đô thị (FloodRisk)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_Ewater">
+                                <label class="form-check-label fw-bold" for="check_Ewater">30. Hệ thống cấp nước sạch tiết kiệm năng lượng (Ewater)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_Ewwater">
+                                <label class="form-check-label fw-bold" for="check_Ewwater">31. Hệ thống quản lý nước thải tiết kiệm năng lượng (Ewwater)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_DigWater">
+                                <label class="form-check-label fw-bold" for="check_DigWater">32. Ứng dụng công nghệ số trong quản lý nước (DigWater)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_R_USWA">
+                                <label class="form-check-label fw-bold" for="check_R_USWA">33. Tỷ lệ tiếp cận nước sạch đô thị (R_USWA)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicator 26: WImanage (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'WImanage',
+                    indicatorName: 'Đánh giá mức độ quản lý tài nguyên nước',
+                    description: 'Đánh giá mức độ lập kế hoạch và quản lý bền vững nguồn tài nguyên nước.',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Đánh giá sơ bộ nguồn nước' },
+                        { value: 2, label: 'Cấp 2 - Báo cáo kiểm kê nguồn nước hiện có, dự báo nhu cầu' },
+                        { value: 3, label: 'Cấp 3 - Kế hoạch Quản lý Tài nguyên nước với hành động ngắn/dài hạn' },
+                        { value: 4, label: 'Cấp 4 - Báo cáo cân bằng nước đáp ứng nhu cầu tương lai' },
+                        { value: 5, label: 'Cấp 5 - Lồng ghép kịch bản biến đổi khí hậu vào quản lý nước' }
+                    ]
+                }) %>
+
+                <!-- Indicator 27: WI_loss -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'WI_loss',
+                    indicatorName: 'Chỉ số giảm thất thoát nguồn nước',
+                    description: 'Tính toán dựa trên lượng nước sản xuất và nước bán.',
+                    required: true,
+                    inputs: [
+                        { id: 'W_P_WI_loss', param: 'W_P', label: 'Tổng lượng nước sản xuất (W_P, m³/tháng)', tooltip: 'Tổng lượng nước được sản xuất hàng tháng', sourceText: '241028_CC TTin ĐH KHTN.xlsx - Tỉ lệ thất thoát nước từng tháng của các Công ty Cổ phần/Xí nghiệp Cấp nước (giai đoạn 2019-2024)', driveLink: 'https://drive.google.com/drive/u/0/folders/1Sh8K0UYLlaTklO_f-aAUf339GpJK1_ZR' },
+                        { id: 'W_S_WI_loss', param: 'W_S', label: 'Tổng lượng nước được bán ra (W_S, m³/tháng)', tooltip: 'Tổng lượng nước được bán ra hàng tháng', sourceText: '241028_CC TTin ĐH KHTN.xlsx - Tỉ lệ thất thoát nước từng tháng của các Công ty Cổ phần/Xí nghiệp Cấp nước (giai đoạn 2019-2024)', driveLink: 'https://drive.google.com/drive/u/0/folders/1ra0LDsFM-tw8pQtYvqf8H-op4cgqgihj' }
+                    ]
+                }) %>
+
+                <!-- Indicator 28: WI_rr -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'WI_rr',
+                    indicatorName: 'Chỉ số tái sử dụng nước thải',
+                    description: 'Tính toán dựa trên lượng nước thải tái sử dụng và nước cấp.',
+                    required: false,
+                    inputs: [
+                        { id: 'W_rr_WI_rr', param: 'W_rr', label: 'Tổng lượng nước thải tái sử dụng (W_rr, m³)', tooltip: 'Lượng nước thải được tái sử dụng', sourceText: '1735 (1).pdf - Trang 4 - Phụ lục 2', driveLink: 'https://drive.google.com/drive/u/0/folders/1K7ZPGZWH9V3HlaE0yHn0bdsC29DpBl_P' },
+                        { id: 'W_s_WI_rr', param: 'W_s', label: 'Tổng lượng nước thải (W_s, m³)', tooltip: 'Tổng lượng nước thải của thành phố', sourceText: '1735 (1).pdf - Trang 4 - Phụ lục 2', driveLink: 'https://drive.google.com/drive/u/0/folders/1Qbjy3HJGqixU6wbMNMgQp-EJ6h5AM8tR' }
+                    ]
+                }) %>
+
+                <!-- Indicator 29: FloodRisk (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'FloodRisk',
+                    indicatorName: 'Quản lý rủi ro ngập lụt đô thị',
+                    description: 'Đánh giá mức độ hiện đại hóa và hiệu quả của hệ thống giám sát, cảnh báo ngập lụt.',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Chưa có hệ thống cảnh báo sớm, giám sát thủ công' },
+                        { value: 2, label: 'Cấp 2 - Cảm biến mực nước tại một số điểm đen, cảnh báo nội bộ' },
+                        { value: 3, label: 'Cấp 3 - Cảm biến thời gian thực, GIS mô phỏng, cảnh báo SMS/app' },
+                        { value: 4, label: 'Cấp 4 - Hệ thống cảm biến toàn diện, AI phân tích, phản ứng tự động' },
+                        { value: 5, label: 'Cấp 5 - Quản lý ngập tích hợp chiến lược đô thị chống chịu khí hậu' }
+                    ]
+                }) %>
+
+                <!-- Indicator 30: Ewater (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'Ewater',
+                    indicatorName: 'Hệ thống cấp nước sạch tiết kiệm năng lượng',
+                    description: 'Đánh giá mức độ tiết kiệm năng lượng trong hệ thống cấp nước sạch.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Báo cáo kiểm toán công suất bơm' },
+                        { value: 2, label: 'Cấp 2 - Giảm năng lượng 5% - 10% so với 5 năm trước' },
+                        { value: 3, label: 'Cấp 3 - Giảm năng lượng 10% - 15% so với 5 năm trước' },
+                        { value: 4, label: 'Cấp 4 - Giảm năng lượng 15% - 20% so với 5 năm trước' },
+                        { value: 5, label: 'Cấp 5 - Giảm năng lượng 20% - 25% so với 5 năm trước' }
+                    ]
+                }) %>
+
+                <!-- Indicator 31: Ewwater (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'Ewwater',
+                    indicatorName: 'Hệ thống quản lý nước thải tiết kiệm năng lượng',
+                    description: 'Đánh giá mức độ tiết kiệm năng lượng trong hệ thống xử lý nước thải.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Báo cáo kiểm toán công suất bơm' },
+                        { value: 2, label: 'Cấp 2 - Giảm năng lượng 5% - 10% so với 5 năm trước' },
+                        { value: 3, label: 'Cấp 3 - Giảm năng lượng 10% - 15% so với 5 năm trước' },
+                        { value: 4, label: 'Cấp 4 - Giảm năng lượng 15% - 20% so với 5 năm trước' },
+                        { value: 5, label: 'Cấp 5 - Giảm năng lượng 20% - 25% so với 5 năm trước' }
+                    ]
+                }) %>
+
+                <!-- Indicator 32: DigWater (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'DigWater',
+                    indicatorName: 'Ứng dụng công nghệ số trong quản lý nước',
+                    description: 'Đánh giá mức độ số hóa và giám sát từ xa trong hệ thống quản lý cấp nước.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Dữ liệu vận hành giấy/tệp' },
+                        { value: 2, label: 'Cấp 2 - >10% giám sát từ xa bằng SCADA, tích hợp GIS' },
+                        { value: 3, label: 'Cấp 3 - 10%-50% giám sát từ xa, Dashboard nội bộ' },
+                        { value: 4, label: 'Cấp 4 - 50%-70% giám sát từ xa, Dashboard nội bộ' },
+                        { value: 5, label: 'Cấp 5 - Trên 70% giám sát từ xa, Dashboard công khai, GIS toàn diện' }
+                    ]
+                }) %>
+
+                <!-- Indicator 33: R_USWA -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'R_USWA',
+                    indicatorName: 'Tỷ lệ tiếp cận nước sạch đô thị',
+                    description: 'Nhập trực tiếp tỷ lệ phần trăm dân số được tiếp cận nước sạch an toàn.',
+                    required: true,
+                    inputs: [
+                        { id: 'ratio_R_USWA', param: 'ratio', label: 'Tỷ lệ tiếp cận nước sạch đô thị (%)', tooltip: 'Tỷ lệ phần trăm dân số đô thị được tiếp cận nước sạch đạt chuẩn', sourceText: 'Chưa có tài liệu', driveLink: 'https://drive.google.com/drive/u/0/folders/16WGV2UOgcp6HTuEA0VTkXvYTRbU-8huj' }
+                    ]
+                }) %>
+
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Lưu tất cả chỉ số Domain 4</button>
+            </form>
+        </div>
+    </div>
+</div>

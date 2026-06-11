@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="description" content="Đăng ký tài khoản Climate Smart City">
+    <title>Đăng Ký - Climate Smart City</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/ai-chatbot.css">
+    <style>
+        .input-group-custom {
+            position: relative;
+            margin-bottom: 22px;
+        }
+        .input-group-custom .form-control {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1.5px solid rgba(59, 130, 246, 0.3);
+            color: white;
+            border-radius: 18px;
+            padding: 14px 50px 14px 48px;
+            font-size: 0.95rem;
+            height: 52px;
+        }
+        .input-group-custom .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        .input-group-custom .form-control.is-invalid {
+            border-color: #ef4444;
+        }
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #60a5fa;
+            z-index: 10;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            z-index: 10;
+            transition: color 0.2s;
+        }
+        .toggle-password:hover {
+            color: #60a5fa;
+        }
+        .btn-register {
+            background: linear-gradient(95deg, #3b82f6, #8b5cf6);
+            border: none;
+            padding: 14px;
+            font-weight: 700;
+            border-radius: 50px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-register:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .password-strength {
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 8px;
+            background: rgba(59, 130, 246, 0.2);
+            transition: all 0.3s;
+        }
+        .password-strength.weak { background: #ef4444; width: 33%; }
+        .password-strength.medium { background: #f59e0b; width: 66%; }
+        .password-strength.strong { background: #10b981; width: 100%; }
+        .form-check-input:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .invalid-feedback-custom {
+            font-size: 0.75rem;
+            color: #f87171;
+            margin-top: 5px;
+            margin-left: 12px;
+            display: none;
+        }
+        .invalid-feedback-custom.show {
+            display: block;
+        }
+        .logo-icon {
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        .alert-custom {
+            background: rgba(239, 68, 68, 0.15);
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- AI Chatbot Component -->
+        <%- include('partials/ai-chatbot') %>
+
+        <!-- Nội dung Đăng Ký -->
+        <div class="content-section">
+            <div class="content-card">
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs-custom">
+                    <a href="/login" class="nav-tab"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
+                    <a href="/register" class="nav-tab active"><i class="fas fa-user-plus"></i> Đăng ký</a>
+                    <a href="/about" class="nav-tab"><i class="fas fa-info-circle"></i> Giới thiệu</a>
+                    <a href="/contact" class="nav-tab"><i class="fas fa-envelope"></i> Liên hệ</a>
+                </div>
+
+                <div class="text-center mb-4">
+                    <div class="logo-icon mx-auto">
+                        <i class="fas fa-cloud-sun-rain fa-2x text-white"></i>
+                    </div>
+                    <h2 style="font-size: 1.8rem; font-weight: 700; background: linear-gradient(90deg, #fff, #94a3b8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Tạo tài khoản</h2>
+                    <p style="color: #94a3b8;">Tham gia cộng đồng Climate Smart City</p>
+                </div>
+
+                <% if (error) { %>
+                    <div class="alert alert-custom">
+                        <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+                    </div>
+                <% } %>
+
+                <form method="POST" action="/register" id="registerForm">
+                    <div class="input-group-custom">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Tên người dùng" required>
+                        <div class="invalid-feedback-custom" id="usernameError">Tên người dùng 3-20 ký tự (chữ, số, _)</div>
+                    </div>
+
+                    <div class="input-group-custom">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                        <div class="invalid-feedback-custom" id="emailError">Vui lòng nhập email hợp lệ</div>
+                    </div>
+
+                    <div class="input-group-custom">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu" required>
+                        <button type="button" class="toggle-password" data-target="password">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                        <div class="invalid-feedback-custom" id="passwordError">Mật khẩu phải có ít nhất 8 ký tự</div>
+                    </div>
+                    <div class="password-strength" id="passwordStrength"></div>
+
+                    <div class="input-group-custom">
+                        <i class="fas fa-check-circle input-icon"></i>
+                        <input type="password" class="form-control" id="confirmPassword" placeholder="Xác nhận mật khẩu" required>
+                        <button type="button" class="toggle-password" data-target="confirmPassword">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                        <div class="invalid-feedback-custom" id="confirmError">Mật khẩu xác nhận không khớp</div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="terms" required>
+                        <label class="form-check-label small text-secondary">
+                            Tôi đồng ý với <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#termsModal">Điều khoản dịch vụ</a>
+                        </label>
+                        <div class="invalid-feedback-custom" id="termsError">Bạn phải đồng ý với điều khoản sử dụng</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-register text-white" id="registerBtn" disabled>
+                        <i class="fas fa-user-plus me-2"></i> Đăng ký
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="small text-secondary">Đã có tài khoản? <a href="/login" class="text-primary fw-semibold">Đăng nhập ngay</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Điều khoản -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid rgba(59,130,246,0.3);">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title"><i class="fas fa-file-contract me-2 text-primary"></i>Điều khoản dịch vụ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>🌱 <strong>Climate Smart City</strong> cam kết bảo vệ dữ liệu người dùng.</p>
+                    <p>✅ Việc đăng ký đồng nghĩa bạn chấp nhận các điều khoản sử dụng hệ thống.</p>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="border-radius: 50px;">Đã hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/ai-chatbot.js"></script>
+    <script>
+        // DOM elements
+        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirmPassword');
+        const termsCheck = document.getElementById('terms');
+        const registerBtn = document.getElementById('registerBtn');
+        const passwordStrength = document.getElementById('passwordStrength');
+
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            });
+        });
+
+        // Update password strength
+        function updatePasswordStrength() {
+            const val = passwordInput.value;
+            passwordStrength.classList.remove('weak', 'medium', 'strong');
+            if (val.length === 0) return;
+            if (val.length >= 12 || (/[A-Z]/.test(val) && /[0-9]/.test(val) && /[@$!%*?&]/.test(val))) {
+                passwordStrength.classList.add('strong');
+            } else if (val.length >= 10 || (/[A-Z]/.test(val) && /[0-9]/.test(val))) {
+                passwordStrength.classList.add('medium');
+            } else if (val.length >= 8) {
+                passwordStrength.classList.add('weak');
+            }
+        }
+
+        // Validate functions
+        function validateUsername() {
+            const username = usernameInput.value.trim();
+            const isValid = /^[a-zA-Z0-9_]{3,20}$/.test(username);
+            const errorEl = document.getElementById('usernameError');
+            if (!username || !isValid) {
+                errorEl.classList.add('show');
+                usernameInput.classList.add('is-invalid');
+                return false;
+            }
+            errorEl.classList.remove('show');
+            usernameInput.classList.remove('is-invalid');
+            return true;
+        }
+
+        function validateEmail() {
+            const email = emailInput.value.trim();
+            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            const errorEl = document.getElementById('emailError');
+            if (!email || !isValid) {
+                errorEl.classList.add('show');
+                emailInput.classList.add('is-invalid');
+                return false;
+            }
+            errorEl.classList.remove('show');
+            emailInput.classList.remove('is-invalid');
+            return true;
+        }
+
+        function validatePassword() {
+            const password = passwordInput.value;
+            const isValid = password.length >= 8;
+            const errorEl = document.getElementById('passwordError');
+            if (!password || !isValid) {
+                errorEl.classList.add('show');
+                passwordInput.classList.add('is-invalid');
+                return false;
+            }
+            errorEl.classList.remove('show');
+            passwordInput.classList.remove('is-invalid');
+            updatePasswordStrength();
+            return true;
+        }
+
+        function validateConfirm() {
+            const isValid = confirmInput.value === passwordInput.value && confirmInput.value.length > 0;
+            const errorEl = document.getElementById('confirmError');
+            if (!isValid) {
+                errorEl.classList.add('show');
+                confirmInput.classList.add('is-invalid');
+                return false;
+            }
+            errorEl.classList.remove('show');
+            confirmInput.classList.remove('is-invalid');
+            return true;
+        }
+
+        function validateTerms() {
+            const isValid = termsCheck.checked;
+            const errorEl = document.getElementById('termsError');
+            if (!isValid) {
+                errorEl.classList.add('show');
+                termsCheck.classList.add('is-invalid');
+                return false;
+            }
+            errorEl.classList.remove('show');
+            termsCheck.classList.remove('is-invalid');
+            return true;
+        }
+
+        function checkAllValidations() {
+            const isUsernameValid = validateUsername();
+            const isEmailValid = validateEmail();
+            const isPasswordValid = validatePassword();
+            const isConfirmValid = validateConfirm();
+            const isTermsValid = validateTerms();
+            
+            const allValid = isUsernameValid && isEmailValid && isPasswordValid && isConfirmValid && isTermsValid;
+            registerBtn.disabled = !allValid;
+            
+            if (allValid) {
+                registerBtn.innerHTML = `<i class="fas fa-check-circle me-2"></i> Hoàn tất đăng ký`;
+            } else {
+                registerBtn.innerHTML = `<i class="fas fa-user-plus me-2"></i> Đăng ký`;
+            }
+            return allValid;
+        }
+
+        // Event listeners
+        usernameInput.addEventListener('input', checkAllValidations);
+        emailInput.addEventListener('input', checkAllValidations);
+        passwordInput.addEventListener('input', () => { validatePassword(); validateConfirm(); checkAllValidations(); });
+        confirmInput.addEventListener('input', () => { validateConfirm(); checkAllValidations(); });
+        termsCheck.addEventListener('change', checkAllValidations);
+
+        // Form submit
+        const form = document.getElementById('registerForm');
+        form.addEventListener('submit', function(e) {
+            if (!checkAllValidations()) {
+                e.preventDefault();
+            }
+        });
+
+        // Initial check
+        checkAllValidations();
+    </script>
+</body>
+</html>

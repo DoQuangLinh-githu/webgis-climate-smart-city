@@ -1,0 +1,203 @@
+<!-- views/cndl/domain3.ejs -->
+<div class="accordion-item">
+    <h2 class="accordion-header" id="heading3">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+            🚗 Giao thông đô thị & chất lượng không khí
+        </button>
+    </h2>
+    <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#domainAccordion">
+        <div class="accordion-body">
+            <form action="/cndl" method="POST" novalidate>
+                <input type="hidden" name="domain_id" value="3">
+                <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
+                <input type="hidden" name="city" value="TP. Hồ Chí Minh">
+
+                <!-- Checklist indicators -->
+                <div class="indicator-list mb-5 p-4 bg-dark bg-opacity-10 rounded">
+                    <h5 class="text-primary mb-4"><i class="fas fa-check-circle me-2"></i>Chọn các chỉ số cần nhập dữ liệu:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_NMT">
+                                <label class="form-check-label fw-bold" for="check_NMT">16. Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới (NMT)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_PT_c">
+                                <label class="form-check-label fw-bold" for="check_PT_c">17. Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch (PT_c)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_PT1000">
+                                <label class="form-check-label fw-bold" for="check_PT1000">18. Mức độ dễ tiếp cận phương tiện công cộng (PT1000)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_STL">
+                                <label class="form-check-label fw-bold" for="check_STL">19. Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh (STL)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_SRRW">
+                                <label class="form-check-label fw-bold" for="check_SRRW">20. Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến (SRRW)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_RoadCap">
+                                <label class="form-check-label fw-bold" for="check_RoadCap">21. Khả năng thông hành và mức phục vụ của đường phố (RoadCap)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_AQstation">
+                                <label class="form-check-label fw-bold" for="check_AQstation">22. Mật độ trạm quan trắc không khí tự động, liên tục (AQstation)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_AQdata">
+                                <label class="form-check-label fw-bold" for="check_AQdata">23. Khả năng cung cấp dữ liệu & cảnh báo AQI thời gian thực (AQdata)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_CleanAirPlan">
+                                <label class="form-check-label fw-bold" for="check_CleanAirPlan">24. Kế hoạch hành động vì không khí sạch (CleanAirPlan)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_AQI_TDE">
+                                <label class="form-check-label fw-bold" for="check_AQI_TDE">25. Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng) (AQI_TDE)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicator 16: NMT -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'NMT',
+                    indicatorName: 'Tỷ lệ bao phủ mạng lưới giao thông phi cơ giới',
+                    description: 'Tỷ lệ đường dành cho xe đạp và đi bộ.',
+                    required: true,
+                    inputs: [
+                        { id: 'NMT_L_NMT', param: 'NMT_L', label: 'Chiều dài mạng lưới giao thông phi cơ giới (NMT_L, km)', tooltip: 'Chiều dài đường dành cho xe đạp và đi bộ', sourceText: 'Số Liệu: 02._QHTPHCM_Báo_cáo_tổng_hợp.pdf - Mục lục 2.2.1', driveLink: 'https://drive.google.com/drive/u/0/folders/1YUoG7Y5aW9r7BxWES6lmHE0cbTtGhHR0' },
+                        { id: 'L_R_NMT', param: 'L_R', label: 'Chiều dài mạng lưới giao thông của thành phố (L_R, km)', tooltip: 'Tổng chiều dài đường giao thông trong thành phố', sourceText: 'Số Liệu: 02._QHTPHCM_Báo_cáo_tổng_hợp.pdf - Mục lục 2.2.1', driveLink: 'https://drive.google.com/drive/u/0/folders/1dwxn62tylUhJvIge6pGfrwsIh7YaD3XM' }
+                    ]
+                }) %>
+
+                <!-- Indicator 17: PT_c -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'PT_c',
+                    indicatorName: 'Tỷ lệ phương tiện công cộng ứng dụng công nghệ sạch',
+                    description: 'Tính toán dựa trên số phương tiện công cộng sạch.',
+                    required: true,
+                    inputs: [
+                        { id: 'PT_c_PT_c', param: 'PT_c', label: 'Phương tiện công cộng sử dụng nhiên liệu sạch hơn (PT_c, phương tiện)', tooltip: 'Số phương tiện công cộng sử dụng công nghệ sạch (điện, hybrid,...)', sourceText: 'Số Liệu:CV 11771-SGTVT gui lay y kien De an.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1MEDKObXy3NGE4mKsWiD9qQzhGuzRvhd5' },
+                        { id: 'PT_PT_c', param: 'PT', label: 'Phương tiện công cộng trong thành phố (PT, phương tiện)', tooltip: 'Tổng số phương tiện công cộng trong thành phố', sourceText: 'Số Liệu:CV 11771-SGTVT gui lay y kien De an.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/100SUUppQl52TdKa7TvQvMU2dUV2cUTWv' }
+                    ]
+                }) %>
+
+                <!-- Indicator 18: PT1000 -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'PT1000',
+                    indicatorName: 'Mức độ dễ tiếp cận phương tiện công cộng',
+                    description: 'Tính toán dựa trên số phương tiện công cộng trên 1000 dân.',
+                    required: true,
+                    inputs: [
+                        { id: 'PT_F_PT1000', param: 'PT_F', label: 'Số lượng phương tiện công cộng trong thành phố (PT_F, phương tiện)', tooltip: 'Số lượng phương tiện công cộng phục vụ dân chúng', sourceText: 'Số Liệu: DAN SO VA LAO DONG.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1OP_m3Uy5548bAUk66WJJWtt2C48meOLy' },
+                        { id: 'P_PT1000', param: 'P', label: 'Dân số ước tính (P, người)', tooltip: 'Dân số ước tính của thành phố', sourceText: 'Số Liệu: DAN SO VA LAO DONG.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/12KkxINbg2ejxSEbDf960I2ctupY_86rX' }
+                    ]
+                }) %>
+
+                <!-- Indicator 19: STL -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'STL',
+                    indicatorName: 'Tỷ lệ hệ thống đèn tín hiệu giao thông thông minh',
+                    description: 'Tính toán dựa trên số đèn giao thông thông minh.',
+                    required: false,
+                    inputs: [
+                        { id: 'STL_S_STL', param: 'STL_S', label: 'Số lượng đèn giao thông thông minh (STL_S, chốt đèn)', tooltip: 'Số chốt đèn giao thông sử dụng công nghệ thông minh', sourceText: 'Số Liệu:CV 11771-SGTVT gui lay y kien De an.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1X_CFwkF0eSbYOabBi6VsizpZdH8EWhrj' },
+                        { id: 'TL_STL', param: 'TL', label: 'Tổng số đèn giao thông trong đô thị (TL, chốt đèn)', tooltip: 'Tổng số chốt đèn giao thông trong thành phố', sourceText: 'Số Liệu:CV 11771-SGTVT gui lay y kien De an.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1MzBP-wqsn8E0XaSEB5AsnCilcSE3cvQM' }
+                    ]
+                }) %>
+
+                <!-- Indicator 20: SRRW -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'SRRW',
+                    indicatorName: 'Tỷ lệ đường phố tích hợp cảnh báo & thông tin giao thông trực tuyến',
+                    description: 'Tính toán dựa trên chiều dài đường có thông tin giao thông trực tuyến.',
+                    required: true,
+                    inputs: [
+                        { id: 'SRRW_L_SRRW', param: 'SRRW_L', label: 'Chiều dài đường có tích hợp cảnh báo giao thông thời gian thực (SRRW_L, km)', tooltip: 'Chiều dài đường có tích hợp cảnh báo giao thông', sourceText: 'Số Liệu:CV 11771-SGTVT gui lay y kien De an.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1vbv8vvyOP0EFVtDFDIWKmwPTgcIqyhuk' },
+                        { id: 'TSR_SRRW', param: 'TSR', label: 'Tổng số km của phố và đường phố trong phạm vi đô thị (TSR, km)', tooltip: 'Tổng chiều dài đường phố trong thành phố', sourceText: 'Số Liệu:CV 11771-SGTVT gui lay y kien De an.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1MgcZXTl-rNJUHadUKKdvWPNnbzMF2pTQ' }
+                    ]
+                }) %>
+
+                <!-- Indicator 21: RoadCap (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'RoadCap',
+                    indicatorName: 'Khả năng thông hành và mức phục vụ của đường phố',
+                    description: 'Đánh giá tỷ lệ mạng lưới giao thông đạt mức phục vụ tốt (mức A – B).',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Tỷ lệ thông thoáng: 0 - < 35%' },
+                        { value: 2, label: 'Cấp 2 - Tỷ lệ thông thoáng: 35% - < 50%' },
+                        { value: 3, label: 'Cấp 3 - Tỷ lệ thông thoáng: 50% - < 75%' },
+                        { value: 4, label: 'Cấp 4 - Tỷ lệ thông thoáng: 75% - < 90%' },
+                        { value: 5, label: 'Cấp 5 - Tỷ lệ thông thoáng: 90% - 100%' }
+                    ]
+                }) %>
+
+                <!-- Indicator 22: AQstation (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'AQstation',
+                    indicatorName: 'Mật độ trạm quan trắc không khí tự động, liên tục',
+                    description: 'Đánh giá số lượng và mức độ phủ sóng của các trạm quan trắc không khí.',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Không có trạm quan trắc không khí tự động' },
+                        { value: 2, label: 'Cấp 2 - Có trạm quan trắc ≤ 12 trạm' },
+                        { value: 3, label: 'Cấp 3 - Có trạm quan trắc > 12 – 15 trạm' },
+                        { value: 4, label: 'Cấp 4 - Có trạm quan trắc > 15 – 20 trạm' },
+                        { value: 5, label: 'Cấp 5 - Có trạm quan trắc > 20 trạm' }
+                    ]
+                }) %>
+
+                <!-- Indicator 23: AQdata (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'AQdata',
+                    indicatorName: 'Khả năng cung cấp dữ liệu & cảnh báo AQI thời gian thực',
+                    description: 'Đánh giá mức độ công khai dữ liệu chất lượng không khí.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Chưa công bố' },
+                        { value: 2, label: 'Cấp 2 - Công bố chỉ số bụi mịn trên cổng thông tin' },
+                        { value: 3, label: 'Cấp 3 - Công bố đa thông số theo Thông tư 10' },
+                        { value: 4, label: 'Cấp 4 - Tích hợp trên nhiều nền tảng khác' },
+                        { value: 5, label: 'Cấp 5 - Tích hợp chức năng khuyến nghị, cảnh báo cộng đồng' }
+                    ]
+                }) %>
+
+                <!-- Indicator 24: CleanAirPlan (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'CleanAirPlan',
+                    indicatorName: 'Kế hoạch hành động vì không khí sạch',
+                    description: 'Đánh giá mức độ xây dựng và thực hiện kế hoạch cải thiện chất lượng không khí.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Không cân nhắc' },
+                        { value: 2, label: 'Cấp 2 - Giám sát và công bố dữ liệu' },
+                        { value: 3, label: 'Cấp 3 - Có kế hoạch kiểm soát chất lượng không khí' },
+                        { value: 4, label: 'Cấp 4 - Chất lượng không khí được cải thiện, đạt mục tiêu' },
+                        { value: 5, label: 'Cấp 5 - Tất cả chỉ số đạt QCVN về chất lượng không khí' }
+                    ]
+                }) %>
+
+                <!-- Indicator 25: AQI_TDE -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'AQI_TDE',
+                    indicatorName: 'Mức độ ô nhiễm không khí (số ngày AQI vượt ngưỡng)',
+                    description: 'Tính toán dựa trên số ngày AQI vượt ngưỡng 100 tại các trạm.',
+                    required: false,
+                    inputs: [
+                        { id: 'AQI_exceed_days_station1_AQI_TDE', param: 'AQI_exceed_days_0', label: 'Số ngày AQI > 100 tại trạm Lý Chính Thắng', tooltip: 'Số ngày AQI vượt ngưỡng 100', sourceText: 'báo cáo chất lượng kkxq miền Nam tuần 25 năm 2024.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1eBvF8NmR7bL4xf0esBxJxKOVWpDUVvBM' },
+                        { id: 'AQI_exceed_days_station2_AQI_TDE', param: 'AQI_exceed_days_1', label: 'Số ngày AQI > 100 tại trạm Vùng Đông Nam Bộ', tooltip: 'Số ngày AQI vượt ngưỡng 100', sourceText: 'báo cáo chất lượng kkxq miền Nam tuần 25 năm 2024.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1f-CIdRtUwOHmz12dvBFVjnALJVxqXyda' },
+                        { id: 'total_days_AQI_TDE', param: 'total_days', label: 'Số ngày công bố chỉ số chất lượng không khí', tooltip: 'Tổng số ngày có dữ liệu AQI được công bố', sourceText: 'báo cáo chất lượng kkxq miền Nam tuần 25 năm 2024.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1V95mTm7dXrdxGh6gs3mMG9wza0V_-mBh' }
+                    ]
+                }) %>
+
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Lưu tất cả chỉ số Domain 3</button>
+            </form>
+        </div>
+    </div>
+</div>

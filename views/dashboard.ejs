@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Climate Smart City</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/loading.css">
+
+    <!-- Page Specific CSS -->
+    <style>
+        .domain-score {
+            font-size: 3.2rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .progress {
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+        }
+        @media (max-width: 992px) {
+            .domain-score {
+                font-size: 2.6rem;
+            }
+            .table-responsive {
+                max-height: 520px;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header + Sidebar -->
+    <% 
+        let currentPage = 'dashboard';
+        let user = locals.user;
+    %>
+    <%- include('partials/header') %>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <div class="page-header animate__animated animate__fadeIn">
+            <h1 class="page-title">Dashboard - TP. Hồ Chí Minh</h1>
+            <p class="lead text-center text-muted">Tổng quan hệ thống đánh giá Climate Smart City</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="alert alert-danger animate__animated animate__shakeX"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+            <div class="alert alert-success animate__animated animate__bounceIn"><%= success %></div>
+        <% } %>
+
+        <!-- Điểm Tổng Hợp -->
+        <div class="control-panel animate__animated animate__fadeInUp">
+            <div class="field-header">
+                <h5>CLIMATE SMART CITY - ĐIỂM TỔNG HỢP</h5>
+            </div>
+            <div class="card-body text-center">
+                <h3 class="display-4 domain-score"><%= totalScore || 0 %></h3>
+                <p class="lead">Điểm Tổng Hợp của 5 lĩnh vực</p>
+                <p class="star-rating mb-4">
+                    <% for(let i = 1; i <= 5; i++) { %>
+                        <% if(i <= (overallLevel || 1)) { %>
+                            <i class="fas fa-star text-danger fs-4 mx-1"></i>
+                        <% } else { %>
+                            <i class="far fa-star text-muted fs-4 mx-1"></i>
+                        <% } %>
+                    <% } %>
+                </p>
+                <p class="lead mt-3 fw-bold" style="color: var(--success);"><%= overallDescription %></p>
+                <p class="text-muted mt-3"><small>Xu hướng sẽ hiển thị khi có dữ liệu năm 2025 để so sánh.</small></p>
+
+                <div class="mt-5">
+                    <h6 class="text-center mb-4 text-muted">Điểm Các Lĩnh Vực</h6>
+                    
+                    <% const domainNames = ['', 'Năng Lượng', 'Quy Hoạch', 'Giao Thông', 'Quản Lý Nước', 'Quản Lý Chất Thải']; %>
+                    <% const colors = ['', 'bg-primary', 'bg-info', 'bg-success', 'bg-warning', 'bg-danger']; %>
+                    <% const maxScores = [0, 800, 700, 1000, 800, 800]; %>
+
+                    <% for(let i = 1; i <= 5; i++) { %>
+                        <% const score = domainScores[i] || 0; %>
+                        <% const max = domains.find(d => d.domain_id === i)?.max_score || maxScores[i]; %>
+                        <% const percent = max > 0 ? Math.round((score / max) * 100) : 0; %>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong><%= domainNames[i] %></strong>
+                                <span><%= score %> / <%= max %> (<%= percent %>%)</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar <%= colors[i] %>" role="progressbar" 
+                                     style="width: <%= percent %>%;" 
+                                     aria-valuenow="<%= percent %>" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5 thẻ lĩnh vực -->
+        <div class="row g-4 mb-5">
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="field-card text-center">
+                    <div class="field-header"><h5>Năng Lượng</h5></div>
+                    <div class="py-4">
+                        <h3 class="domain-score"><%= domainScores[1] || 0 %></h3>
+                        <p class="text-muted">/ <%= domains.find(d => d.domain_id === 1)?.max_score || 800 %> điểm</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="field-card text-center">
+                    <div class="field-header"><h5>Quy Hoạch</h5></div>
+                    <div class="py-4">
+                        <h3 class="domain-score"><%= domainScores[2] || 0 %></h3>
+                        <p class="text-muted">/ <%= domains.find(d => d.domain_id === 2)?.max_score || 700 %> điểm</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="field-card text-center">
+                    <div class="field-header"><h5>Giao Thông</h5></div>
+                    <div class="py-4">
+                        <h3 class="domain-score"><%= domainScores[3] || 0 %></h3>
+                        <p class="text-muted">/ <%= domains.find(d => d.domain_id === 3)?.max_score || 1000 %> điểm</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="field-card text-center">
+                    <div class="field-header"><h5>Quản Lý Nước</h5></div>
+                    <div class="py-4">
+                        <h3 class="domain-score"><%= domainScores[4] || 0 %></h3>
+                        <p class="text-muted">/ <%= domains.find(d => d.domain_id === 4)?.max_score || 800 %> điểm</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-6">
+                <div class="field-card text-center">
+                    <div class="field-header"><h5>Quản Lý Chất Thải</h5></div>
+                    <div class="py-4">
+                        <h3 class="domain-score"><%= domainScores[5] || 0 %></h3>
+                        <p class="text-muted">/ <%= domains.find(d => d.domain_id === 5)?.max_score || 800 %> điểm</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bản đồ -->
+        <div style="margin: 3rem 0; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border);">
+            <div style="background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 2.2rem 1.5rem; text-align: center; color: white;">
+                <h1 style="margin:0; font-size: 2.4rem; font-weight: 900; letter-spacing: 1px; text-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                    Bản đồ đánh giá mức độ thích nghi với biến đổi khí hậu của TP.HCM
+                </h1>
+            </div>
+            <iframe id="map-dashboard-iframe"
+                    src="/ban_do.html"
+                    style="width: 100%; height: 760px; border: none; display: block;"
+                    allowfullscreen
+                    loading="lazy">
+            </iframe>
+        </div>
+
+        <!-- Bảng dữ liệu chỉ số -->
+        <div class="field-card">
+            <div class="field-header">
+                <h5>Dữ Liệu Chỉ Số TP. Hồ Chí Minh</h5>
+                <div>
+                    <span>Tổng: <%= assessments.length %> Chỉ số</span>
+                    <a href="/export/excel" class="btn btn-sm btn-light">Xuất Excel</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <% if (assessments && assessments.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover text-light">
+                            <thead>
+                                <tr>
+                                    <th>Lĩnh vực</th>
+                                    <th>Chỉ số</th>
+                                    <th>Giá trị</th>
+                                    <th>Điểm</th>
+                                    <th>Cấp độ</th>
+                                    <th>Cập nhật</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% assessments.forEach(ass => { %>
+                                    <tr>
+                                        <td><%= domains.find(d => d.domain_id === ass.domain_id)?.name || '—' %></td>
+                                        <td><%= indicators.find(i => i.indicator_id === ass.indicator_id)?.name || '—' %></td>
+                                        <td><%= ass.value !== null ? ass.value : '—' %></td>
+                                        <td><%= ass.score_awarded !== null ? ass.score_awarded : '—' %></td>
+                                        <td>
+                                            <% if (ass.level !== null) { %>
+                                                <span class="badge bg-<%= ['secondary','danger','warning','info','success'][ass.level] || 'secondary' %>">
+                                                    Level <%= ass.level %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">N/A</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= ass.date ? new Date(ass.date).toLocaleDateString('vi-VN') : '—' %></td>
+                                        <td>
+                                            <a href="/edit_cndl/<%= ass.assessment_id %>" class="btn btn-sm btn-primary">Sửa</a>
+                                            <% if (user && user.role === 'admin') { %>
+                                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#detailModal" 
+                                                        onclick="showDetail('<%= ass.assessment_id %>', 
+                                                                           '<%= domains.find(d => d.domain_id === ass.domain_id)?.name || '' %>', 
+                                                                           '<%= indicators.find(i => i.indicator_id === ass.indicator_id)?.name || '' %>', 
+                                                                           '<%= ass.value !== null ? ass.value : '' %>', 
+                                                                           '<%= ass.score_awarded !== null ? ass.score_awarded : '' %>', 
+                                                                           '<%= ass.level !== null ? ass.level : '' %>')">
+                                                    Chi tiết
+                                                </button>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <p>Chưa có dữ liệu</p>
+                        <p>Vui lòng cập nhật dữ liệu đầu tiên</p>
+                        <a href="/cndl" class="btn btn-primary">Bắt đầu cập nhật</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Modal Chi Tiết -->
+        <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailModalLabel">Chi Tiết Chỉ Số</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Lĩnh vực:</strong> <span id="modal-domain"></span></p>
+                                <p><strong>Chỉ số:</strong> <span id="modal-indicator"></span></p>
+                                <p><strong>Giá trị:</strong> <span id="modal-value"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Điểm:</strong> <span id="modal-score"></span></p>
+                                <p><strong>Cấp độ:</strong> <span id="modal-level" class="badge bg-secondary"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <a href="/cndl" class="btn btn-primary">Cập Nhật Dữ Liệu</a>
+                        <% if (user && user.role === 'admin') { %>
+                            <button type="button" class="btn btn-danger" onclick="deleteIndicator()">Xóa Chỉ Số</button>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <!-- Footer + Scripts -->
+    <%- include('partials/footer') %>
+
+    <!-- Page Specific Scripts -->
+    <script>
+        function showDetail(id, domain, indicator, value, score, level) {
+            document.getElementById('modal-domain').textContent = domain || '—';
+            document.getElementById('modal-indicator').textContent = indicator || '—';
+            document.getElementById('modal-value').textContent = value !== '' ? value : '—';
+            document.getElementById('modal-score').textContent = score !== '' ? score : '—';
+            
+            const levelEl = document.getElementById('modal-level');
+            if (level !== '' && level !== null) {
+                levelEl.textContent = `Level ${level}`;
+                const colors = ['secondary', 'danger', 'warning', 'info', 'success'];
+                levelEl.className = `badge bg-${colors[level] || 'secondary'}`;
+            } else {
+                levelEl.textContent = 'N/A';
+                levelEl.className = 'badge bg-secondary';
+            }
+        }
+
+        function deleteIndicator() {
+            if (confirmDelete('Bạn có chắc chắn muốn xóa chỉ số này?')) {
+                showNotification('info', 'Chức năng xóa đang được phát triển');
+            }
+        }
+
+        function sendDataToMapIframe() {
+            const iframe = document.getElementById('map-dashboard-iframe');
+            if (!iframe || !iframe.contentWindow) return;
+
+            const domainScores = [0, <%= domainScores[1] || 0 %>, <%= domainScores[2] || 0 %>, <%= domainScores[3] || 0 %>, <%= domainScores[4] || 0 %>, <%= domainScores[5] || 0 %>];
+            const data = {
+                totalScore: <%= totalScore || 50 %>,
+                energyScore: domainScores[1],
+                planningScore: domainScores[2],
+                transportScore: domainScores[3],
+                waterScore: domainScores[4],
+                wastewaterScore: domainScores[5],
+                energyCriteriaLevels: [],
+                planningCriteriaLevels: [],
+                transportCriteriaLevels: [],
+                waterCriteriaLevels: [],
+                wastewaterCriteriaLevels: []
+            };
+            iframe.contentWindow.postMessage({ type: 'UPDATE_MAP_DATA', data }, '*');
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(sendDataToMapIframe, 1500);
+        });
+    </script>
+</body>
+</html>

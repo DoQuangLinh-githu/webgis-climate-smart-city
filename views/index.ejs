@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Smart City - TP. Hồ Chí Minh</title>
+   
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(15, 23, 42, 0.6);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* ================ MAIN CONTENT ================ */
+        .main-content {
+            margin-left: 0;
+            padding: 30px;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 80px 20px 30px 20px;
+            }
+        }
+
+        /* ================ TAB NAVIGATION (PHÍA TRÊN) - CHUYỂN TRANG ================ */
+        .tab-navigation {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 60px;
+            padding: 8px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tab-btn {
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            background: transparent;
+            border: none;
+            color: #cbd5e1;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn i {
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: white;
+            background: rgba(59, 130, 246, 0.2);
+            text-decoration: none;
+        }
+
+        /* ================ BỐ CỤC 2 CỘT TRÁI - PHẢI ================ */
+        .two-column-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .left-data-panel {
+            flex: 0 0 38%;
+            max-width: 38%;
+        }
+
+        .right-map-panel {
+            flex: 0 0 62%;
+            max-width: 62%;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
+            height: fit-content;
+        }
+
+        @media (max-width: 992px) {
+            .two-column-layout {
+                flex-direction: column;
+            }
+            .left-data-panel, .right-map-panel {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .right-map-panel {
+                position: relative;
+                top: 0;
+            }
+        }
+
+        /* ================ CARD STYLES ================ */
+        .data-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 25px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .data-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.15));
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .card-body-custom {
+            padding: 24px;
+        }
+
+        /* Tổng điểm */
+        .total-score-circle {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .circle-score {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+        }
+
+        .circle-score h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            color: white;
+        }
+
+        .circle-score p {
+            margin: 0;
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .star-rating {
+            margin: 15px 0;
+        }
+
+        .star-rating i {
+            font-size: 1.2rem;
+            margin: 0 2px;
+        }
+
+        /* Progress bars */
+        .progress {
+            height: 12px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+        }
+
+        .domain-progress-item {
+            margin-bottom: 20px;
+        }
+
+        .domain-progress-item .d-flex {
+            margin-bottom: 8px;
+        }
+
+        .domain-progress-item strong {
+            color: #f8fafc !important;
+            font-weight: 600;
+        }
+
+        .domain-progress-item span {
+            color: #cbd5e6 !important;
+            font-weight: 500;
+        }
+
+        /* 5 thẻ lĩnh vực nhỏ */
+        .domain-mini-card {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            padding: 15px 10px;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            transition: all 0.3s;
+        }
+
+        .domain-mini-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .domain-mini-card h6 {
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .domain-mini-card h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .domain-mini-card small {
+            color: #94a3b8;
+        }
+
+        /* Stats mini */
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-item h4 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .stat-item p {
+            margin: 5px 0 0;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        /* Map container */
+        .map-container {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 24px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            width: 100%;
+        }
+
+        .map-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 18px 24px;
+            text-align: center;
+        }
+
+        .map-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        iframe {
+            width: 100%;
+            height: 650px;
+            border: none;
+            display: block;
+        }
+
+        .qr-footer {
+            margin-top: 20px;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .qr-footer img {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+        }
+
+        .qr-footer p {
+            color: #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+            .tab-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+            .card-header-custom {
+                padding: 12px 16px;
+                font-size: 1rem;
+            }
+            .card-body-custom {
+                padding: 16px;
+            }
+            .circle-score {
+                width: 110px;
+                height: 110px;
+            }
+            .circle-score h1 {
+                font-size: 2.2rem;
+            }
+            iframe {
+                height: 400px;
+            }
+        }
+
+        @media (min-width: 1400px) {
+            iframe {
+                height: 750px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="main-content">
+        <!-- Thanh Tab chuyển trang - SỬ DỤNG THẺ <a> ĐỂ CHUYỂN HƯỚNG -->
+        <div class="d-flex justify-content-center">
+            <div class="tab-navigation" id="tabNavigation">
+                <a href="/" class="tab-btn active">
+                    <i class="fas fa-home"></i> Trang Chủ
+                </a>
+                <a href="/login" class="tab-btn">
+                    <i class="fas fa-sign-in-alt"></i> Đăng Nhập
+                </a>
+                <a href="/register" class="tab-btn">
+                    <i class="fas fa-user-plus"></i> Đăng Ký
+                </a>
+                <a href="/about" class="tab-btn">
+                    <i class="fas fa-info-circle"></i> Giới Thiệu
+                </a>
+                <a href="/contact" class="tab-btn">
+                    <i class="fas fa-envelope"></i> Liên Hệ
+                </a>
+            </div>
+        </div>
+
+        <!-- Nội dung trang chủ - Bố cục 2 cột trái phải -->
+        <div id="homeContent">
+            <div class="two-column-layout">
+                <!-- CỘT TRÁI: SỐ LIỆU - CUỘN ĐƯỢC -->
+                <div class="left-data-panel">
+                    <!-- Điểm tổng hợp + tiến độ -->
+                    <div class="data-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-chart-line me-2"></i> CLIMATE SMART CITY - ĐIỂM TỔNG HỢP
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="total-score-circle">
+                                <div class="circle-score">
+                                    <h1><%= totalScore || 0 %></h1>
+                                    <p>Tổng điểm</p>
+                                </div>
+                                <div class="star-rating">
+                                    <% for(let i = 1; i <= 5; i++) { %>
+                                        <% if(i <= (overallLevel || 1)) { %>
+                                            <i class="fas fa-star text-danger"></i>
+                                        <% } else { %>
+                                            <i class="far fa-star text-muted"></i>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                                <p class="fw-bold text-success mt-2"><%= overallDescription %></p>
+                            </div>
+
+                            <div class="mt-4">
+                                <h6 class="mb-3 text-muted"><i class="fas fa-chart-simple me-2"></i> TIẾN ĐỘ CÁC LĨNH VỰC</h6>
+                                <% const domainNames = ['', 'Năng Lượng', 'Quy Hoạch', 'Giao Thông', 'Quản Lý Nước', 'Quản Lý Chất Thải']; %>
+                                <% const colors = ['', 'bg-primary', 'bg-info', 'bg-success', 'bg-warning', 'bg-danger']; %>
+                                <% const maxScores = [0, 800, 700, 1000, 800, 800]; %>
+                                <% for(let i = 1; i <= 5; i++) { %>
+                                    <% const score = domainScores[i] || 0; %>
+                                    <% const max = domains.find(d => d.domain_id === i)?.max_score || maxScores[i]; %>
+                                    <% const percent = max > 0 ? Math.round((score / max) * 100) : 0; %>
+                                    <div class="domain-progress-item">
+                                        <div class="d-flex justify-content-between">
+                                            <strong><%= domainNames[i] %></strong>
+                                            <span><%= score.toFixed(1) %> / <%= max %> (<%= percent %>%)</span>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar <%= colors[i] %>" style="width: <%= percent %>%;"></div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5 thẻ lĩnh vực nhỏ -->
+                    <div class="data-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-building me-2"></i> ĐIỂM CHI TIẾT THEO LĨNH VỰC
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="row g-3">
+                                <% for(let i = 1; i <= 5; i++) { %>
+                                    <div class="col-6">
+                                        <div class="domain-mini-card">
+                                            <h6><%= domainNames[i] %></h6>
+                                            <h3><%= domainScores[i]?.toFixed(1) || 0 %></h3>
+                                            <small>/ <%= domains.find(d => d.domain_id === i)?.max_score || 100 %> điểm</small>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thống kê nhanh TP -->
+                    <div class="data-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-chart-pie me-2"></i> THỐNG KÊ THÀNH PHỐ
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="stats-mini">
+                                <div class="stat-item"><h4>1.650</h4><p>nghìn tỷ VND<br>GRDP 2025</p></div>
+                                <div class="stat-item"><h4>9,8</h4><p>triệu<br>Dân số</p></div>
+                                <div class="stat-item"><h4>2.095</h4><p>km²<br>Diện tích</p></div>
+                                <div class="stat-item"><h4>312</h4><p>Phường/Xã</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin thêm -->
+                    <div class="data-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-info-circle me-2"></i> THÔNG TIN THÊM
+                        </div>
+                        <div class="card-body-custom">
+                            <p>Climate Smart City là sáng kiến nhằm đánh giá và cải thiện khả năng thích ứng với biến đổi khí hậu của TP. Hồ Chí Minh.</p>
+                            <p class="mt-2">Hệ thống dựa trên 5 trụ cột chính với các chỉ số đánh giá chi tiết, giúp định hướng phát triển bền vững.</p>
+                            <hr class="my-3" style="border-color: rgba(59,130,246,0.3);">
+                            <p class="small text-muted">Cập nhật: Quý I/2026</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI: BẢN ĐỒ - CỐ ĐỊNH KHI CUỘN (STICKY) -->
+                <div class="right-map-panel">
+                    <div class="map-container">
+                        <div class="map-header">
+                            <h3><i class="fas fa-map-marked-alt me-2"></i> Bản đồ đánh giá mức độ thích nghi với biến đổi khí hậu của TP.HCM</h3>
+                        </div>
+                        <iframe id="map-dashboard-iframe" src="/ban_do.html" allowfullscreen loading="lazy"></iframe>
+                    </div>
+                    
+                    <!-- QR Code -->
+                    <div class="qr-footer">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://webgis-climate-smart-city-av31.vercel.app/" alt="QR Code">
+                        <p class="mt-2 mb-0 small">
+                            <i class="fas fa-lock me-1"></i> Miễn phí 100% &nbsp;|&nbsp;
+                            <i class="fas fa-shield-alt me-1"></i> An toàn bảo mật &nbsp;|&nbsp;
+                            <i class="fas fa-bolt me-1"></i> Truy cập tức thì
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Xác định tab đang active dựa trên đường dẫn hiện tại
+        function setActiveTab() {
+            const currentPath = window.location.pathname;
+            const tabs = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => {
+                const href = tab.getAttribute('href');
+                if (href === currentPath) {
+                    tab.classList.add('active');
+                } else if (currentPath === '/' && href === '/') {
+                    tab.classList.add('active');
+                } else if (currentPath !== '/' && href !== '/') {
+                    tab.classList.remove('active');
+                } else if (currentPath === '/' && href !== '/') {
+                    tab.classList.remove('active');
+                } else if (href === currentPath) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+
+        // Hàm gửi dữ liệu sang iframe bản đồ
+        function sendDataToMapIframe() {
+            const iframe = document.getElementById('map-dashboard-iframe');
+            if (!iframe || !iframe.contentWindow) return;
+            
+            const domainScores = [0, <%= domainScores[1] || 0 %>, <%= domainScores[2] || 0 %>, <%= domainScores[3] || 0 %>, <%= domainScores[4] || 0 %>, <%= domainScores[5] || 0 %>];
+            const energyLevels = [], planningLevels = [], transportLevels = [], waterLevels = [], wastewaterLevels = [];
+            
+            <% assessments.forEach(ass => { %>
+                if (<%= ass.domain_id %> === 1) energyLevels.push(<%= ass.level || 3 %>);
+                if (<%= ass.domain_id %> === 2) planningLevels.push(<%= ass.level || 3 %>);
+                if (<%= ass.domain_id %> === 3) transportLevels.push(<%= ass.level || 3 %>);
+                if (<%= ass.domain_id %> === 4) waterLevels.push(<%= ass.level || 3 %>);
+                if (<%= ass.domain_id %> === 5) wastewaterLevels.push(<%= ass.level || 3 %>);
+            <% }); %>
+            
+            const data = {
+                totalScore: <%= totalScore || 50 %>,
+                energyScore: domainScores[1],
+                planningScore: domainScores[2],
+                transportScore: domainScores[3],
+                waterScore: domainScores[4],
+                wastewaterScore: domainScores[5],
+                energyCriteriaLevels: energyLevels,
+                planningCriteriaLevels: planningLevels,
+                transportCriteriaLevels: transportLevels,
+                waterCriteriaLevels: waterLevels,
+                wastewaterCriteriaLevels: wastewaterLevels
+            };
+            iframe.contentWindow.postMessage({ type: 'UPDATE_MAP_DATA', data }, '*');
+        }
+
+        // Chạy khi trang load
+        window.addEventListener('load', () => {
+            setActiveTab();
+            setTimeout(sendDataToMapIframe, 1500);
+        });
+    </script>
+</body>
+</html>

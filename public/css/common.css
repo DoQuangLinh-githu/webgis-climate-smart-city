@@ -1,0 +1,350 @@
+/* ==================== COMMON STYLES ==================== */
+:root {
+    --primary: #3b82f6;
+    --secondary: #8b5cf6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+    --dark: #0f172a;
+    --light: #f8fafc;
+    --text-muted: #94a3b8;
+    --glass: rgba(15, 23, 42, 0.85);
+    --border: rgba(59, 130, 246, 0.3);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #f8fafc;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ==================== SIDEBAR ==================== */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 25px;
+}
+
+.sidebar-header h5 {
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.sidebar-logo img {
+    max-width: 120px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.nav-link {
+    color: #cbd5e1;
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin: 6px 0;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.3s ease;
+    z-index: -1;
+}
+
+.nav-link:hover::before,
+.nav-link.active::before {
+    width: 100%;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: white !important;
+    transform: translateX(6px);
+}
+
+/* ==================== SIDEBAR OVERLAY (Mobile) ==================== */
+.mobile-toggle {
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+.mobile-toggle i {
+    transition: transform 0.4s ease;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s ease;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ==================== MAIN CONTENT ==================== */
+.main-content {
+    margin-left: 280px;
+    padding: 30px;
+    min-height: 100vh;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.15));
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 35px;
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+.page-title {
+    font-size: 2.8rem;
+    font-weight: 900;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+}
+
+/* ==================== CARDS ==================== */
+.field-card, .control-panel, .form-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 25px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+    transition: all 0.4s ease;
+}
+
+.field-card:hover, .control-panel:hover, .form-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 40px rgba(59, 130, 246, 0.25);
+    border-color: var(--primary);
+}
+
+.field-header {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 18px 24px;
+    border-radius: 16px 16px 0 0;
+    margin: -25px -25px 25px -25px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ==================== FORMS ==================== */
+.form-label {
+    color: #cbd5e1;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.form-control, .form-select {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid var(--border);
+    color: #f8fafc;
+    border-radius: 12px;
+    padding: 14px 18px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+    transform: translateY(-1px);
+}
+
+.form-control[readonly] {
+    background: rgba(15, 23, 42, 0.85);
+    color: #94a3b8;
+}
+
+/* ==================== BUTTONS ==================== */
+.btn-primary {
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border: none;
+    border-radius: 30px;
+    padding: 14px 32px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.5);
+}
+
+.btn-outline-light {
+    border: 2px solid rgba(248, 250, 252, 0.6);
+    color: #f8fafc;
+    border-radius: 14px;
+    padding: 14px 32px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+    background: rgba(248, 250, 252, 0.1);
+    border-color: #f8fafc;
+    transform: translateY(-2px);
+}
+
+/* ==================== TABLES ==================== */
+.table {
+    color: #f8fafc;
+    margin-bottom: 0;
+}
+
+.table thead {
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table th, .table td {
+    border-color: rgba(59, 130, 246, 0.3);
+    vertical-align: middle;
+    padding: 14px 16px;
+}
+
+.table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* ==================== PROGRESS BARS ==================== */
+.progress {
+    height: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--primary), var(--secondary)) !important;
+}
+
+/* ==================== BADGES ==================== */
+.badge-level {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.level-1 { background: #ef4444; }
+.level-2 { background: #f59e0b; }
+.level-3 { background: #3b82f6; }
+.level-4 { background: #10b981; }
+.level-5 { background: #8b5cf6; }
+
+/* ==================== USER INFO ==================== */
+.user-info {
+    margin-top: 30px;
+    padding: 18px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    text-align: center;
+}
+
+/* ==================== MOBILE RESPONSIVE ==================== */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 20px 15px;
+    }
+    .page-title {
+        font-size: 2.3rem;
+    }
+    .field-card, .control-panel, .form-card {
+        padding: 20px;
+    }
+    .field-header {
+        font-size: 1.25rem;
+        margin: -20px -20px 20px -20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 15px 10px;
+    }
+    .page-header {
+        padding: 25px 18px;
+    }
+}
+
+/* ==================== UTILITIES ==================== */
+.text-muted { color: var(--text-muted) !important; }
+.cursor-pointer { cursor: pointer; }

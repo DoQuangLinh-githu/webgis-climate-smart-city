@@ -1,0 +1,43 @@
+{
+  "name": "webgis-climate-smart-city",
+  "version": "1.0.0",
+  "description": "WebGIS for Climate Smart City in Ho Chi Minh City",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.0.0",
+    "axios": "^1.12.2",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "docx": "^9.6.1",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
+    "express": "^4.22.1",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.2.1",
+    "forwarded-parse": "^2.1.2",
+    "fs": "^0.0.1-security",
+    "googleapis": "^165.0.0",
+    "helmet": "^8.1.0",
+    "html-pdf": "^3.0.1",
+    "ioredis": "^5.8.0",
+    "jsonwebtoken": "^9.0.2",
+    "mathjs": "^14.8.0",
+    "mongodb": "^6.20.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.6",
+    "path": "^0.12.7",
+    "pdf-poppler": "^0.2.1",
+    "pdf2docx": "^0.0.0",
+    "pdfkit": "^0.17.2",
+    "pdfmake": "^0.3.0",
+    "pg": "^8.16.3",
+    "stream": "^0.0.3"
+  },
+  "author": "",
+  "license": "ISC"
+}

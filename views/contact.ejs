@@ -1,0 +1,406 @@
+<!-- views/contact.ejs -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="description" content="Liên hệ với Climate Smart City - Nền tảng quản lý và phân tích dữ liệu thành phố thông minh bền vững.">
+    <title>Liên Hệ - Climate Smart City</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/ai-chatbot.css">
+    <style>
+        /* Contact page specific styles */
+        .contact-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .contact-header .logo-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 25px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+        .contact-header .logo-icon i {
+            font-size: 40px;
+            color: white;
+        }
+        .contact-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .contact-header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        /* Contact Info Items */
+        .contact-info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 18px;
+            padding: 18px;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 20px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            transition: all 0.3s ease;
+        }
+        .contact-info-item:hover {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: #3b82f6;
+            transform: translateX(5px);
+        }
+        .contact-info-item i {
+            font-size: 1.8rem;
+            color: #60a5fa;
+            min-width: 45px;
+            text-align: center;
+        }
+        .contact-info-item h5 {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+        .contact-info-item p {
+            color: #94a3b8;
+            margin: 0;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        /* Form Styles */
+        .form-control, .form-select {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1.5px solid rgba(59, 130, 246, 0.3);
+            color: #f8fafc;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            background: #1e293b;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        .form-label {
+            color: #cbd5e1;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        textarea.form-control {
+            resize: vertical;
+        }
+
+        /* Social Links */
+        .social-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .social-link {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            color: #60a5fa;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        .social-link:hover {
+            background: linear-gradient(95deg, #3b82f6, #8b5cf6);
+            color: white;
+            transform: translateY(-5px);
+            border-color: transparent;
+        }
+
+        /* Map Container */
+        .map-container {
+            height: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-top: 20px;
+        }
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            background: linear-gradient(95deg, #3b82f6, #8b5cf6);
+            border: none;
+            padding: 12px 28px;
+            font-weight: 600;
+            border-radius: 50px;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Section Title */
+        .section-title {
+            color: white;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title i {
+            color: #60a5fa;
+        }
+
+        @media (max-width: 768px) {
+            .contact-info-item {
+                padding: 14px;
+            }
+            .contact-info-item i {
+                font-size: 1.5rem;
+                min-width: 35px;
+            }
+            .map-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="display: flex; min-height: 100vh;">
+        <!-- AI Chatbot Component -->
+        <%- include('partials/ai-chatbot') %>
+
+        <!-- Nội dung Liên Hệ -->
+        <div class="content-section">
+            <div class="content-card" style="max-width: 750px;">
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs-custom">
+                    <a href="/login" class="nav-tab"><i class="fas fa-sign-in-alt"></i> Đăng nhập</a>
+                    <a href="/register" class="nav-tab"><i class="fas fa-user-plus"></i> Đăng ký</a>
+                    <a href="/about" class="nav-tab"><i class="fas fa-info-circle"></i> Giới thiệu</a>
+                    <a href="/contact" class="nav-tab active"><i class="fas fa-envelope"></i> Liên hệ</a>
+                </div>
+
+                <!-- Header -->
+                <div class="contact-header">
+                    <div class="logo-icon">
+                        <i class="fas fa-cloud-sun-rain"></i>
+                    </div>
+                    <h2>Liên hệ với chúng tôi</h2>
+                    <p>Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn</p>
+                </div>
+
+                <!-- Thông báo sau khi gửi -->
+                <div id="successMessage" class="alert alert-success" style="display: none; border-radius: 16px; background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #a7f3d0;">
+                    <i class="fas fa-check-circle me-2"></i> Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất.
+                </div>
+
+                <div class="row g-4">
+                    <!-- Form liên hệ bên trái -->
+                    <div class="col-md-7">
+                        <h5 class="section-title"><i class="fas fa-paper-plane"></i> Gửi tin nhắn</h5>
+                        <form id="contactForm">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="fullname" placeholder="Nguyễn Văn A" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="email" placeholder="example@climatesmartcity.vn" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" id="phone" placeholder="0123 456 789">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Chủ đề</label>
+                                    <select class="form-select" id="subject">
+                                        <option value="support">Hỗ trợ kỹ thuật</option>
+                                        <option value="register">Đăng ký tài khoản</option>
+                                        <option value="bug">Báo cáo lỗi</option>
+                                        <option value="partner">Hợp tác dự án</option>
+                                        <option value="other">Khác</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Nội dung tin nhắn <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="message" rows="5" placeholder="Nhập nội dung tin nhắn của bạn..." required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-submit text-white">
+                                        <i class="fas fa-paper-plane me-2"></i> Gửi tin nhắn
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Thông tin liên hệ bên phải -->
+                    <div class="col-md-5">
+                        <h5 class="section-title"><i class="fas fa-address-card"></i> Thông tin</h5>
+                        
+                        <div class="contact-info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <h5>Địa chỉ</h5>
+                                <p>268 Lý Thường Kiệt, Phường 14<br>Quận 10, TP. Hồ Chí Minh</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-item">
+                            <i class="fas fa-phone-alt"></i>
+                            <div>
+                                <h5>Điện thoại</h5>
+                                <p>Hotline: (028) 3835 1271<br>Mobile: 0901 234 567</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h5>Email</h5>
+                                <p>info@climatesmartcity.vn<br>support@climatesmartcity.vn</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <h5>Thời gian làm việc</h5>
+                                <p>Thứ 2 - Thứ 6: 8:00 - 17:00<br>Thứ 7: 8:00 - 12:00<br>Chủ nhật: Nghỉ</p>
+                            </div>
+                        </div>
+
+                        <!-- Social Links -->
+                        <div class="text-center mt-3">
+                            <div class="social-links">
+                                <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bản đồ -->
+                <div class="mt-4">
+                    <h5 class="section-title"><i class="fas fa-map-marked-alt"></i> Vị trí trên bản đồ</h5>
+                    <div class="map-container">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.516521395981!2d106.66325877570889!3d10.771369589374882!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752ed2392c44df%3A0xd2ecb62e0d050fe9!2zMjY4IEzDvSBUaMaw4budbmcgS2nhu4d0LCBQaMaw4budbmcgMTQsIFF14bqtbiAxMCwgVGjDoG5oIHBo4buRIEjhu5MgQ2jDrSBNaW5oLCBWaeG7h3QgTmFt!5e0!3m2!1svi!2s!4v1703000000000!5m2!1svi!2s" 
+                            width="100%" 
+                            height="100%" 
+                            style="border:0;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="text-center mt-4 pt-3">
+                    <p class="small text-secondary">
+                        <i class="fas fa-shield-alt me-1"></i> Thông tin của bạn được bảo mật tuyệt đối
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/ai-chatbot.js"></script>
+    <script>
+        // Xử lý form liên hệ
+        const contactForm = document.getElementById('contactForm');
+        const successMessage = document.getElementById('successMessage');
+
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Kiểm tra validation cơ bản
+            const fullname = document.getElementById('fullname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            if (!fullname) {
+                showError('Vui lòng nhập họ và tên');
+                return;
+            }
+            if (!email) {
+                showError('Vui lòng nhập email');
+                return;
+            }
+            if (!message) {
+                showError('Vui lòng nhập nội dung tin nhắn');
+                return;
+            }
+            
+            // Hiệu ứng loading cho nút submit
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang gửi...';
+            
+            // Giả lập gửi form thành công
+            setTimeout(() => {
+                successMessage.style.display = 'block';
+                contactForm.reset();
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                
+                // Tự động ẩn thông báo sau 5 giây
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+            }, 800);
+        });
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+            errorDiv.style.border = '1px solid #ef4444';
+            errorDiv.style.borderRadius = '12px';
+            errorDiv.style.padding = '10px 15px';
+            errorDiv.style.marginBottom = '15px';
+            errorDiv.style.fontSize = '0.85rem';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> ${message}`;
+            
+            contactForm.insertBefore(errorDiv, contactForm.firstChild);
+            setTimeout(() => errorDiv.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

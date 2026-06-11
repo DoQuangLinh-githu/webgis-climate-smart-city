@@ -1,0 +1,154 @@
+<!-- views/cndl/domain2.ejs -->
+<div class="accordion-item">
+    <h2 class="accordion-header" id="heading2">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+            🌳 Quy hoạch đô thị, phủ xanh & đa dạng sinh học
+        </button>
+    </h2>
+    <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#domainAccordion">
+        <div class="accordion-body">
+            <form action="/cndl" method="POST" novalidate>
+                <input type="hidden" name="domain_id" value="2">
+                <input type="hidden" name="year" value="<%= year || new Date().getFullYear() %>">
+                <input type="hidden" name="city" value="TP. Hồ Chí Minh">
+
+                <!-- Checklist indicators -->
+                <div class="indicator-list mb-5 p-4 bg-dark bg-opacity-10 rounded">
+                    <h5 class="text-primary mb-4"><i class="fas fa-check-circle me-2"></i>Chọn các chỉ số cần nhập dữ liệu:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_R_S-water">
+                                <label class="form-check-label fw-bold" for="check_R_S-water">9. Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở (R_S-water)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_Rcover">
+                                <label class="form-check-label fw-bold" for="check_Rcover">10. Tỷ lệ phủ xanh trong thành phố (Rcover)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_Rland_p">
+                                <label class="form-check-label fw-bold" for="check_Rland_p">11. Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị (Rland_p)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_UBI_PNRA">
+                                <label class="form-check-label fw-bold" for="check_UBI_PNRA">12. Đa dạng sinh học đô thị (UBI_PNRA)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_GISapp">
+                                <label class="form-check-label fw-bold" for="check_GISapp">13. Ứng dụng GIS và dữ liệu số trong quy hoạch đô thị (GISapp)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_DISaster">
+                                <label class="form-check-label fw-bold" for="check_DISaster">14. Hệ thống cảnh báo & quản lý thiên tai thông minh (DISaster)</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input indicator-checkbox" type="checkbox" id="check_ClimateAct">
+                                <label class="form-check-label fw-bold" for="check_ClimateAct">15. Kế hoạch hành động về khí hậu (ClimateAct)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicator 9: R_S-water -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'R_S-water',
+                    indicatorName: 'Mức độ quy hoạch, bảo vệ và phát triển mặt nước & không gian mở',
+                    description: 'Tính toán dựa trên diện tích mặt nước và không gian mở.',
+                    required: true,
+                    inputs: [
+                        { id: 'S_water_present_R_S-water', param: 'S_water_present', label: 'Diện tích mặt nước hiện tại (S_water_present, ha)', tooltip: 'Diện tích mặt nước hiện có (sông, hồ, kênh,...)', sourceText: 'Số Liệu: T1.01. KGian 231227-HCM ĐCQHC.pdf - Trang 41 - Mặt Nước năm 2025', driveLink: 'https://drive.google.com/drive/u/0/folders/1bmP1igsIQp4LOzSD0nZiY69tQ9_sWks7' },
+                        { id: 'S_water_plan_R_S-water', param: 'S_water_plan', label: 'Diện tích mặt nước quy hoạch (S_water_plan, ha)', tooltip: 'Diện tích mặt nước theo kế hoạch phát triển', sourceText: 'Số Liệu: T1.01. KGian 231227-HCM ĐCQHC.pdf - Trang 156 - Mặt Nước - Quy hoạch toàn thành phố đến năm 2040', driveLink: 'https://drive.google.com/drive/u/0/folders/16p9HKbk_3bACK-7FlsWpXzWiMeO_9tdY' },
+                        { id: 'S_op_present_R_S-water', param: 'S_op_present', label: 'Diện tích không gian mở hiện tại (S_op_present, ha)', tooltip: 'Diện tích không gian mở hiện có (công viên, quảng trường,...)', sourceText: 'Số Liệu: T1.01. KGian 231227-HCM ĐCQHC.pdf - Trang 40 - Bảng: So sánh hiện trạng sử dụng đất', driveLink: 'https://drive.google.com/drive/u/0/folders/1QRb6vZCvhZmKuIVWcOY5FWiWX_dFXDGB' },
+                        { id: 'S_op_plan_R_S-water', param: 'S_op_plan', label: 'Diện tích không gian mở quy hoạch (S_op_plan, ha)', tooltip: 'Diện tích không gian mở theo kế hoạch phát triển', sourceText: 'Số Liệu: T1.01. KGian 231227-HCM ĐCQHC.pdf - Trang 155 - Tổng hợp sử dụng đất quy hoạch thành phố Hồ Chí Minh đến năm 2040', driveLink: 'https://drive.google.com/drive/u/0/folders/1KmGxU8s3sUbJpF6ruMhKFFZWQ_gX0TUr' }
+                    ]
+                }) %>
+
+                <!-- Indicator 10: Rcover -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'Rcover',
+                    indicatorName: 'Tỷ lệ phủ xanh trong thành phố',
+                    description: 'Tính toán dựa trên diện tích cây xanh công cộng và dân số.',
+                    required: true,
+                    inputs: [
+                        { id: 'S_pp_Rcover', param: 'S_pp', label: 'Diện tích cây xanh công cộng (S_pp, m²)', tooltip: 'Diện tích cây xanh công cộng (công viên, đường phố,...)', sourceText: 'Số Liệu: https://vneconomy.vn/tp-hcm-dat-540-so-voi-chi-tieu-trong-phat-trien-mang-xanh-cong-cong.htm', driveLink: 'https://drive.google.com/drive/u/0/folders/1UQ1Xlbuf63bbbTcFbrkQM2Bg9EULc7mT' },
+                        { id: 'P_Rcover', param: 'P', label: 'Tổng dân số (P, người)', tooltip: 'Tổng dân số của thành phố', sourceText: 'Số Liệu: 04. Dan so TPHCM 2023.pdf', driveLink: 'https://drive.google.com/drive/u/0/folders/1LDas125Y17oLVtdavfYfnh6PvPhLFHx9' }
+                    ]
+                }) %>
+
+                <!-- Indicator 11: Rland_p -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'Rland_p',
+                    indicatorName: 'Tỷ lệ đất cây xanh đô thị trên tổng diện tích đất xây dựng đô thị',
+                    description: 'Tính toán dựa trên diện tích đất cây xanh và tổng diện tích đất xây dựng.',
+                    required: true,
+                    inputs: [
+                        { id: 'S_land_p_Rland_p', param: 'S_land_p', label: 'Diện tích đất cây xanh đô thị (S_land_p, ha)', tooltip: 'Diện tích đất dành cho cây xanh trong đô thị', sourceText: 'Số Liệu: T1.01. KGian 231227-HCM ĐCQHC.pdf - Trang 67 - So sánh hiện trạng sử dụng đất', driveLink: 'https://drive.google.com/drive/u/0/folders/1crs9H2HhYh3tp3nJds3FbotupOPG6Y_R' },
+                        { id: 'S_total_land_Rland_p', param: 'S_total_land', label: 'Tổng diện tích đất xây dựng đô thị (S_total_land, ha)', tooltip: 'Tổng diện tích đất dành cho xây dựng đô thị', sourceText: 'Số Liệu: T1.01. KGian 231227-HCM ĐCQHC.pdf - Trang 67 - So sánh hiện trạng sử dụng đất', driveLink: 'https://drive.google.com/drive/u/0/folders/1snk4ut3Nrfa9hOrUVZkTzMS6Gbd4cbuT' }
+                    ]
+                }) %>
+
+                <!-- Indicator 12: UBI_PNRA -->
+                <%- include('shared/indicator-card', {
+                    indicatorCode: 'UBI_PNRA',
+                    indicatorName: 'Đa dạng sinh học đô thị',
+                    description: 'Tính toán dựa trên diện tích tự nhiên và phục hồi sinh thái.',
+                    required: false,
+                    inputs: [
+                        { id: 'A_natural_UBI_PNRA', param: 'A_natural', label: 'Diện tích khu vực tự nhiên (A_natural, ha)', tooltip: 'Diện tích các khu vực tự nhiên (rừng, đất ngập nước,...)', sourceText: 'Năm nay không có số liệu', driveLink: 'https://drive.google.com/drive/u/0/folders/1yu144usYVWA8ReZx-EyyqN9FaZV5SyEu' },
+                        { id: 'A_restored_UBI_PNRA', param: 'A_restored', label: 'Diện tích khu vực phục hồi sinh thái (A_restored, ha)', tooltip: 'Diện tích các khu vực được phục hồi sinh thái', sourceText: 'Năm nay không có số liệu', driveLink: 'https://drive.google.com/drive/u/0/folders/1Qi8ZMS48hUNDCJ2leI-7WWx5mpbI4cgh' },
+                        { id: 'A_city_UBI_PNRA', param: 'A_city', label: 'Tổng diện tích thành phố (A_city, ha)', tooltip: 'Tổng diện tích của thành phố', sourceText: 'Năm nay không có số liệu', driveLink: 'https://drive.google.com/drive/u/0/folders/1brbvECG_iJvAl8FyWKtgmiAkTZ_9rugD' }
+                    ]
+                }) %>
+
+                <!-- Indicator 13: GISapp (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'GISapp',
+                    indicatorName: 'Ứng dụng GIS và dữ liệu số trong quy hoạch đô thị',
+                    description: 'Đánh giá mức độ số hóa và ứng dụng GIS trong quản lý, quy hoạch đô thị.',
+                    required: false,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Chưa ứng dụng GIS (quy hoạch thủ công, rời rạc)' },
+                        { value: 2, label: 'Cấp 2 - GIS cơ bản (bản đồ tĩnh, số hóa < 50%)' },
+                        { value: 3, label: 'Cấp 3 - Tích hợp thông tin quy hoạch (số hóa 50–75%)' },
+                        { value: 4, label: 'Cấp 4 - Phân tích không gian nâng cao (số hóa 75–90%)' },
+                        { value: 5, label: 'Cấp 5 - GIS thời gian thực (Digital Twin), số hóa >90%' }
+                    ]
+                }) %>
+
+                <!-- Indicator 14: DISaster (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'DISaster',
+                    indicatorName: 'Hệ thống cảnh báo & quản lý thiên tai thông minh',
+                    description: 'Đánh giá mức độ hiện đại hóa và hiệu quả của hệ thống cảnh báo, dự báo thiên tai.',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Hệ thống cảnh báo thủ công/truyền thống' },
+                        { value: 2, label: 'Cấp 2 - Có một vài trạm quan trắc tự động, mật độ thấp' },
+                        { value: 3, label: 'Cấp 3 - Tích hợp GIS, mật độ trạm 1–2 trạm/100 km²' },
+                        { value: 4, label: 'Cấp 4 - Áp dụng AI, IoT, mật độ trạm >2 trạm/100 km²' },
+                        { value: 5, label: 'Cấp 5 - Hệ thống cảnh báo đa thiên tai thông minh, mạng lưới cảm biến dày đặc' }
+                    ]
+                }) %>
+
+                <!-- Indicator 15: ClimateAct (Select) -->
+                <%- include('shared/indicator-card-select', {
+                    indicatorCode: 'ClimateAct',
+                    indicatorName: 'Kế hoạch hành động về khí hậu',
+                    description: 'Đánh giá mức độ hoàn thiện và hiệu quả thực thi của kế hoạch hành động ứng phó biến đổi khí hậu.',
+                    required: true,
+                    options: [
+                        { value: 1, label: 'Cấp 1 - Chưa xây dựng kế hoạch hoặc chỉ dừng ở mức định hướng' },
+                        { value: 2, label: 'Cấp 2 - Đã xây dựng kế hoạch sơ bộ, thiếu mục tiêu định lượng' },
+                        { value: 3, label: 'Cấp 3 - Có kế hoạch được UBND ban hành, mục tiêu rõ ràng' },
+                        { value: 4, label: 'Cấp 4 - Kế hoạch xác lập mục tiêu Net Zero 2045–2050, có lộ trình thực hiện' },
+                        { value: 5, label: 'Cấp 5 - Kế hoạch tích hợp toàn diện, thực thi các dự án giảm phát thải lớn' }
+                    ]
+                }) %>
+
+                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save me-2"></i>Lưu tất cả chỉ số Domain 2</button>
+            </form>
+        </div>
+    </div>
+</div>

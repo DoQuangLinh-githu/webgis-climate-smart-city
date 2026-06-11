@@ -1,0 +1,88 @@
+<!-- views/cndl/shared/indicator-card-select.ejs -->
+<% 
+    const { indicatorCode, indicatorName, description, required, options } = locals;
+%>
+<div class="indicator-section" id="section_<%= indicatorCode %>" style="display: none;" data-required="<%= required %>">
+    <div class="field-card" style="background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 16px; padding: 25px; margin-bottom: 25px;">
+        <div class="field-header" style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); padding: 16px 24px; border-radius: 12px 12px 0 0; margin: -25px -25px 25px -25px;">
+            <h5 style="color: white; margin: 0; display: inline-block;">
+                <i class="fas fa-star me-2"></i>Chỉ số <%= indicatorCode %>: <%= indicatorName %>
+            </h5>
+            <i class="fas fa-info-circle tooltip-icon ms-2" style="color: rgba(255,255,255,0.8);" data-bs-toggle="tooltip" title="<%= description %>"></i>
+        </div>
+        <div class="card-body p-3">
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <!-- Label thay vì form-floating -->
+                    <label for="<%= indicatorCode %>_<%= indicatorCode %>" class="form-label" style="color: #cbd5e1; font-weight: 500; margin-bottom: 8px;">
+                        <i class="fas fa-chart-simple me-1"></i>Chọn cấp độ đánh giá (1-5)
+                    </label>
+                    <select id="<%= indicatorCode %>_<%= indicatorCode %>" 
+                            name="<%= indicatorCode %>[params][<%= indicatorCode %>]" 
+                            class="form-select"
+                            style="background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(59, 130, 246, 0.4); color: #f8fafc; border-radius: 10px; padding: 12px 16px; width: 100%;">
+                        <option value="" disabled selected style="color: #94a3b8;">-- Chọn cấp độ đánh giá (1-5) --</option>
+                        <% options.forEach(opt => { %>
+                            <option value="<%= opt.value %>" style="color: #f8fafc;"><%= opt.label %></option>
+                        <% }) %>
+                    </select>
+                    
+                    <!-- Component sửa nguồn -->
+                    <%- include('source-edit', { 
+                        param: indicatorCode, 
+                        sourceText: 'Đọc tài liệu, dựa vào tiêu chí đánh giá và đưa ra cấp độ phù hợp',
+                        folderId: indicatorCode.toLowerCase() 
+                    }) %>
+                </div>
+                <div class="col-md-1 d-flex align-items-start justify-content-end" style="margin-top: 38px;">
+                    <a href="https://drive.google.com/drive/u/0/folders/1<%= indicatorCode %>" target="_blank" title="Xem tài liệu hỗ trợ" style="color: #60a5fa; text-decoration: none;">
+                        <i class="fas fa-paperclip fa-lg"></i>
+                    </a>
+                </div>
+                <div class="col-md-3"></div>
+            </div>
+
+            <!-- Bảng tiêu chí đánh giá -->
+            <div class="mt-4">
+                <h6 class="fw-bold mb-3" style="color: #cbd5e1;">
+                    <i class="fas fa-list-ol me-2" style="color: #60a5fa;"></i>Tiêu chí đánh giá theo cấp độ
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" style="color: #f8fafc; border-color: rgba(59, 130, 246, 0.3);">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); color: white;">Cấp độ</th>
+                                <th style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); color: white;">Tiêu chí</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% options.forEach(opt => { %>
+                                <tr style="background: rgba(30, 41, 59, 0.6);">
+                                    <td class="text-center fw-bold" style="color: #60a5fa;"><%= opt.value %></td>
+                                    <td style="color: #cbd5e1;"><%= opt.label %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted mt-2 d-block" style="color: #94a3b8;">
+                    <i class="fas fa-lightbulb me-1" style="color: #f59e0b;"></i>Chọn cấp độ phù hợp nhất dựa trên thực tế hiện tại của thành phố.
+                </small>
+            </div>
+
+            <div class="mt-4 d-flex gap-3">
+                <button type="button" class="btn btn-primary preview-btn" data-indicator="<%= indicatorCode %>" style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); border: none; border-radius: 50px; padding: 10px 28px; color: white; font-weight: 600;">
+                    <i class="fas fa-eye me-2"></i>Xem trước kết quả
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="resetSelectIndicator('<%= indicatorCode %>')" style="border: 1.5px solid #60a5fa; color: #60a5fa; border-radius: 50px; padding: 10px 28px; background: transparent;">
+                    <i class="fas fa-undo-alt me-2"></i>Đặt lại
+                </button>
+            </div>
+            
+            <div class="chart-container mt-4" id="chart_<%= indicatorCode %>" style="display: none; background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 15px;">
+                <canvas id="<%= indicatorCode.toLowerCase() %>Chart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>

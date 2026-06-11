@@ -1,0 +1,24 @@
+<!-- views/cndl/shared/source-edit.ejs -->
+<div class="source-wrapper" data-key="<%= param %>">
+    <div class="source-view">
+        <small class="d-block" style="color: #94a3b8; font-size: 0.75rem;">
+            <i class="fas fa-book-open me-1" style="color: #60a5fa;"></i>
+            <span class="source-text"><%= sourceText || 'Chưa có tài liệu tham khảo' %></span>
+        </small>
+        <button type="button" class="btn-edit-source" onclick="editSource(this)" style="background: none; border: none; color: #f59e0b; padding: 0; font-size: 0.75rem; cursor: pointer;">
+            <i class="fas fa-edit me-1"></i>Sửa nguồn
+        </button>
+    </div>
+    <div class="source-edit" style="display: none; margin-top: 8px;">
+        <textarea class="source-input form-control" rows="2" placeholder="Nhập nguồn tài liệu tham khảo..." 
+                  style="background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(59, 130, 246, 0.4); color: #f8fafc; border-radius: 8px; font-size: 0.85rem; width: 100%; margin-bottom: 8px;"></textarea>
+        <div>
+            <button type="button" class="btn-save-source btn btn-sm btn-success" onclick="saveSource(this)" style="border-radius: 8px; background: #10b981; border: none; padding: 5px 15px; margin-right: 8px;">
+                <i class="fas fa-save me-1"></i>Lưu
+            </button>
+            <button type="button" class="btn-cancel-source btn btn-sm btn-secondary" onclick="cancelSource(this)" style="border-radius: 8px; background: #475569; border: none; padding: 5px 15px;">
+                <i class="fas fa-times me-1"></i>Hủy
+            </button>
+        </div>
+    </div>
+</div>

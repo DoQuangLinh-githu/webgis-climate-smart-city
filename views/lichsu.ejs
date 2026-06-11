@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Hoạt Động - Climate Smart City</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/loading.css">
+
+    <!-- Page Specific CSS -->
+    <style>
+        /* Stats Cards */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-box {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 20px;
+            padding: 28px 20px;
+            text-align: center;
+            backdrop-filter: blur(16px);
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-box:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25);
+        }
+
+        .stat-icon {
+            font-size: 2.8rem;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 28px;
+            backdrop-filter: blur(16px);
+        }
+
+        .form-label {
+            color: #cbd5e1;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .form-control, .form-select {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            color: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 32px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 85px;
+            margin-bottom: 35px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 20px;
+            top: 4px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 4px solid #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .timeline-content {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            transition: all 0.4s ease;
+        }
+
+        .timeline-content:hover {
+            transform: translateX(12px);
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.3);
+            border-color: var(--primary);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .timeline-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .timeline-badge {
+            padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-create { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .badge-update { background: rgba(59, 130, 246, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+        .badge-delete { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+
+        .timeline-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+        }
+
+        .timeline-details {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 14px;
+            padding: 18px;
+            margin-top: 16px;
+        }
+
+        .change-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .change-item:last-child { border-bottom: none; }
+
+        .change-field {
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 160px;
+            font-size: 0.85rem;
+        }
+
+        .change-old {
+            color: #ef4444;
+            text-decoration: line-through;
+        }
+
+        .change-new {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px dashed rgba(59, 130, 246, 0.4);
+            border-radius: 24px;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: #475569;
+            margin-bottom: 20px;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 12px 28px;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-outline-light-custom {
+            border: 2px solid rgba(255,255,255,0.3);
+            background: transparent;
+            color: #cbd5e1;
+            padding: 12px 28px;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-light-custom:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: white;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .timeline::before { left: 18px; }
+            .timeline-item { padding-left: 60px; }
+            .timeline-marker { left: 8px; width: 28px; height: 28px; }
+            .timeline-content { padding: 18px; }
+            .change-field { min-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header + Sidebar -->
+    <% 
+        let currentPage = 'lichsu';
+        let user = locals.user;
+    %>
+    <%- include('partials/header') %>
+
+    <!-- Main content -->
+    <main class="main-content">
+        <div class="page-header animate__animated animate__fadeIn">
+            <h1 class="page-title"><i class="fas fa-history me-3"></i> Lịch Sử Hoạt Động</h1>
+            <p class="lead text-center text-muted">Theo dõi tất cả các thay đổi dữ liệu trong hệ thống</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="alert alert-danger animate__animated animate__shakeX">
+                <i class="fas fa-exclamation-triangle me-2"></i><%= error %>
+            </div>
+        <% } %>
+
+        <!-- Stats -->
+        <div class="stats-row animate__animated animate__fadeInUp">
+            <div class="stat-box">
+                <div class="stat-icon" style="color: #3b82f6;"><i class="fas fa-edit"></i></div>
+                <div class="stat-value"><%= history ? history.length : 0 %></div>
+                <div class="stat-label">Tổng thay đổi</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon" style="color: #10b981;"><i class="fas fa-calendar-day"></i></div>
+                <div class="stat-value" id="todayChanges">--</div>
+                <div class="stat-label">Thay đổi hôm nay</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon" style="color: #f59e0b;"><i class="fas fa-users"></i></div>
+                <div class="stat-value"><%= history ? [...new Set(history.map(h => h.changed_by))].filter(Boolean).length : 0 %></div>
+                <div class="stat-label">Người dùng hoạt động</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon" style="color: #8b5cf6;"><i class="fas fa-database"></i></div>
+                <div class="stat-value"><%= history ? [...new Set(history.map(h => h.table_name))].length : 0 %></div>
+                <div class="stat-label">Bảng dữ liệu</div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="filter-section animate__animated animate__fadeInUp">
+            <h5 class="mb-4"><i class="fas fa-filter me-2" style="color: var(--primary);"></i> Bộ Lọc Lịch Sử</h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Loại thay đổi</label>
+                    <select class="form-select" id="actionFilter">
+                        <option value="">Tất cả</option>
+                        <option value="create">Tạo mới</option>
+                        <option value="update">Cập nhật</option>
+                        <option value="delete">Xóa</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Bảng dữ liệu</label>
+                    <select class="form-select" id="tableFilter">
+                        <option value="">Tất cả</option>
+                        <% if (history) { %>
+                            <% [...new Set(history.map(h => h.table_name))].filter(Boolean).sort().forEach(table => { %>
+                                <option value="<%= table %>"><%= table %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Người thực hiện</label>
+                    <input type="text" class="form-control" id="userFilter" placeholder="Tên người dùng">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Từ ngày</label>
+                    <input type="date" class="form-control" id="dateFrom">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Đến ngày</label>
+                    <input type="date" class="form-control" id="dateTo">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary-custom w-100" onclick="applyFilters()">
+                        <i class="fas fa-search me-2"></i>Tìm kiếm
+                    </button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-light-custom w-100" onclick="resetFilters()">
+                        <i class="fas fa-undo me-2"></i>Đặt lại
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline animate__animated animate__fadeInUp" id="historyTimeline">
+            <% if (!user) { %>
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-lock"></i></div>
+                    <h4 class="empty-title">Yêu cầu đăng nhập</h4>
+                    <p class="empty-text">Vui lòng đăng nhập để xem lịch sử hoạt động.</p>
+                </div>
+            <% } else if (!history || history.length === 0) { %>
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                    <h4 class="empty-title">Chưa có hoạt động</h4>
+                    <p class="empty-text">Hiện tại chưa có bất kỳ thay đổi nào được ghi nhận.</p>
+                </div>
+            <% } else { %>
+                <% history.forEach((h, index) => { 
+                    let action = 'update', actionText = 'Cập nhật', badgeClass = 'badge-update', 
+                        icon = 'fa-sync-alt', markerColor = '#3b82f6';
+
+                    if (!h.old_values || Object.keys(h.old_values || {}).length === 0) {
+                        action = 'create'; actionText = 'Tạo mới'; badgeClass = 'badge-create';
+                        icon = 'fa-plus-circle'; markerColor = '#10b981';
+                    } else if (!h.new_values || Object.keys(h.new_values || {}).length === 0) {
+                        action = 'delete'; actionText = 'Xóa'; badgeClass = 'badge-delete';
+                        icon = 'fa-trash-alt'; markerColor = '#ef4444';
+                    }
+
+                    const oldValues = h.old_values || {};
+                    const newValues = h.new_values || {};
+                %>
+                    <div class="timeline-item" data-action="<%= action %>" 
+                         data-table="<%= h.table_name || '' %>" 
+                         data-user="<%= h.changed_by || '' %>"
+                         data-date="<%= h.timestamp ? new Date(h.timestamp).toISOString().split('T')[0] : '' %>">
+                        <div class="timeline-marker" style="background: <%= markerColor %>;">
+                            <i class="fas <%= icon %>"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <div>
+                                    <h5 class="timeline-title">
+                                        <%= actionText %> <strong><%= h.table_name || 'Unknown' %></strong> 
+                                        (ID: <%= h.record_id || 'N/A' %>)
+                                    </h5>
+                                </div>
+                                <span class="timeline-badge <%= badgeClass %>">
+                                    <i class="fas <%= icon %> me-1"></i><%= actionText %>
+                                </span>
+                            </div>
+
+                            <div class="timeline-meta">
+                                <span><i class="fas fa-user"></i> <%= h.changed_by || 'Hệ thống' %></span>
+                                <span><i class="fas fa-clock"></i> <%= h.timestamp ? new Date(h.timestamp).toLocaleString('vi-VN') : 'N/A' %></span>
+                                <span><i class="fas fa-database"></i> <%= h.table_name || 'Unknown' %></span>
+                            </div>
+
+                            <button class="btn btn-sm btn-outline-light mt-2" 
+                                    type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#details-<%= h.id || index %>">
+                                <i class="fas fa-chevron-down me-1"></i> Xem chi tiết thay đổi
+                            </button>
+
+                            <div class="collapse timeline-details mt-3" id="details-<%= h.id || index %>">
+                                <% if (Object.keys(newValues).length || Object.keys(oldValues).length) { %>
+                                    <% if (action === 'create') { %>
+                                        <% for (let key in newValues) { %>
+                                            <div class="change-item">
+                                                <span class="change-field"><%= key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %></span>
+                                                <span class="change-new"><%= newValues[key] !== null && newValues[key] !== undefined ? newValues[key] : 'N/A' %></span>
+                                            </div>
+                                        <% } %>
+                                    <% } else if (action === 'delete') { %>
+                                        <% for (let key in oldValues) { %>
+                                            <div class="change-item">
+                                                <span class="change-field"><%= key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %></span>
+                                                <span class="change-old"><%= oldValues[key] !== null && oldValues[key] !== undefined ? oldValues[key] : 'N/A' %></span>
+                                            </div>
+                                        <% } %>
+                                    <% } else { %>
+                                        <% for (let key in newValues) { %>
+                                            <% if (oldValues[key] !== newValues[key]) { %>
+                                                <div class="change-item">
+                                                    <span class="change-field"><%= key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %></span>
+                                                    <span class="change-old"><%= oldValues[key] !== null && oldValues[key] !== undefined ? oldValues[key] : 'N/A' %></span>
+                                                    <i class="fas fa-arrow-right text-muted"></i>
+                                                    <span class="change-new"><%= newValues[key] !== null && newValues[key] !== undefined ? newValues[key] : 'N/A' %></span>
+                                                </div>
+                                            <% } %>
+                                        <% } %>
+                                    <% } %>
+                                <% } else { %>
+                                    <p class="text-muted text-center py-4">Không có chi tiết thay đổi nào.</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+
+        <!-- Export -->
+        <div class="filter-section mt-4 animate__animated animate__fadeInUp">
+            <h5 class="mb-4"><i class="fas fa-download me-2" style="color: var(--primary);"></i> Xuất Dữ Liệu Lịch Sử</h5>
+            <div class="d-flex flex-wrap gap-3">
+                <button class="btn btn-primary-custom" onclick="exportHistory('pdf')">
+                    <i class="fas fa-file-pdf me-2"></i>Xuất PDF
+                </button>
+                <button class="btn btn-primary-custom" onclick="exportHistory('excel')">
+                    <i class="fas fa-file-excel me-2"></i>Xuất Excel
+                </button>
+                <button class="btn btn-primary-custom" onclick="exportHistory('csv')">
+                    <i class="fas fa-file-csv me-2"></i>Xuất CSV
+                </button>
+                <button class="btn btn-outline-light-custom" onclick="printHistory()">
+                    <i class="fas fa-print me-2"></i>In Báo Cáo
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer + Scripts -->
+    <%- include('partials/footer') %>
+
+    <!-- Page Specific Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tính số thay đổi hôm nay
+            const today = new Date().toISOString().split('T')[0];
+            let todayCount = 0;
+            document.querySelectorAll('.timeline-item').forEach(item => {
+                const date = item.dataset.date;
+                if (date === today) todayCount++;
+            });
+            const todayChangesEl = document.getElementById('todayChanges');
+            if (todayChangesEl) todayChangesEl.textContent = todayCount;
+
+            // Populate table filter options
+            const tables = new Set();
+            document.querySelectorAll('.timeline-item').forEach(item => {
+                const table = item.dataset.table;
+                if (table) tables.add(table);
+            });
+            
+            // Filter functionality
+            window.applyFilters = function() {
+                const action = document.getElementById('actionFilter').value;
+                const table = document.getElementById('tableFilter').value;
+                const user = document.getElementById('userFilter').value.toLowerCase();
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+
+                document.querySelectorAll('.timeline-item').forEach(item => {
+                    const itemAction = item.dataset.action;
+                    const itemTable = item.dataset.table;
+                    const itemUser = (item.dataset.user || '').toLowerCase();
+                    const itemDate = item.dataset.date;
+
+                    let show = true;
+                    if (action && itemAction !== action) show = false;
+                    if (table && itemTable !== table) show = false;
+                    if (user && !itemUser.includes(user)) show = false;
+                    if (dateFrom && itemDate < dateFrom) show = false;
+                    if (dateTo && itemDate > dateTo) show = false;
+
+                    item.style.display = show ? '' : 'none';
+                });
+            };
+
+            window.resetFilters = function() {
+                document.getElementById('actionFilter').value = '';
+                document.getElementById('tableFilter').value = '';
+                document.getElementById('userFilter').value = '';
+                document.getElementById('dateFrom').value = '';
+                document.getElementById('dateTo').value = '';
+                document.querySelectorAll('.timeline-item').forEach(item => {
+                    item.style.display = '';
+                });
+            };
+
+            window.exportHistory = function(format) {
+                alert(`Đang xuất lịch sử dưới dạng ${format.toUpperCase()}...\nTính năng đang được phát triển.`);
+            };
+
+            window.printHistory = function() {
+                window.print();
+            };
+        });
+    </script>
+</body>
+</html>
