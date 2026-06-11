@@ -2544,7 +2544,7 @@ app.get('/export/metadata/csv', authenticateToken, async (req, res) => {
   try {
     console.log('Export CSV params:', req.query);
 
-    // Lấy danh sách ID được chọn từ query parameter 'selected'
+    // Lấy danh sách ID được chọn từ query parameter
     const selected = req.query.selected
       ? req.query.selected.split(',').map(Number).filter(n => !isNaN(n))
       : null;
